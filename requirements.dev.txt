@@ -1,0 +1,7 @@
+flake8
+pep8-naming
+tox
+pytest
+pytest-cov
+sphinx
+sphinx_rtd_theme

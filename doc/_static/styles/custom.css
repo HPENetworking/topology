@@ -1,0 +1,61 @@
+/* Fix Pygments Monokai theme */
+div.highlight pre,
+div[class^='highlight'] {
+    background: #272822 !important;
+    background-color: #272822 !important;
+    color: #f8f8f2 !important;
+    border: none !important;
+}
+
+/* Improve autodoc */
+dl.class,
+dl.function {
+    background: #f3f6f6 !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+dl.class dt,
+dl.function dt {
+    width: 100%;
+}
+
+dl.class dt {
+}
+
+dl.class dt code.descclassname {
+    font-size: 70% !important;
+}
+
+dl.class dt em.property {
+    font-size: 120% !important;
+    font-style: normal !important;
+}
+
+dl.class dd dl.attribute em.property {
+    font-size: 100% !important;
+    font-weight: normal !important;
+    font-family: monospace !important;
+}
+
+dl dd {
+    margin: 15px 0px 0px 20px !important;
+}
+
+/* Useful common classes */
+.float-right {
+    float: right;
+    width: auto !important;
+}
+
+.float-left {
+    float: left;
+    width: auto !important;
+}
+
+.float-center {
+    text-align: center;
+}
+
+.clear {
+    clear: both;
+}
