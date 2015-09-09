@@ -16,33 +16,8 @@
 # under the License.
 
 """
-Mininet  testing suite.
+topology pytest plugin module entry point.
 """
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
-
-import pytest  # noqa
-
-
-TOPOLOGY = """
-[type = vtysh] sw1
-[type = host] hs1
-sw1:1 -- hs1:1
-"""
-
-
-def setup_module(module, topology):
-    print('setup_module({})'.format(module.__name__))
-
-
-def teardown_module(module, topology):
-    print('teardown_module({})'.format(module.__name__))
-
-
-def test_ping(topology):
-    sw1 = topology.get('sw1')
-    response = sw1.sendcmd('ping -c 1 10.0.30.1')
-
-    # Do something with ping
-    print(response)
