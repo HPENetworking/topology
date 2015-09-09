@@ -26,63 +26,13 @@ import logging
 from datetime import datetime
 from collections import OrderedDict
 
-from pynml import Topology
+from pynml import NMLManager
 
 from .platforms.base import BaseNode
 from .platforms.manager import platforms
 
 
 log = logging.getLogger(__name__)
-
-
-class NMLManager(object):
-
-    def __init__(self, **kwargs):
-        self.root = Topology(kwargs)
-        self.namespace = OrderedDict()
-
-        self.nodes = OrderedDict()
-        self.biports = OrderedDict()
-        self.bilinks = OrderedDict()
-
-    def register_object(self, obj):
-        if obj.identifier in self.namespace:
-            raise Exception(
-                'Object already in namespace {}'.format(obj.identifier)
-            )
-        self.namespace[obj.identifier] = obj
-
-    def create_node(self, **kwargs):
-        node = None
-        self.register_object(node)
-        return node
-
-    def create_port(self, node, **kwargs):
-        biport = None
-        self.register_object(biport)
-        self.biports[node.identifier] = biport
-        return biport
-
-    def create_link(self, porta, portb, **kwargs):
-        bilink = None
-        self.register_object(bilink)
-        self.bilinks[(porta.identifier, portb.identifier)] = bilink
-        return bilink
-
-    def nodes(self):
-        for node in self.nodes.values():
-            yield node
-
-    def ports(self):
-        for nodeid, biport in self.biports.items():
-            yield (self.nodes[nodeid], biport)
-
-    def links(self):
-        for (portaid, portbid), bilink in self.bilinks.items():
-            yield (self.biports[portaid], self.biports[portbid], bilink)
-
-    def export_nml(self):
-        pass
 
 
 class TopologyManager(object):
