@@ -2,6 +2,7 @@ include README.rst LICENSE
 include requirements.txt requirements.dev.txt
 
 recursive-include test test_*.py
+recursive-include examples *.py
 
 recursive-include doc conf.py *.rst
 recursive-include doc/_static *.png *.css
