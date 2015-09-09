@@ -51,6 +51,7 @@ def topology(request):
     request.addfinalizer(topomgr.unbuild)
 
     # Autobuild topology if available
+    # FIXME: Skip all module if parsing or build fails
     if hasattr(request.module, 'TOPOLOGY'):
         topomgr.parse(request.module.TOPOLOGY)
         topomgr.build()

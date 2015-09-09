@@ -93,6 +93,83 @@ class TopologyManager(object):
         self.nodes = OrderedDict()
         self._platform = None
 
+    def load(self, dictmeta):
+        # FIXME actualy read the dictmeta and load the topology
+        print(dictmeta)
+
+    def parse(self, txtmeta):
+        data = {
+            'nodes': {},
+            'ports': {},
+            'links': {},
+        }
+
+        def parse_attrs(subline):
+            attrs = {}
+
+            attrs_parts = subline.replace('[', '', 1).split(',')
+            for part in attrs_parts:
+                key, value = part.split('=')
+                attrs[key.strip()] = value.strip()
+
+            return attrs
+
+        def parse_node(line):
+            attrs_part, nodes_part = line.split(']')
+
+            nodes = set(nodes_part.split())
+            attrs = parse_attrs(attrs_part)
+
+            return nodes, attrs
+
+        def parse_link(line):
+
+            attrs = {}
+            link_part = line
+
+            if ']' in line:
+                attrs_part, link_part = line.split(']')
+                attrs = parse_attrs(attrs_part)
+
+            endp_a, endp_b = link_part.split('--')
+            link = []
+
+            for endp in [endp_a, endp_b]:
+
+                endp = endp.strip()
+                node_port = endp.split(':')
+
+                if len(node_port) not in [1, 2]:
+                    raise Exception(
+                        'Bad link specification: "{}"'.format(line)
+                    )
+                if len(node_port) == 1:
+                    # FIXME: Find next suitable port number
+                    node_port.append(None)
+
+                link.append(tuple(node_port))
+
+            return link, attrs
+
+        for line in txtmeta.splitlines():
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+
+            if '--' in line:
+                # FIXME actualy put them in the data dict
+                print(parse_link(line))
+                continue
+
+            if ']' in line:
+                # FIXME actualy put them in the data dict
+                print(parse_node(line))
+                continue
+
+            raise Exception('Bad topology specification: "{}"'.format(line))
+
+        self.load(data)
+
     def build(self):
 
         plugin = platforms()[self.engine]
