@@ -4,55 +4,66 @@
 .. automodule:: {{ fullname }}
    :show-inheritance:
 
-   {% block functions %}
-   {% if functions %}
-   .. rubric:: Functions
+   .. contents::
+      :local:
 
-   .. autosummary::
-   {% for item in functions %}
-      {{ item }}
-   {%- endfor %}
-
-   {% for item in functions %}
-   .. autofunction:: {{ item }}
-   {%- endfor %}
-
-   {% endif %}
-   {% endblock %}
+.. currentmodule:: {{ fullname }}
 
 
-   {% block classes %}
-   {% if classes %}
-   .. rubric:: Classes
+{% block functions -%}
+{%- if functions -%}
+Functions
+---------
 
-   .. autosummary::
-   {% for item in classes %}
-      {{ item }}
-   {%- endfor %}
+.. autosummary::
+{% for item in functions %}
+   {{ item }}
+{%- endfor %}
 
-   {% for item in classes %}
-   .. autoclass:: {{ item }}
-      :show-inheritance:
-      :members:
-   {%- endfor %}
+{% for item in functions %}
+.. autofunction:: {{ item }}
+{##}
+{%- endfor -%}
+{%- endif -%}
+{%- endblock %}
 
-   {% endif %}
-   {% endblock %}
+{% block classes -%}
+{%- if classes -%}
+Classes
+-------
 
+.. autosummary::
+{% for item in classes %}
+   {{ item }}
+{%- endfor %}
 
-   {% block exceptions %}
-   {% if exceptions %}
-   .. rubric:: Exceptions
+{% for item in classes %}
+.. autoclass:: {{ item }}
+   :members:
 
-   .. autosummary::
-   {% for item in exceptions %}
-      {{ item }}
-   {%- endfor %}
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: {{ item }}
+{##}
+{%- endfor -%}
+{%- endif -%}
+{%- endblock %}
 
-   {% for item in exceptions %}
-   .. autoexception:: {{ item }}
-      :show-inheritance:
-   {%- endfor %}
+{% block exceptions -%}
+{% if exceptions -%}
+Exceptions
+----------
 
-   {% endif %}
-   {% endblock %}
+.. autosummary::
+{% for item in exceptions %}
+   {{ item }}
+{%- endfor %}
+
+{% for item in exceptions %}
+.. autoexception:: {{ item }}
+
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: {{ item }}
+{##}
+{%- endfor -%}
+{%- endif -%}
+{%- endblock %}
