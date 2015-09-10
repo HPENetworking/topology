@@ -17,6 +17,10 @@
 
 """
 topology manager module.
+
+This module takes care of understanding the topology defined in the test
+suite, commanding its construction to appropriate topology platform plugin
+and finally commanding its destruction to the plugin also.
 """
 
 from __future__ import unicode_literals, absolute_import

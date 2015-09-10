@@ -18,6 +18,17 @@
 """
 topology pytest plugin module entry point.
 
+This plugin gets the topology description from the test suite
+and handles it to be created. It also gets the topology platform
+specifier and sends it to let the topology creator know which platform
+to use.
+
+This plugin defines that the topology is to be destroyed once
+the last test using this fixture has ended its execution.
+
+This plugin provides the --platform option, so it can be set when
+the user runs a test suite.
+
 For reference see:
 
     https://pytest.org/latest/plugins.html#well-specified-hooks

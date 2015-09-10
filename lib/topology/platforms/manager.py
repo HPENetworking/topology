@@ -17,6 +17,9 @@
 
 """
 topology platforms manager module.
+
+This module finds out which topology platforms plugins are installed and
+returns them in a dictionary.
 """
 
 from __future__ import unicode_literals, absolute_import

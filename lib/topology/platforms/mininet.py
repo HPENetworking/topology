@@ -17,6 +17,8 @@
 
 """
 Mininet engine platform module for topology.
+
+Topology platform plugin for Mininet.
 """
 
 from __future__ import unicode_literals, absolute_import

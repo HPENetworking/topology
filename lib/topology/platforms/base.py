@@ -17,6 +17,9 @@
 
 """
 Base engine platform module for topology.
+
+This module defines the functionality that a topology platform plugin must
+provide to be able to create a network using specific hardware.
 """
 
 from __future__ import unicode_literals, absolute_import
