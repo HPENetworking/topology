@@ -5,3 +5,8 @@ pytest
 pytest-cov
 sphinx
 sphinx_rtd_theme
+
+-e git+git://github.com/mininet/mininet@master#egg=mininet
+
+# update this when pynml is on pypi
+-e git+git@magma-git.austin.hp.com:testing/pynml.git@master#egg=pynml
