@@ -42,7 +42,7 @@ class MininetPlatform(BasePlatform):
 
     def pre_build(self):
         self._net = Mininet()
-        self._net.addController('c0')
+        self._net.addController(b'c0')
 
     def add_node(self, node):
         variety = node.metadata.get('variety', 'switch')
@@ -50,11 +50,12 @@ class MininetPlatform(BasePlatform):
 
         if variety == 'switch':
             mininet_node = MininetSwitch(
-                self._net.addSwitch(node.identifier,
+                self._net.addSwitch(str(node.identifier),
                                     dpid=str(len(self.nmlnode_node_map))))
         elif variety == 'host':
-            mininet_node = MininetHost(self._net.addHost(node.identifier,
-                                       dpid=str(len(self.nmlnode_node_map))))
+            mininet_node = MininetHost(
+                self._net.addHost(str(node.identifier),
+                                  dpid=str(len(self.nmlnode_node_map))))
         else:
             log.error('Unsupported variety')
 
@@ -84,7 +85,9 @@ class MininetSwitch(BaseNode):
         self.node = mininet_node
 
     def send_command(self, command):
-        self.node.sendCmd(command)
+        if not self.node.waiting:
+            self.node.sendCmd(command)
+            return self.node.waitOutput()
 
 
 class MininetHost(BaseNode):
