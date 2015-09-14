@@ -132,7 +132,7 @@ class TopologyManager(object):
 
         self._platform = plugin(timestamp, self.nml)
 
-        self._platform.pre_build(self.nml)
+        self._platform.pre_build()
 
         for node in self.nml.nodes():
             enode = self._platform.add_node(node)
@@ -153,10 +153,10 @@ class TopologyManager(object):
         for node_porta, node_portb, bilink in self.nml.bilinks():
             self._platform.add_bilink(node_porta, node_portb, bilink)
 
-        self._platform.post_build(self.nml)
+        self._platform.post_build()
 
     def unbuild(self):
-        self._platform.destroy(self.nmlmanager)
+        self._platform.destroy()
 
     def get(self, identifier):
         return self.nodes[identifier]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015 Hewlett Packard Enterprise Development LP <asicapi@hp.com>
 #
@@ -35,11 +34,12 @@ log = logging.getLogger(__name__)
 class BasePlatform(object):
     __metaclass__ = ABCMeta
 
+    @abstractmethod
     def __init__(self, timestamp, nmlmanager):
         pass
 
     @abstractmethod
-    def pre_build(self, nmlmanager):
+    def pre_build(self):
         pass
 
     @abstractmethod
@@ -55,11 +55,11 @@ class BasePlatform(object):
         pass
 
     @abstractmethod
-    def post_build(self, nmlmanager):
+    def post_build(self):
         pass
 
     @abstractmethod
-    def destroy(self, nmlmanager):
+    def destroy(self):
         pass
 
 
