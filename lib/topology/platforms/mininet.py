@@ -45,19 +45,19 @@ class MininetPlatform(BasePlatform):
         self._net.addController(b'c0')
 
     def add_node(self, node):
-        variety = node.metadata.get('variety', 'switch')
+        variant = node.metadata.get('variant', 'switch')
         mininet_node = None
 
-        if variety == 'switch':
+        if variant == 'switch':
             mininet_node = MininetSwitch(
                 self._net.addSwitch(str(node.identifier),
                                     dpid=str(len(self.nmlnode_node_map))))
-        elif variety == 'host':
+        elif variant == 'host':
             mininet_node = MininetHost(
                 self._net.addHost(str(node.identifier),
                                   dpid=str(len(self.nmlnode_node_map))))
         else:
-            log.error('Unsupported variety')
+            log.error('Unsupported variant')
 
         self.nmlnode_node_map[node.identifier] = mininet_node
         return mininet_node
@@ -79,23 +79,23 @@ class MininetPlatform(BasePlatform):
         self._net.stop()
 
 
-class MininetSwitch(BaseNode):
-
+class MininetNode(BaseNode):
     def __init__(self, mininet_node):
         self.node = mininet_node
 
-    def send_command(self, command):
-        if not self.node.waiting:
-            self.node.sendCmd(command)
-            return self.node.waitOutput()
+    def send_command(self, command, shell=None):
+        if shell:
+            raise Exception(
+                'Shell {} is not supported for mininet.'.format(shell)
+            )
+        return self.node.cmd(command)
 
 
-class MininetHost(BaseNode):
+class MininetSwitch(MininetNode):
+    pass
 
-    def __init__(self, mininet_node):
-        self.node = mininet_node
 
-    def send_command(self, command):
-        self.node.sendCmd(command)
+class MininetHost(MininetNode):
+    pass
 
-__all__ = ['MininetPlatform', 'MininetSwitch']
+__all__ = ['MininetPlatform', 'MininetSwitch', 'MininetHost']

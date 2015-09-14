@@ -17,7 +17,6 @@
 
 """
 Test suite for module topology.
-
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -25,7 +24,15 @@ from __future__ import print_function, division
 
 import pytest  # noqa
 
-from topology.platforms.mininet import MininetPlatform, MininetSwitch
+from topology.platforms.mininet import MininetPlatform, MininetSwitch, \
+    MininetHost
+
+
+class Node(object):
+    """mockup Node"""
+    def __init__(self, identifier, **kwargs):
+        self.metadata = kwargs
+        self.identifier = identifier
 
 
 def test_build_topology():
@@ -33,26 +40,46 @@ def test_build_topology():
     mn.pre_build()
     assert mn._net is not None
 
-    class Node(object):
-        """docstring for  Node"""
-        def __init__(self, identifier):
-            self.metadata = {}
-            self.identifier = identifier
-
     s1 = Node('s1')
     mn.add_node(s1)
 
     assert mn.nmlnode_node_map[s1.identifier] is not None
     assert isinstance(mn.nmlnode_node_map[s1.identifier], MininetSwitch)
 
-    s2 = Node('s2')
-    mn.add_node(s2)
+    h2 = Node('h2', variant='host')
+    mn.add_node(h2)
 
-    assert mn.nmlnode_node_map[s2.identifier] is not None
-    assert isinstance(mn.nmlnode_node_map[s2.identifier], MininetSwitch)
+    assert mn.nmlnode_node_map[h2.identifier] is not None
+    assert isinstance(mn.nmlnode_node_map[h2.identifier], MininetHost)
 
-    mn.add_bilink((s1, None), (s2, None), None)
+    mn.add_bilink((s1, None), (h2, None), None)
 
     mn.post_build()
 
     mn.destroy()
+
+
+def test_send_command():
+    mn = MininetPlatform(None, None)
+    mn.pre_build()
+    assert mn._net is not None
+
+    s1 = Node('s1')
+    mn.add_node(s1)
+
+    h1 = Node('h1', variant='host')
+    mn_h1 = mn.add_node(h1)
+
+    h2 = Node('h2', variant='host')
+    mn_h2 = mn.add_node(h2)
+
+    mn.add_bilink((s1, None), (h1, None), None)
+    mn.add_bilink((s1, None), (h2, None), None)
+
+    mn.post_build()
+
+    ping_response = mn_h1.send_command('ping -c 1 ' + mn_h2.node.IP())
+
+    mn.destroy()
+
+    assert '1 packets transmitted, 1 received' in ping_response
