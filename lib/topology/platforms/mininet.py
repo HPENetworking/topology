@@ -34,6 +34,9 @@ log = logging.getLogger(__name__)
 
 
 class MininetPlatform(BasePlatform):
+    """
+    Plugin to build a topology on Mininet
+    """
 
     def __init__(self, timestamp, nmlmanager):
         super(MininetPlatform, self).__init__(timestamp, nmlmanager)
@@ -41,10 +44,18 @@ class MininetPlatform(BasePlatform):
         self.nmlnode_node_map = {}
 
     def pre_build(self):
+        """
+        Brings up a mininet instance
+
+        Mininet needs a controller to make a topology works
+        """
         self._net = Mininet()
         self._net.addController(b'c0')
 
     def add_node(self, node):
+        """
+        Add new switch or host node.
+        """
         variant = node.metadata.get('variant', 'switch')
         mininet_node = None
 
@@ -63,19 +74,28 @@ class MininetPlatform(BasePlatform):
         return mininet_node
 
     def add_biport(self, node, biport):
-        # For mininet this is not necessary
+        """ For mininet this is not necessary """
         pass
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
+        """
+        Add a link between two nodes, ignores the port.
+        """
         node_a = self.nmlnode_node_map[nodeport_a[0].identifier].node
         node_b = self.nmlnode_node_map[nodeport_b[0].identifier].node
 
         self._net.addLink(node_a, node_b)
 
     def post_build(self):
+        """
+        Starts the mininet platform.
+        """
         self._net.start()
 
     def destroy(self):
+        """
+        Stops the mininet platform.
+        """
         self._net.stop()
 
 

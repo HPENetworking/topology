@@ -36,6 +36,10 @@ class Node(object):
 
 
 def test_build_topology():
+    """
+    Builds (and destroys) a basic topology consisting in one switch and one
+    host
+    """
     mn = MininetPlatform(None, None)
     mn.pre_build()
     assert mn._net is not None
@@ -60,6 +64,15 @@ def test_build_topology():
 
 
 def test_send_command():
+    """
+    Connect two host to a switch and ping h2 from h1
+
+        +------+                  +------+
+        |      |     +------+     |      |
+        |  h1  <----->  s1  <----->  h2  |
+        |      |     +------+     |      |
+        +------+                  +------+
+    """
     mn = MininetPlatform(None, None)
     mn.pre_build()
     assert mn._net is not None
