@@ -5,6 +5,7 @@ pytest
 pytest-cov
 sphinx
 sphinx_rtd_theme
+sphinxcontrib-plantuml
 
 -e git+git://github.com/mininet/mininet@master#egg=mininet
 

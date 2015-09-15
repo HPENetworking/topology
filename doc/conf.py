@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import os
+from os.path import join, dirname, abspath
 on_rtd = os.environ.get('READTHEDOCS', None) is not None
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -25,7 +26,6 @@ on_rtd = os.environ.get('READTHEDOCS', None) is not None
 # when pushing in readthedocs.org
 if on_rtd:
     import sys
-    from os.path import join, dirname, abspath
     sys.path.insert(
         0, join(dirname(dirname(abspath(__file__))), 'lib')
     )
@@ -43,6 +43,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
+    'sphinxcontrib.plantuml'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -310,6 +311,10 @@ texinfo_documents = [
 
 # Reference stubs generation
 autosummary_generate = True
+
+# Configure PlantUML
+plantuml = 'java -jar ' + join(dirname(abspath(__name__)), 'plantuml.8030.jar')
+plantuml_output_format = 'svg'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {

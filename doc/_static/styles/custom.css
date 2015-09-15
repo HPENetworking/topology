@@ -1,12 +1,3 @@
-/* Fix Pygments Monokai theme */
-div.highlight pre,
-div[class^='highlight'] {
-    background: #272822 !important;
-    background-color: #272822 !important;
-    color: #f8f8f2 !important;
-    border: none !important;
-}
-
 /* Improve autodoc */
 dl.class,
 dl.function {
