@@ -43,7 +43,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
-    'sphinxcontrib.plantuml'
+    'sphinxcontrib.plantuml',
+    'sphinx.ext.graphviz'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -315,6 +316,9 @@ autosummary_generate = True
 # Configure PlantUML
 plantuml = 'java -jar ' + join(dirname(abspath(__name__)), 'plantuml.8030.jar')
 plantuml_output_format = 'svg'
+
+# Configure Graphviz
+graphviz_output_format = 'svg'
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
