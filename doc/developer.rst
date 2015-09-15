@@ -1,5 +1,7 @@
 .. toctree::
 
+.. highlight:: sh
+
 ===============
 Developer Guide
 ===============

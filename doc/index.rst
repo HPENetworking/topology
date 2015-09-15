@@ -3,6 +3,7 @@
 
    developer
    reference
+   plugins
 
 ==========================
 Network Topology Framework
@@ -19,6 +20,7 @@ Documentation
 =============
 
 - :doc:`Developer Guide. <developer>`
+- :doc:`Plugins Development Guide. <plugins>`
 - :doc:`Internal Documentation Reference. <reference>`
 
 
