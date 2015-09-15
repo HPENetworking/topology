@@ -71,6 +71,9 @@ def topology(request):
 
 
 def pytest_addoption(parser):
+    """
+    pytest hook to add CLI arguments.
+    """
     group = parser.getgroup('general')
     group.addoption(
         '--platform',
@@ -80,4 +83,4 @@ def pytest_addoption(parser):
     )
 
 
-__all__ = []
+__all__ = ['topology', 'pytest_addoption']

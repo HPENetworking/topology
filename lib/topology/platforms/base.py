@@ -38,9 +38,11 @@ class BasePlatform(object):
     This class represent the base interface that topology engines require to
     implement.
 
+    See the :doc:`Plugins Development Guide </plugins>` for reference.
+
     :param str timestamp: Timestamp in ISO 8601 format.
     :param nmlmanager: Manager holding the NML namespace.
-    :type nmlmanager: :class:`NMLManager`
+    :type nmlmanager: :class:`pynml.manager.NMLManager`
     """
     __metaclass__ = ABCMeta
 
@@ -64,8 +66,8 @@ class BasePlatform(object):
         Add a node to your platform.
 
         This method receives a NML node and must return a new Engine Node
-        subclass of :class:`topology.platforms.base.BaseNode` that implements
-        the communication mechanism with that node.
+        subclass of :class:`BaseNode` that implements the communication
+        mechanism with that node.
 
         :param node: The specification NML node to add to the platform.
         :type node: :class:`pynml.nml.Node`
@@ -144,6 +146,8 @@ class BaseNode(object):
 
     This class represent the base interface that engine nodes require to
     implement.
+
+    See the :doc:`Plugins Development Guide </plugins>` for reference.
     """
     __metaclass__ = ABCMeta
 

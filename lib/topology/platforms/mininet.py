@@ -35,7 +35,9 @@ log = logging.getLogger(__name__)
 
 class MininetPlatform(BasePlatform):
     """
-    Plugin to build a topology on Mininet
+    Plugin to build a topology on Mininet.
+
+    See :class:`topology.platforms.base.BasePlatform` for more information.
     """
 
     def __init__(self, timestamp, nmlmanager):
@@ -45,9 +47,11 @@ class MininetPlatform(BasePlatform):
 
     def pre_build(self):
         """
-        Brings up a mininet instance
+        Brings up a mininet instance.
 
-        Mininet needs a controller to make a topology works
+        Mininet needs a controller to make a topology works.
+
+        See :meth:`BasePlatform.pre_build` for more information.
         """
         self._net = Mininet()
         self._net.addController(b'c0')
@@ -55,6 +59,8 @@ class MininetPlatform(BasePlatform):
     def add_node(self, node):
         """
         Add new switch or host node.
+
+        See :meth:`BasePlatform.add_node` for more information.
         """
         variant = node.metadata.get('variant', 'switch')
         mininet_node = None
@@ -74,12 +80,18 @@ class MininetPlatform(BasePlatform):
         return mininet_node
 
     def add_biport(self, node, biport):
-        """ For mininet this is not necessary """
+        """
+        For mininet this is not necessary.
+
+        See :meth:`BasePlatform.add_biport` for more information.
+        """
         pass
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
         """
         Add a link between two nodes, ignores the port.
+
+        See :meth:`BasePlatform.add_bilink` for more information.
         """
         node_a = self.nmlnode_node_map[nodeport_a[0].identifier].node
         node_b = self.nmlnode_node_map[nodeport_b[0].identifier].node
@@ -89,33 +101,72 @@ class MininetPlatform(BasePlatform):
     def post_build(self):
         """
         Starts the mininet platform.
+
+        See :meth:`BasePlatform.post_build` for more information.
         """
         self._net.start()
 
     def destroy(self):
         """
         Stops the mininet platform.
+
+        See :meth:`BasePlatform.destroy` for more information.
         """
         self._net.stop()
 
 
 class MininetNode(BaseNode):
+    """
+    Mininet Engine Node for Topology.
+
+    This is an adaptator class for between Topology's
+    :class:`topology.platforms.base.BaseNode` and Mininet's
+    :class:`mininet.node.Node`.
+
+    :param mininet_node: The node as a Mininet object.
+    :type mininet_node: :class:`mininet.node.Node`
+    """
     def __init__(self, mininet_node):
         self.node = mininet_node
 
     def send_command(self, command, shell=None):
-        if shell:
+        """
+        Implementation of the ``send_command`` interface.
+
+        See :meth:`topology.platforms.base.BaseNode.send_command` for more
+        information.
+        """
+        if shell is not None:
             raise Exception(
                 'Shell {} is not supported for mininet.'.format(shell)
             )
         return self.node.cmd(command)
 
+    def send_data(self, data, function=None):
+        """
+        Implementation of the ``send_data`` interface.
+
+        See :meth:`topology.platforms.base.BaseNode.send_data` for more
+        information.
+        """
+        raise Exception('Unsupported interface')
+
 
 class MininetSwitch(MininetNode):
+    """
+    Specilized class for node of type switch.
+
+    See :class:`MininetNode`.
+    """
     pass
 
 
 class MininetHost(MininetNode):
+    """
+    Specilized class for node of type host.
+
+    See :class:`MininetNode`.
+    """
     pass
 
 __all__ = ['MininetPlatform', 'MininetSwitch', 'MininetHost']

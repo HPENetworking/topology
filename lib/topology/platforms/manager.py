@@ -39,6 +39,28 @@ log = logging.getLogger(__name__)
 
 
 def platforms(cache=True):
+    """
+    List all available engine platforms available.
+
+    This method lists the default engine plus any other it can discover looking
+    up the entry point. This lookup requires to load all available plugins,
+    which can be costly or error prone if a plugin misbehave, and because of
+    this a cache is stored after the first call.
+
+    :param bool cache: If ``True`` return the cached result. If ``False`` force
+     reload of all plugins registered for the entry point.
+    :rtype: dict
+    :return: A dictionary associating the name of the engine platform and the
+     class (subclass of :class:`topology.platforms.base.BasePlatform`)
+     implementing it:
+
+     ::
+
+        {
+            'mininet': MininetPlatform,
+            'other': OtherPlatform
+        }
+    """
 
     # Return cached value if call is repeated
     if cache and hasattr(platforms, 'available'):

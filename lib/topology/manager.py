@@ -30,7 +30,7 @@ import logging
 from datetime import datetime
 from collections import OrderedDict
 
-from pynml import NMLManager
+from pynml.manager import ExtendedNMLManager
 
 from .platforms.base import BaseNode
 from .platforms.manager import platforms
@@ -40,18 +40,59 @@ log = logging.getLogger(__name__)
 
 
 class TopologyManager(object):
+    """
+    Main Topology Manager object.
+
+    This object is responsible to build a topology given a description.
+
+    There is three options to build a topology:
+
+    - Using the simplified textual description using a Graphviz like syntax.
+      To use this option call the :meth:`parse`.
+    - Using a basic Python dictionary to load the description of the topology.
+      To use this option call the :meth:`load`.
+    - Build a full NML topology using NML objects and relations and register
+      all the objects in the namespace using the enbbedded
+      :class:`pynml.manager.ExtendedNMLManager`, for example:
+
+      ::
+
+         mgr = TopologyManager()
+         sw1 = mgr.create_node(name='My Switch 1')
+         sw2 = mgr.create_node(name='My Switch 2')
+         sw1p1 = mgr.create_biport(sw1)
+         # ...
+
+      See :class:`pynml.manager.ExtendedNMLManager` for more information of
+      this usage.
+
+    :param str engine: Name of the engine platform to build the topology.
+     See :func:`platforms` for how to get and discover available platforms.
+    """
 
     def __init__(self, engine='mininet', **kwargs):
-        self.nml = NMLManager(kwargs)
+        self.nml = ExtendedNMLManager(kwargs)
         self.engine = engine
         self.nodes = OrderedDict()
         self._platform = None
 
     def load(self, dictmeta):
-        # FIXME actualy read the dictmeta and load the topology
+        """
+        FIXME write some documentation.
+
+        FIXME actualy read the dictmeta and load the topology
+        FIXME Specify dictionary format
+        """
         print(dictmeta)
 
     def parse(self, txtmeta):
+        """
+        FIXME write some documentation.
+
+        FIXME change data dictionary for whatever the format supported by
+        load() is
+        """
+
         data = {
             'nodes': {},
             'ports': {},
@@ -59,9 +100,18 @@ class TopologyManager(object):
         }
 
         def parse_attrs(subline):
+            """
+            Parse all attributes in a subline:
+
+            '[myattr1="A String" myattr2=bar]' ->
+            {
+                'myattr1': '"A String"'
+                'myattr2': 'bar'
+            }
+            """
             attrs = {}
 
-            attrs_parts = subline.replace('[', '', 1).split(',')
+            attrs_parts = subline.replace('[', '', 1).split()
             for part in attrs_parts:
                 key, value = part.split('=')
                 attrs[key.strip()] = value.strip()
@@ -125,11 +175,16 @@ class TopologyManager(object):
         self.load(data)
 
     def build(self):
+        """
+        Build the topology hold by this manager.
 
-        plugin = platforms()[self.engine]
-
+        This method instance the platform engine and request the build of the
+        topology defined.
+        """
         timestamp = datetime.now().replace(microsecond=0).isoformat()
 
+        # Instance platform
+        plugin = platforms()[self.engine]
         self._platform = plugin(timestamp, self.nml)
 
         self._platform.pre_build()
@@ -156,6 +211,12 @@ class TopologyManager(object):
         self._platform.post_build()
 
     def unbuild(self):
+        """
+        Undo the topology.
+
+        This removes all references to the engine nodes and request the
+        platform to destroy the topology.
+        """
         # Remove own reference to enodes
         self.nodes = OrderedDict()
 
@@ -167,6 +228,13 @@ class TopologyManager(object):
         self._platform = None
 
     def get(self, identifier):
+        """
+        Get a engine platform with given identifier.
+
+        :param str identifier: The node identifier.
+        :rtype: A subclass of :class:`topology.platforms.base.BaseNode`
+        :return: The engine node implementing the communication with the node.
+        """
         return self.nodes[identifier]
 
 
