@@ -156,7 +156,15 @@ class TopologyManager(object):
         self._platform.post_build()
 
     def unbuild(self):
+        # Remove own reference to enodes
+        self.nodes = OrderedDict()
+
+        # Call platform destroy hook
         self._platform.destroy()
+
+        # Explicitly delete platform
+        del self._platform
+        self._platform = None
 
     def get(self, identifier):
         return self.nodes[identifier]
