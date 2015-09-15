@@ -69,7 +69,9 @@ setup(
     # Metadata
     author='Hewlett Packard Enterprise Development LP',
     author_email='asicapi@hp.com',
-    description='Network Topology Framework using NML, with support for pytest.',
+    description=(
+        'Network Topology Framework using NML, with support for pytest.'
+    ),
     long_description=read('README.rst'),
     url='http://magma-git.austin.hp.com/testing/topology',
     keywords='topology',
