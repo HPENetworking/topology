@@ -50,7 +50,7 @@ def platforms(cache=True):
     }
 
     # Iterate over entry points
-    for ep in iter_entry_points(group='topology_platform_ep'):
+    for ep in iter_entry_points(group='topology_platform_10'):
 
         name = ep.name
 
