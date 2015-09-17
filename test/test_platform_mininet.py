@@ -50,7 +50,7 @@ def test_build_topology():
     assert mn.nmlnode_node_map[s1.identifier] is not None
     assert isinstance(mn.nmlnode_node_map[s1.identifier], MininetSwitch)
 
-    h2 = Node('h2', variant='host')
+    h2 = Node('h2', type='host')
     mn.add_node(h2)
 
     assert mn.nmlnode_node_map[h2.identifier] is not None
@@ -80,10 +80,10 @@ def test_send_command():
     s1 = Node('s1')
     mn.add_node(s1)
 
-    h1 = Node('h1', variant='host')
+    h1 = Node('h1', type='host')
     mn_h1 = mn.add_node(h1)
 
-    h2 = Node('h2', variant='host')
+    h2 = Node('h2', type='host')
     mn_h2 = mn.add_node(h2)
 
     mn.add_bilink((s1, None), (h1, None), None)

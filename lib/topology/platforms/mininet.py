@@ -62,19 +62,19 @@ class MininetPlatform(BasePlatform):
 
         See :meth:`BasePlatform.add_node` for more information.
         """
-        variant = node.metadata.get('variant', 'switch')
+        node_type = node.metadata.get('type', 'switch')
         mininet_node = None
 
-        if variant == 'switch':
+        if node_type == 'switch':
             mininet_node = MininetSwitch(
                 self._net.addSwitch(str(node.identifier),
                                     dpid=str(len(self.nmlnode_node_map))))
-        elif variant == 'host':
+        elif node_type == 'host':
             mininet_node = MininetHost(
                 self._net.addHost(str(node.identifier),
                                   dpid=str(len(self.nmlnode_node_map))))
         else:
-            log.error('Unsupported variant')
+            log.error('Unsupported type')
 
         self.nmlnode_node_map[node.identifier] = mininet_node
         return mininet_node
