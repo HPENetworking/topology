@@ -142,12 +142,10 @@ def test_add_bipport():
 
     mn.post_build()
 
-    # Link is made on s1-eth4 as is the fourth port
-    # Command return empty string if interface do exist
-    assert not (mn_s1.send_command('ovs-vsctl get Interface s1-eth4'))
+    # Link is made on s1-eth4 on port 4
+    assert 4 == int(mn_s1.send_command(
+        'ovs-vsctl get Interface s1-eth4 ofport'))
 
-    # Link is made on s1-eth4 as is the fourth port
-    # Command return empty string if interface do exist
     assert 'h2-eth1' == (mn_h2.send_command('ifconfig'))[:7]
 
     mn.destroy()
