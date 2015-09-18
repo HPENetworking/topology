@@ -81,22 +81,33 @@ class MininetPlatform(BasePlatform):
 
     def add_biport(self, node, biport):
         """
-        For mininet this is not necessary.
+        Add port to MininetNode, it is not registered on mininet until a link
+        is made.
 
         See :meth:`BasePlatform.add_biport` for more information.
+        FIXME: find a way to create a port on mininet-ovs.
         """
-        pass
+        mn_node = self.nmlnode_node_map[node.identifier]
+        port_number = len(mn_node.nmlport_port_map) + 1
+        mn_node.nmlport_port_map[biport.identifier] = port_number
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
         """
-        Add a link between two nodes, ignores the port.
+        Add a link between two nodes.
 
         See :meth:`BasePlatform.add_bilink` for more information.
         """
-        node_a = self.nmlnode_node_map[nodeport_a[0].identifier].node
-        node_b = self.nmlnode_node_map[nodeport_b[0].identifier].node
+        node_a = self.nmlnode_node_map[nodeport_a[0].identifier]
+        port_a = None
+        if nodeport_a[1] is not None:
+            port_a = node_a.nmlport_port_map[nodeport_a[1].identifier]
 
-        self._net.addLink(node_a, node_b)
+        node_b = self.nmlnode_node_map[nodeport_b[0].identifier]
+        port_b = None
+        if nodeport_b[1] is not None:
+            port_b = node_b.nmlport_port_map[nodeport_b[1].identifier]
+
+        self._net.addLink(node_a.node, node_b.node, port1=port_a, port2=port_b)
 
     def post_build(self):
         """
@@ -128,6 +139,7 @@ class MininetNode(BaseNode):
     """
     def __init__(self, mininet_node):
         self.node = mininet_node
+        self.nmlport_port_map = {}
 
     def send_command(self, command, shell=None):
         """
