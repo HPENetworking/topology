@@ -23,7 +23,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import pytest  # noqa
-from os import system
+from os import system, getuid
 
 from topology.platforms.mininet import MininetPlatform, MininetSwitch, \
     MininetHost
@@ -41,6 +41,7 @@ class Node(object):
         self.identifier = identifier
 
 
+@pytest.mark.skipif(getuid() != 0, reason="need root permissions")
 def test_build_topology():
     """
     Builds (and destroys) a basic topology consisting in one switch and one
@@ -69,6 +70,7 @@ def test_build_topology():
     mn.destroy()
 
 
+@pytest.mark.skipif(getuid() != 0, reason="need root permissions")
 def test_send_command():
     """
     Connect two host to a switch and ping h2 from h1
@@ -104,6 +106,7 @@ def test_send_command():
     assert '1 packets transmitted, 1 received' in ping_response
 
 
+@pytest.mark.skipif(getuid() != 0, reason="need root permissions")
 def test_add_bipport():
     """
     Link a switch and a host specifing a port
