@@ -3,6 +3,7 @@ pep8-naming
 tox
 pytest
 pytest-cov
+deepdiff
 sphinx
 sphinx_rtd_theme
 sphinxcontrib-plantuml

@@ -29,6 +29,7 @@ from __future__ import print_function, division
 import logging
 from datetime import datetime
 from collections import OrderedDict
+from string import ascii_lowercase, digits
 
 from pynml.manager import ExtendedNMLManager
 
@@ -37,6 +38,9 @@ from .platforms.manager import platforms
 
 
 log = logging.getLogger(__name__)
+
+
+IDENTIFIER = ascii_lowercase + digits + '_'
 
 
 class TopologyManager(object):
@@ -71,10 +75,24 @@ class TopologyManager(object):
     """
 
     def __init__(self, engine='mininet', **kwargs):
-        self.nml = ExtendedNMLManager(kwargs)
+        self.nml = ExtendedNMLManager(**kwargs)
         self.engine = engine
         self.nodes = OrderedDict()
         self._platform = None
+
+    def is_identifier(self, raw):
+        """
+        Check if a string is a identifier.
+
+        An identifier is any non empty string which letters are ascii
+        lowercase, digits or the underscore character, but needs to start with
+        a letter.
+        """
+        if not raw:
+            return False
+        if not raw[0] in ascii_lowercase:
+            return False
+        return all(l in IDENTIFIER for l in raw)
 
     def load(self, dictmeta):
         """
@@ -83,96 +101,212 @@ class TopologyManager(object):
         FIXME actualy read the dictmeta and load the topology
         FIXME Specify dictionary format
         """
+        print('*' * 79)
         print(dictmeta)
 
-    def parse(self, txtmeta):
+    def parse(self, txtmeta, load=True):
         """
-        FIXME write some documentation.
+        Parse a textual topology meta-description.
 
-        FIXME change data dictionary for whatever the format supported by
-        load() is
+        This topology representation format allows to quickly specify simple
+        topologies that are only composed of simple nodes and links between
+        them. For a more feature full format consider the ``metadict`` format
+        or using the :class:`pynml.manager.ExtendedNMLManager` directly.
+
+        The format for the textual description of a topology is similar to
+        Graphviz syntax and allows to define nodes with shared attributes and
+        links between endpoints with shared attributes too.
+
+        ::
+
+            # Nodes
+            [type=switch attr1=1] sw1 sw2
+            hs1
+
+            # Links
+            [linkattr1=20] sw1 -- sw2
+            [linkattr2=40] sw1: -- sw2:3
+
+        In the above example two nodes with the attributes ``type`` and
+        ``attr1`` are specified. Then a third node `hs1` with no particular
+        attributes is defined. In the same way, a link between endpoints MAY
+        have attributes.
+
+        An endpoint is a combination of a node and a port number, but the
+        port number is optional. If the endpoint just specifies the node
+        (``sw1``, ``sw1:``) then the next available port is implied.
         """
 
-        data = {
-            'nodes': {},
-            'ports': {},
-            'links': {},
-        }
-
-        def parse_attrs(subline):
+        def parse_attrs(subline, raw_line, lineno):
             """
             Parse all attributes in a subline:
 
-            '[myattr1="A String" myattr2=bar]' ->
-            {
-                'myattr1': '"A String"'
-                'myattr2': 'bar'
-            }
+            ::
+
+                '[myattr1="A String" myattr2=bar' ->
+                {
+                    'myattr1': '"A String"'
+                    'myattr2': 'bar'
+                }
             """
-            attrs = {}
+            attrs = OrderedDict()
 
             attrs_parts = subline.replace('[', '', 1).split()
             for part in attrs_parts:
-                key, value = part.split('=')
-                attrs[key.strip()] = value.strip()
+
+                key, value = [p.strip() for p in part.split('=')]
+
+                # Check for value overriding
+                if key in attrs:
+                    log.warning(
+                        'Repeated key in line #{}: "{}"'.format(
+                            lineno, raw_line
+                        )
+                    )
+                    log.warning(
+                        'Overriding "{}" value from "{}" to "{}"'.format(
+                            key, attrs[key], value
+                        )
+                    )
+
+                attrs[key] = value
 
             return attrs
 
-        def parse_node(line):
-            attrs_part, nodes_part = line.split(']')
+        def parse_nodes(line, raw_line, lineno):
+            """
+            Parse a nodes description:
 
-            nodes = set(nodes_part.split())
-            attrs = parse_attrs(attrs_part)
+            ::
 
-            return nodes, attrs
+                '[...] sw1 hs1' ->
+                {
+                    'nodes': ('sw1', 'hs1'),
+                    'attributes': {
+                        ...
+                    }
+                }
+            """
+            attributes = OrderedDict()
+            nodes_part = line
 
-        def parse_link(line):
+            # Parse attributes if present
+            if ']' in line:
+                attrs_part, nodes_part = line.split(']')
+                attributes = parse_attrs(attrs_part, raw_line, lineno)
 
-            attrs = {}
+            nodes = nodes_part.split()
+            nodes_set = set(nodes)
+
+            if len(nodes) != len(nodes_set):
+                log.warning(
+                    'Repeated node names in line #{}: "{}"'.format(
+                        lineno, raw_line
+                    )
+                )
+
+            return {
+                'nodes': nodes_set,
+                'attributes': attributes
+            }
+
+        def parse_link(line, raw_line, lineno):
+            """
+            Parse a link description:
+
+            ::
+
+                '[...] sw1:1 -- hs1:1' ->
+                {
+                    'endpoints': (('sw1', 1), ('hs1', 1)),
+                    'attributes': {
+                        ...
+                    }
+                }
+
+                '[...] sw1: -- hs1' ->
+                {
+                    'endpoints': (('sw1', None), ('hs1', None)),
+                    'attributes': {
+                        ...
+                    }
+                }
+            """
+            attributes = OrderedDict()
             link_part = line
 
+            # Parse attributes if present
             if ']' in line:
                 attrs_part, link_part = line.split(']')
-                attrs = parse_attrs(attrs_part)
+                attributes = parse_attrs(attrs_part, raw_line, lineno)
 
+            # Split endpoints
             endp_a, endp_b = link_part.split('--')
-            link = []
+            endpoints = []
 
+            # Parse endpoints
             for endp in [endp_a, endp_b]:
 
                 endp = endp.strip()
                 node_port = endp.split(':')
 
-                if len(node_port) not in [1, 2]:
-                    raise Exception(
-                        'Bad link specification: "{}"'.format(line)
+                # Check consistency
+                if len(node_port) not in [1, 2] or not node_port[0]:
+                    msg = 'Bad link specification at line #{}: "{}"'.format(
+                        lineno, raw_line
                     )
+                    log.error(msg)
+                    raise Exception(msg)
+
+                # First syntax 'sw1'
                 if len(node_port) == 1:
-                    # FIXME: Find next suitable port number
                     node_port.append(None)
 
-                link.append(tuple(node_port))
+                # Second syntax 'sw1:'
+                elif not node_port[1]:
+                    node_port[1] = None
 
-            return link, attrs
+                # Third syntax 'sw:1'
+                else:
+                    node_port[1] = int(node_port[1])
 
-        for line in txtmeta.splitlines():
-            line = line.strip()
+                endpoints.append(tuple(node_port))
+
+            return {
+                'endpoints': tuple(endpoints),
+                'attributes': attributes
+            }
+
+        # Parse txtmeta
+        data = {
+            'nodes': [],
+            'links': []
+        }
+
+        for lineno, raw_line in enumerate(txtmeta.splitlines(), 1):
+
+            # Ignore comments and empty line
+            line = raw_line.strip()
             if not line or line.startswith('#'):
                 continue
 
+            # Parse links
             if '--' in line:
-                # FIXME actualy put them in the data dict
-                print(parse_link(line))
+                link_spec = parse_link(line, raw_line, lineno)
+                data['links'].append(link_spec)
+                log.debug('Line number {}:\n{}'.format(lineno, link_spec))
                 continue
 
-            if ']' in line:
-                # FIXME actualy put them in the data dict
-                print(parse_node(line))
-                continue
+            # Parse nodes
+            nodes_spec = parse_nodes(line, raw_line, lineno)
+            data['nodes'].append(nodes_spec)
+            log.debug('Line number {}:\n{}'.format(lineno, nodes_spec))
+            continue
 
-            raise Exception('Bad topology specification: "{}"'.format(line))
+        if load:
+            self.load(data)
 
-        self.load(data)
+        return data
 
     def build(self):
         """

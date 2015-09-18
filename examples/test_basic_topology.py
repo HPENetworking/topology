@@ -26,8 +26,8 @@ import pytest  # noqa
 
 
 TOPOLOGY = """
-[type = vtysh] sw1
-[type = host] hs1
+[type=vtysh] sw1
+[type=host] hs1
 sw1:1 -- hs1:1
 """
 
