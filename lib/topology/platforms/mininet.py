@@ -74,7 +74,7 @@ class MininetPlatform(BasePlatform):
                 self._net.addHost(str(node.identifier),
                                   dpid=str(len(self.nmlnode_node_map))))
         else:
-            log.error('Unsupported type')
+            raise Exception('Unsupported type {}'.format(node_type))
 
         self.nmlnode_node_map[node.identifier] = mininet_node
         return mininet_node
