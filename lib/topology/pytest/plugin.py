@@ -64,7 +64,11 @@ def topology(request):
     # Autobuild topology if available
     # FIXME: Skip all module if parsing or build fails
     if hasattr(request.module, 'TOPOLOGY'):
-        topomgr.parse(request.module.TOPOLOGY)
+        topo = request.module.TOPOLOGY
+        if isinstance(topo, dict):
+            topomgr.load(topo)
+        else:
+            topomgr.parse(request.module.TOPOLOGY)
         topomgr.build()
 
     return topomgr
