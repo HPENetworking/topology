@@ -68,20 +68,18 @@ class MininetPlatform(BasePlatform):
         node_type = node.metadata.get('type', 'switch')
         enode = None
 
-        # FIXME: Define an identifier to the topology
-        # FIXME: I know I know is non-unique :/
-        identifier = node.name.lower().replace(' ', '_').replace('-', '_')
-
         if node_type == 'switch':
             enode = MininetSwitch(
                 self._net.addSwitch(
-                    identifier, dpid=str(len(self.nmlnode_node_map))
+                    str(node.identifier),
+                    dpid=str(len(self.nmlnode_node_map))
                 )
             )
         elif node_type == 'host':
             enode = MininetHost(
                 self._net.addHost(
-                    identifier, dpid=str(len(self.nmlnode_node_map))
+                    str(node.identifier),
+                    dpid=str(len(self.nmlnode_node_map))
                 )
             )
         else:

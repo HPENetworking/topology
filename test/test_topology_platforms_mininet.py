@@ -26,6 +26,7 @@ from os import system, getuid
 from distutils.spawn import find_executable
 
 import pytest  # noqa
+from pynml import Node
 
 from topology.platforms.mininet import (
     MininetPlatform, MininetSwitch, MininetHost
@@ -43,16 +44,6 @@ def teardown_function(function):
         system(mn_exec + ' --clean')
 
 
-class NMLNode(object):
-    """
-    Mockup NMLNode
-    """
-    def __init__(self, name, **kwargs):
-        self.name = name
-        self.identifier = id(self)
-        self.metadata = kwargs
-
-
 @pytest.mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
 def test_build_topology():
     """
@@ -63,13 +54,13 @@ def test_build_topology():
     mn.pre_build()
     assert mn._net is not None
 
-    s1 = NMLNode('s1')
+    s1 = Node(identifier='s1')
     mn.add_node(s1)
 
     assert mn.nmlnode_node_map[s1.identifier] is not None
     assert isinstance(mn.nmlnode_node_map[s1.identifier], MininetSwitch)
 
-    h2 = NMLNode('h2', type='host')
+    h2 = Node(identifier='h2', type='host')
     mn.add_node(h2)
 
     assert mn.nmlnode_node_map[h2.identifier] is not None
@@ -97,13 +88,13 @@ def test_send_command():
     mn.pre_build()
     assert mn._net is not None
 
-    s1 = NMLNode('s1')
+    s1 = Node(identifier='s1')
     mn.add_node(s1)
 
-    h1 = NMLNode('h1', type='host')
+    h1 = Node(identifier='h1', type='host')
     mn_h1 = mn.add_node(h1)
 
-    h2 = NMLNode('h2', type='host')
+    h2 = Node(identifier='h2', type='host')
     mn_h2 = mn.add_node(h2)
 
     mn.add_bilink((s1, None), (h1, None), None)
@@ -127,21 +118,21 @@ def test_add_bipport():
     mn.pre_build()
     assert mn._net is not None
 
-    s1 = NMLNode('s1')
+    s1 = Node(identifier='s1')
     mn_s1 = mn.add_node(s1)
-    mn.add_biport(s1, NMLNode('s1_p1'))
-    mn.add_biport(s1, NMLNode('s1_p2'))
-    mn.add_biport(s1, NMLNode('s1_p3'))
+    mn.add_biport(s1, Node(identifier='s1_p1'))
+    mn.add_biport(s1, Node(identifier='s1_p2'))
+    mn.add_biport(s1, Node(identifier='s1_p3'))
 
-    s1_p4 = NMLNode('s1_p4')
+    s1_p4 = Node(identifier='s1_p4')
     mn.add_biport(s1, s1_p4)
 
     assert mn.nmlnode_node_map.get(s1.identifier, None) is not None
     assert isinstance(mn.nmlnode_node_map[s1.identifier], MininetSwitch)
 
-    h2 = NMLNode('h2', type='host')
+    h2 = Node(identifier='h2', type='host')
     mn_h2 = mn.add_node(h2)
-    p2 = NMLNode('p2')
+    p2 = Node(identifier='p2')
     mn.add_biport(h2, p2)
 
     assert mn.nmlnode_node_map[h2.identifier] is not None
