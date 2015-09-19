@@ -152,7 +152,7 @@ class BaseNode(object):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def send_command(self, cmd, shell=None):
+    def send_command(self, cmd, shell=None, wait=True):
         """
         Send a command to this engine node.
 
@@ -160,8 +160,19 @@ class BaseNode(object):
         :param str shell: Shell that must interpret the command.
          `None` for the default shell. Is up to the engine platform to
          determine what the default shell is.
+        :param bool wait: If ``True``, wait for command to finish.
         :rtype: str
         :return: The response of the command.
+        """
+
+    @abstractmethod
+    def available_shells(self):
+        """
+        Get the list of available shells.
+
+        :rtype: List of str.
+        :return: The list of all available shells. The first one is the
+         default (if any).
         """
 
     @abstractmethod
@@ -180,6 +191,16 @@ class BaseNode(object):
          determine what the default function is.
         :rtype: dict
         :return: The response of the function.
+        """
+
+    @abstractmethod
+    def available_functions(self):
+        """
+        Get the list of available functions.
+
+        :rtype: List of str.
+        :return: The list of all available functions. The first one is the
+         default (if any).
         """
 
 
