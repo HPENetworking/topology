@@ -148,8 +148,16 @@ class BaseNode(object):
     implement.
 
     See the :doc:`Plugins Development Guide </plugins>` for reference.
+
+    :param str identifier: Unique identifier of the engine node.
+    :var metadata: Additional metadata (kwargs leftovers).
     """
     __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, identifier, **kwargs):
+        self.identifier = identifier
+        self.metadata = kwargs
 
     @abstractmethod
     def send_command(self, cmd, shell=None, wait=True):

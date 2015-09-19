@@ -47,7 +47,7 @@ sw1: -- hs1
 
 def test_txtmeta_parse():
     """
-    The txtmeta parsing feature of the TopologyManager object.
+    Test the txtmeta parsing feature of the TopologyManager object.
     """
     topology = TopologyManager()
     dictmeta = topology.parse(TOPOLOGY, load=False)

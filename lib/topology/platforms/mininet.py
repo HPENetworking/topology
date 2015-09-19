@@ -68,18 +68,20 @@ class MininetPlatform(BasePlatform):
         node_type = node.metadata.get('type', 'switch')
         enode = None
 
+        # FIXME: Define an identifier to the topology
+        # FIXME: I know I know is non-unique :/
+        identifier = node.name.lower().replace(' ', '_').replace('-', '_')
+
         if node_type == 'switch':
             enode = MininetSwitch(
                 self._net.addSwitch(
-                    str(node.identifier),
-                    dpid=str(len(self.nmlnode_node_map))
+                    identifier, dpid=str(len(self.nmlnode_node_map))
                 )
             )
         elif node_type == 'host':
             enode = MininetHost(
                 self._net.addHost(
-                    str(node.identifier),
-                    dpid=str(len(self.nmlnode_node_map))
+                    identifier, dpid=str(len(self.nmlnode_node_map))
                 )
             )
         else:
@@ -153,11 +155,11 @@ class MininetNode(BaseNode):
 
     @abstractmethod
     def __init__(self, mininet_node, **kwargs):
+        super(MininetNode, self).__init__(mininet_node.name, **kwargs)
         self._mininet_node = mininet_node
         self._nmlport_port_map = {}
         self._shells = OrderedDict()
         self._functions = OrderedDict()
-        self._metadata = kwargs
 
     def send_command(self, command, shell=None):
         """
