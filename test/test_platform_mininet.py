@@ -99,7 +99,7 @@ def test_send_command():
 
     mn.post_build()
 
-    ping_response = mn_h1.send_command('ping -c 1 ' + mn_h2.node.IP())
+    ping_response = mn_h1.send_command('ping -c 1 ' + mn_h2._mininet_node.IP())
 
     mn.destroy()
 
@@ -143,8 +143,7 @@ def test_add_bipport():
     mn.post_build()
 
     # Link is made on s1-eth4 on port 4
-    assert 4 == int(mn_s1.send_command(
-        'ovs-vsctl get Interface s1-eth4 ofport'))
+    assert 4 == int(mn_s1.send_command('get Interface s1-eth4 ofport'))
 
     assert 'h2-eth1' == (mn_h2.send_command('ifconfig'))[:7]
 

@@ -25,6 +25,9 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from collections import OrderedDict
+from abc import ABCMeta, abstractmethod
+
 from mininet.net import Mininet
 
 from .base import BasePlatform, BaseNode
@@ -63,21 +66,27 @@ class MininetPlatform(BasePlatform):
         See :meth:`BasePlatform.add_node` for more information.
         """
         node_type = node.metadata.get('type', 'switch')
-        mininet_node = None
+        enode = None
 
         if node_type == 'switch':
-            mininet_node = MininetSwitch(
-                self._net.addSwitch(str(node.identifier),
-                                    dpid=str(len(self.nmlnode_node_map))))
+            enode = MininetSwitch(
+                self._net.addSwitch(
+                    str(node.identifier),
+                    dpid=str(len(self.nmlnode_node_map))
+                )
+            )
         elif node_type == 'host':
-            mininet_node = MininetHost(
-                self._net.addHost(str(node.identifier),
-                                  dpid=str(len(self.nmlnode_node_map))))
+            enode = MininetHost(
+                self._net.addHost(
+                    str(node.identifier),
+                    dpid=str(len(self.nmlnode_node_map))
+                )
+            )
         else:
             raise Exception('Unsupported type {}'.format(node_type))
 
-        self.nmlnode_node_map[node.identifier] = mininet_node
-        return mininet_node
+        self.nmlnode_node_map[node.identifier] = enode
+        return enode
 
     def add_biport(self, node, biport):
         """
@@ -88,8 +97,8 @@ class MininetPlatform(BasePlatform):
         FIXME: find a way to create a port on mininet-ovs.
         """
         mn_node = self.nmlnode_node_map[node.identifier]
-        port_number = len(mn_node.nmlport_port_map) + 1
-        mn_node.nmlport_port_map[biport.identifier] = port_number
+        port_number = len(mn_node._nmlport_port_map) + 1
+        mn_node._nmlport_port_map[biport.identifier] = port_number
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
         """
@@ -100,14 +109,17 @@ class MininetPlatform(BasePlatform):
         node_a = self.nmlnode_node_map[nodeport_a[0].identifier]
         port_a = None
         if nodeport_a[1] is not None:
-            port_a = node_a.nmlport_port_map[nodeport_a[1].identifier]
+            port_a = node_a._nmlport_port_map[nodeport_a[1].identifier]
 
         node_b = self.nmlnode_node_map[nodeport_b[0].identifier]
         port_b = None
         if nodeport_b[1] is not None:
-            port_b = node_b.nmlport_port_map[nodeport_b[1].identifier]
+            port_b = node_b._nmlport_port_map[nodeport_b[1].identifier]
 
-        self._net.addLink(node_a.node, node_b.node, port1=port_a, port2=port_b)
+        self._net.addLink(
+            node_a._mininet_node, node_b._mininet_node,
+            port1=port_a, port2=port_b
+        )
 
     def post_build(self):
         """
@@ -137,9 +149,15 @@ class MininetNode(BaseNode):
     :param mininet_node: The node as a Mininet object.
     :type mininet_node: :class:`mininet.node.Node`
     """
-    def __init__(self, mininet_node):
-        self.node = mininet_node
-        self.nmlport_port_map = {}
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, mininet_node, **kwargs):
+        self._mininet_node = mininet_node
+        self._nmlport_port_map = {}
+        self._shells = OrderedDict()
+        self._functions = OrderedDict()
+        self._metadata = kwargs
 
     def send_command(self, command, shell=None):
         """
@@ -148,11 +166,22 @@ class MininetNode(BaseNode):
         See :meth:`topology.platforms.base.BaseNode.send_command` for more
         information.
         """
-        if shell is not None:
+        if shell is None and self._shells:
+            shell = self._shells.keys()[0]
+        elif shell not in self._shells.keys():
             raise Exception(
-                'Shell {} is not supported for mininet.'.format(shell)
+                'Shell {} is not supported.'.format(shell)
             )
-        return self.node.cmd(command)
+        return self._shells[shell](command)
+
+    def available_shells(self):
+        """
+        Implementation of the ``available_shells`` interface.
+
+        See :meth:`topology.platforms.base.BaseNode.available_shells` for more
+        information.
+        """
+        return self._shells.keys()
 
     def send_data(self, data, function=None):
         """
@@ -161,7 +190,22 @@ class MininetNode(BaseNode):
         See :meth:`topology.platforms.base.BaseNode.send_data` for more
         information.
         """
-        raise Exception('Unsupported interface')
+        if function is None and self._functions:
+            function = self._functions.keys()[0]
+        elif function not in self._functions.keys():
+            raise Exception(
+                'Function {} is not supported.'.format(function)
+            )
+        return self._functions[function](data)
+
+    def available_functions(self):
+        """
+        Implementation of the ``available_functions`` interface.
+
+        See :meth:`topology.platforms.base.BaseNode.available_functions` for
+        more information.
+        """
+        return self._functions.keys()
 
 
 class MininetSwitch(MininetNode):
@@ -170,7 +214,12 @@ class MininetSwitch(MininetNode):
 
     See :class:`MininetNode`.
     """
-    pass
+
+    def __init__(self, mininet_node, **kwargs):
+        super(MininetSwitch, self).__init__(mininet_node, **kwargs)
+        self._shells['ovs-vsctl'] = self._mininet_node.vsctl
+        self._shells['ovs-ofctl'] = self._mininet_node.dpctl
+        self._shells['bash'] = self._mininet_node.cmd
 
 
 class MininetHost(MininetNode):
@@ -179,6 +228,9 @@ class MininetHost(MininetNode):
 
     See :class:`MininetNode`.
     """
-    pass
+    def __init__(self, mininet_node, **kwargs):
+        super(MininetHost, self).__init__(mininet_node, **kwargs)
+        self._shells['bash'] = self._mininet_node.cmd
+
 
 __all__ = ['MininetPlatform', 'MininetSwitch', 'MininetHost']
