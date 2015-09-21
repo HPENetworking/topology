@@ -109,23 +109,32 @@ def test_build():
 
     # Create topology using the NMLManager
     sw1 = topology.nml.create_node(identifier='sw1', name='My Switch 1')
-    sw2 = topology.nml.create_node(identifier='sw2', name='My Switch 2')
+    hs1 = topology.nml.create_node(identifier='hs1', name='My Host 1',
+                                   type='host')
 
     sw1p1 = topology.nml.create_biport(sw1)
     sw1p2 = topology.nml.create_biport(sw1)
     sw1p3 = topology.nml.create_biport(sw1)  # noqa
-    sw2p1 = topology.nml.create_biport(sw2)
-    sw2p2 = topology.nml.create_biport(sw2)
-    sw2p3 = topology.nml.create_biport(sw2)  # noqa
+    hs1p1 = topology.nml.create_biport(hs1)
+    hs1p2 = topology.nml.create_biport(hs1)
+    hs1p3 = topology.nml.create_biport(hs1)  # noqa
 
-    sw1p1_sw2p1 = topology.nml.create_bilink(sw1p1, sw2p1)  # noqa
-    sw1p2_sw2p2 = topology.nml.create_bilink(sw1p2, sw2p2)  # noqa
+    sw1p1_hs1p1 = topology.nml.create_bilink(sw1p1, hs1p1)  # noqa
+    sw1p2_hs1p2 = topology.nml.create_bilink(sw1p2, hs1p2)  # noqa
 
     # Build topology
     topology.build()
 
-    # FIXME: More assert to check that the topology was build
-    assert topology.get('sw1') is not None
+    mnsw1 = topology.get('sw1')
+
+    from topology.platforms.mininet import MininetSwitch
+    assert isinstance(mnsw1, MininetSwitch)
+
+    # Ping to validate nodes and link
+    ping_response = topology.get('hs1').send_command(
+        'ping -c 1 ' + mnsw1._mininet_node.IP())
 
     # Unbuild topology
     topology.unbuild()
+
+    assert '1 packets transmitted, 1 received' in ping_response
