@@ -22,10 +22,11 @@ Test suite for module topology.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from sys import version_info
 from os import system, getuid
 from distutils.spawn import find_executable
 
-import pytest  # noqa
+from pytest import mark
 from pynml import Node
 
 from topology.platforms.mininet import (
@@ -44,7 +45,8 @@ def teardown_function(function):
         system(mn_exec + ' --clean')
 
 
-@pytest.mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
+@mark.skipif(version_info[0] == 3, reason="Mininet does not support Python3")
+@mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
 def test_build_topology():
     """
     Builds (and destroys) a basic topology consisting in one switch and one
@@ -73,7 +75,8 @@ def test_build_topology():
     mn.destroy()
 
 
-@pytest.mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
+@mark.skipif(version_info[0] == 3, reason="Mininet does not support Python3")
+@mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
 def test_send_command():
     """
     Connect two host to a switch and ping h2 from h1
@@ -109,7 +112,8 @@ def test_send_command():
     assert '1 packets transmitted, 1 received' in ping_response
 
 
-@pytest.mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
+@mark.skipif(version_info[0] == 3, reason="Mininet does not support Python3")
+@mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
 def test_add_bipport():
     """
     Link a switch and a host specifing a port

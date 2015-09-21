@@ -24,11 +24,12 @@ See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from sys import version_info
 from os import system, getuid
 from distutils.spawn import find_executable
 from collections import OrderedDict
 
-import pytest  # noqa
+from pytest import mark
 from deepdiff import DeepDiff
 
 from topology.manager import TopologyManager
@@ -100,7 +101,8 @@ def test_txtmeta_parse():
     assert not ddiff
 
 
-@pytest.mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
+@mark.skipif(version_info[0] == 3, reason="Mininet does not support Python3")
+@mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
 def test_build():
     """
     Test building and unbuilding a topology using the Mininet engine.

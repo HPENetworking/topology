@@ -28,8 +28,6 @@ import logging
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
-from mininet.net import Mininet
-
 from .base import BasePlatform, BaseNode
 
 
@@ -56,6 +54,8 @@ class MininetPlatform(BasePlatform):
 
         See :meth:`BasePlatform.pre_build` for more information.
         """
+        from mininet.net import Mininet
+
         self._net = Mininet()
         self._net.addController(b'c0')
 
