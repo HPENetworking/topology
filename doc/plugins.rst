@@ -144,8 +144,8 @@ Entry Point
 -----------
 
 The entry point to provide a new *Communication Library* is
-``topology_communication_<api_version>``, currently
-``topology_communication_10``.
+``topology_library_<api_version>``, currently
+``topology_library_10``.
 
 To extend `topology` to support your communication library you must implement
 in your package a module with all your public functions and create a registry
@@ -172,7 +172,7 @@ Then specify in your `setup.py`:
 
     # Entry points
     entry_points={
-        'topology_communication_10': ['my = topology_lib_my.library']
+        'topology_library_10': ['my = topology_lib_my.library.REGISTRY']
     }
 
 With this, and if your *Engine Platform* builds your *Engine Nodes* to support

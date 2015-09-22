@@ -41,12 +41,12 @@ log = logging.getLogger(__name__)
 
 def platforms(cache=True):
     """
-    List all available engine platforms available.
+    List all available engine platforms.
 
-    This method lists the default engine plus any other it can discover looking
-    up the entry point. This lookup requires to load all available plugins,
-    which can be costly or error prone if a plugin misbehave, and because of
-    this a cache is stored after the first call.
+    This function lists the default engine plus any other it can discover
+    looking up the entry point. This lookup requires to load all available
+    engine platform plugins, which can be costly or error prone if a plugin
+    misbehave, and because of this a cache is stored after the first call.
 
     :param bool cache: If ``True`` return the cached result. If ``False`` force
      reload of all plugins registered for the entry point.
@@ -81,14 +81,18 @@ def platforms(cache=True):
         try:
             platform = ep.load()
         except:
-            log.error('Unable to load topology plugin {}.'.format(name))
+            log.error(
+                'Unable to load topology engine '
+                'platform plugin {}.'.format(name)
+            )
             log.debug(format_exc())
             continue
 
         if not isclass(platform) or not issubclass(platform, BasePlatform):
             log.error(
                 'Ignoring platform "{}" as it doesn\'t '
-                'match the required interface.'.format(name)
+                'match the required interface: '
+                'Platform not a subclass of BasePlatform.'.format(name)
             )
             continue
 
