@@ -25,13 +25,11 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
-from six import iterkeys, add_metaclass
+from six import add_metaclass
 
-from .base import BasePlatform, BaseNode
-from ..libraries.manager import libraries
+from .base import BasePlatform, CommonNode
 
 
 log = logging.getLogger(__name__)
@@ -142,7 +140,7 @@ class MininetPlatform(BasePlatform):
 
 
 @add_metaclass(ABCMeta)
-class MininetNode(BaseNode):
+class MininetNode(CommonNode):
     """
     Mininet Engine Node for Topology.
 
@@ -159,62 +157,6 @@ class MininetNode(BaseNode):
         super(MininetNode, self).__init__(mininet_node.name, **kwargs)
         self._mininet_node = mininet_node
         self._nmlport_port_map = {}
-        self._shells = OrderedDict()
-        self._functions = OrderedDict()
-
-        # Add support for communication libraries
-        for libname, registry in libraries():
-            for register in registry:
-                key = '{}_{}'.format(libname, register.__name__)
-                self._functions[key] = register
-
-    def send_command(self, command, shell=None):
-        """
-        Implementation of the ``send_command`` interface.
-
-        See :meth:`topology.platforms.base.BaseNode.send_command` for more
-        information.
-        """
-        if shell is None and self._shells:
-            shell = list(iterkeys(self._shells))[0]
-        elif shell not in self._shells.keys():
-            raise Exception(
-                'Shell {} is not supported.'.format(shell)
-            )
-        return self._shells[shell](command)
-
-    def available_shells(self):
-        """
-        Implementation of the ``available_shells`` interface.
-
-        See :meth:`topology.platforms.base.BaseNode.available_shells` for more
-        information.
-        """
-        return list(iterkeys(self._shells))
-
-    def send_data(self, data, function=None):
-        """
-        Implementation of the ``send_data`` interface.
-
-        See :meth:`topology.platforms.base.BaseNode.send_data` for more
-        information.
-        """
-        if function is None and self._functions:
-            function = list(iterkeys(self._functions))[0]
-        elif function not in self._functions.keys():
-            raise Exception(
-                'Function {} is not supported.'.format(function)
-            )
-        return self._functions[function](data)
-
-    def available_functions(self):
-        """
-        Implementation of the ``available_functions`` interface.
-
-        See :meth:`topology.platforms.base.BaseNode.available_functions` for
-        more information.
-        """
-        return list(iterkeys(self._functions))
 
 
 class MininetSwitch(MininetNode):

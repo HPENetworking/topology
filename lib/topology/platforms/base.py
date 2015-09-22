@@ -26,8 +26,11 @@ from __future__ import print_function, division
 
 import logging
 from abc import ABCMeta, abstractmethod
+from collections import OrderedDict
 
-from six import add_metaclass
+from six import add_metaclass, iterkeys
+
+from ..libraries.manager import libraries
 
 
 log = logging.getLogger(__name__)
@@ -73,7 +76,7 @@ class BasePlatform(object):
 
         :param node: The specification NML node to add to the platform.
         :type node: :class:`pynml.nml.Node`
-        :rtype: :class:`topology.platforms.base.BaseNode`
+        :rtype: BaseNode
         :return: Platform specific communication node.
         """
         pass
@@ -214,4 +217,97 @@ class BaseNode(object):
         """
 
 
-__all__ = ['BasePlatform', 'BaseNode']
+@add_metaclass(ABCMeta)
+class CommonNode(BaseNode):
+    """
+    Base engine node class with a common base implementation.
+
+    This class provides a basic common implementation for managing shells and
+    functions, where an internal ordered dictionary handles the keys for
+    functions that implements the logic for those shells or functions.
+
+    Child classes will then only require to populate the internal dictionaries
+    with those handling functions to delegate the process of the call.
+
+    In particular, this class implements support for topology communication
+    libraries and will ad-hoc to the internal functions dictionary all
+    libraries available.
+
+    See :class:`BaseNode`.
+    """
+
+    @abstractmethod
+    def __init__(self, identifier, **kwargs):
+        super(CommonNode, self).__init__(identifier, **kwargs)
+        self._shells = OrderedDict()
+        self._functions = OrderedDict()
+
+        # Add support for communication libraries
+        for libname, registry in libraries():
+            for register in registry:
+                key = '{}_{}'.format(libname, register.__name__)
+                self._functions[key] = register
+
+    def send_command(self, command, shell=None):
+        """
+        Implementation of the ``send_command`` interface.
+
+        This method will lookup for the shell argument in an internal ordered
+        dictionary to fetch a function to delegate the command to. If None is
+        provided, the first key of the dictionary will be used.
+
+        See :meth:`BaseNode.send_command` for more information.
+        """
+        if shell is None and self._shells:
+            shell = list(iterkeys(self._shells))[0]
+        elif shell not in self._shells.keys():
+            raise Exception(
+                'Shell {} is not supported.'.format(shell)
+            )
+        return self._shells[shell](command)
+
+    def available_shells(self):
+        """
+        Implementation of the ``available_shells`` interface.
+
+        This method will just list the available keys in the internal ordered
+        dictionary.
+
+        See :meth:`BaseNode.available_shells` for more information.
+        """
+        return list(iterkeys(self._shells))
+
+    def send_data(self, data, function=None):
+        """
+        Implementation of the ``send_data`` interface.
+
+        This method will lookup for the function argument in an internal
+        ordered dictionary to fetch a function to delegate the command to.
+        If None is  provided, the first key of the dictionary will be used.
+
+        Note that this internal dictionary is populated at instantiation of the
+        node using the :func:`topology.libraries.manager.libraries` function.
+
+        See :meth:`BaseNode.send_data` for more information.
+        """
+        if function is None and self._functions:
+            function = list(iterkeys(self._functions))[0]
+        elif function not in self._functions.keys():
+            raise Exception(
+                'Function {} is not supported.'.format(function)
+            )
+        return self._functions[function](data)
+
+    def available_functions(self):
+        """
+        Implementation of the ``available_functions`` interface.
+
+        This method will just list the available keys in the internal ordered
+        dictionary.
+
+        See :meth:`BaseNode.available_functions` for more information.
+        """
+        return list(iterkeys(self._functions))
+
+
+__all__ = ['BasePlatform', 'BaseNode', 'CommonNode']

@@ -23,12 +23,8 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from collections import OrderedDict
 
-from six import iterkeys
-
-from .base import BasePlatform, BaseNode
-from ..libraries.manager import libraries
+from .base import BasePlatform, CommonNode
 
 
 log = logging.getLogger(__name__)
@@ -88,26 +84,21 @@ class DebugPlatform(BasePlatform):
         log.debug('[HOOK] destroy()')
 
 
-class DebugNode(BaseNode):
+class DebugNode(CommonNode):
     """
     Engine Node for debugging.
     """
 
     def __init__(self, identifier, **kwargs):
         super(DebugNode, self).__init__(identifier, **kwargs)
-        self._functions = OrderedDict()
-
-        # Add support for communication libraries
-        for libname, registry in libraries():
-            for register in registry:
-                key = '{}_{}'.format(libname, register.__name__)
-                self._functions[key] = register
 
     def send_command(self, command, shell=None):
         """
         Implementation of the ``send_command`` interface.
 
-        See :meth:`topology.platforms.base.BaseNode.send_command` for more
+        This test node will just echo the command.
+
+        See :meth:`topology.platforms.base.CommonNode.send_command` for more
         information.
         """
         log.debug('{}.send_command({}, shell={})'.format(
@@ -119,8 +110,10 @@ class DebugNode(BaseNode):
         """
         Implementation of the ``available_shells`` interface.
 
-        See :meth:`topology.platforms.base.BaseNode.available_shells` for more
-        information.
+        This test node has no shells available.
+
+        See :meth:`topology.platforms.base.CommonNode.available_shells` for
+        more information.
         """
         log.debug('{}.available_shells()'.format(str(self)))
         return []
@@ -129,29 +122,23 @@ class DebugNode(BaseNode):
         """
         Implementation of the ``send_data`` interface.
 
-        See :meth:`topology.platforms.base.BaseNode.send_data` for more
+        See :meth:`topology.platforms.base.CommonNode.send_data` for more
         information.
         """
         log.debug('{}.send_data({}, data={}, function={})'.format(
             str(self), data, function
         ))
-        if function is None and self._functions:
-            function = list(iterkeys(self._functions))[0]
-        elif function not in self._functions.keys():
-            raise Exception(
-                'Function {} is not supported.'.format(function)
-            )
-        return self._functions[function](data)
+        return super(DebugNode, self).send_data(data, function=function)
 
     def available_functions(self):
         """
         Implementation of the ``available_functions`` interface.
 
-        See :meth:`topology.platforms.base.BaseNode.available_functions` for
+        See :meth:`topology.platforms.base.CommonNode.available_functions` for
         more information.
         """
         log.debug('{}.available_functions()'.format(str(self)))
-        return list(iterkeys(self._functions))
+        return super(DebugNode, self).available_functions()
 
     def __str__(self):
         return 'DebugNode(identifier={}, metadata={})'.format(
