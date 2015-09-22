@@ -18,20 +18,25 @@
 """
 topology pytest plugin module entry point.
 
-This plugin gets the topology description from the test suite
-and handles it to be created. It also gets the topology platform
-specifier and sends it to let the topology creator know which platform
-to use.
+This plugin provides a fixture ``topology`` that will load and build a topology
+description from the module. This topology must be present in the module as a
+constant variable ``TOPOLOGY``. It can be either a string and thus the method
+:meth:`topology.manager.TopologyManager.parse` will be used, or a dictionary in
+which case the method :meth:`topology.manager.TopologyManager.load` will be
+used. Once built, the plugin registers the *unbuild* for when the module has
+ended all the tests.
 
-This plugin defines that the topology is to be destroyed once
-the last test using this fixture has ended its execution.
+If the ``TOPOLOGY`` variable isn't present the fixture assumes the user will
+prefer to build the topology using the standard NML objects with the
+:class:`pynml.manager.NMLManager` instance enbeed into the
+:class:`topology.manager.TopologyManager`.
 
-This plugin provides the --platform option, so it can be set when
-the user runs a test suite.
+To be able to select the engine platform this plugins registers the ``--engine-
+platform`` option that can be set in pytest command line.
 
 For reference see:
 
-    https://pytest.org/latest/plugins.html#well-specified-hooks
+    http://pytest.org/dev/plugins.html#hook-specification-and-validation
 """
 
 from __future__ import unicode_literals, absolute_import
