@@ -28,7 +28,7 @@ import logging
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
-from six import iterkeys
+from six import iterkeys, add_metaclass
 
 from .base import BasePlatform, BaseNode
 
@@ -140,6 +140,7 @@ class MininetPlatform(BasePlatform):
         self._net.stop()
 
 
+@add_metaclass(ABCMeta)
 class MininetNode(BaseNode):
     """
     Mininet Engine Node for Topology.
@@ -151,7 +152,6 @@ class MininetNode(BaseNode):
     :param mininet_node: The node as a Mininet object.
     :type mininet_node: :class:`mininet.node.Node`
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, mininet_node, **kwargs):
