@@ -104,6 +104,12 @@ class TopologyManager(object):
         print('*' * 79)
         print(dictmeta)
 
+        # Load nodes
+        for nodes_spec in dictmeta.get('nodes', []):
+            attributes = nodes_spec['attributes']
+            for node_id in nodes_spec['nodes']:
+                self.nml.create_node(identifier=node_id, **attributes)
+
     def parse(self, txtmeta, load=True):
         """
         Parse a textual topology meta-description.
@@ -351,6 +357,11 @@ class TopologyManager(object):
         This removes all references to the engine nodes and request the
         platform to destroy the topology.
         """
+        if self._platform is None:
+            raise RuntimeError(
+                'You cannot unbuild and never built topology.'
+            )
+
         # Remove own reference to enodes
         self.nodes = OrderedDict()
 
@@ -369,7 +380,7 @@ class TopologyManager(object):
         :rtype: A subclass of :class:`topology.platforms.base.BaseNode`
         :return: The engine node implementing the communication with the node.
         """
-        return self.nodes[identifier]
+        return self.nodes.get(identifier, None)
 
 
 __all__ = ['TopologyManager']

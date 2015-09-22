@@ -58,8 +58,8 @@ def topology(request):
     - https://pytest.org/latest/fixture.html
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
-    topomgr = TopologyManager(request.config.topology)
-    request.addfinalizer(topomgr.unbuild)
+    engine = request.config.getoption('--engine-platform')
+    topomgr = TopologyManager(engine)
 
     # Autobuild topology if available
     # FIXME: Skip all module if parsing or build fails
@@ -68,8 +68,9 @@ def topology(request):
         if isinstance(topo, dict):
             topomgr.load(topo)
         else:
-            topomgr.parse(request.module.TOPOLOGY)
+            topomgr.parse(topo)
         topomgr.build()
+        request.addfinalizer(topomgr.unbuild)
 
     return topomgr
 
@@ -80,7 +81,7 @@ def pytest_addoption(parser):
     """
     group = parser.getgroup('general')
     group.addoption(
-        '--platform',
+        '--engine-platform',
         default='mininet',
         help='Select platform to run topology tests',
         choices=sorted(platforms())
