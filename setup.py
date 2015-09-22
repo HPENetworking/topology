@@ -73,7 +73,7 @@ setup(
         'Network Topology Framework using NML, with support for pytest.'
     ),
     long_description=read('README.rst'),
-    url='http://magma-git.austin.hp.com/testing/topology',
+    url='https://github-sc-p.corp.hp.com/hpe-networking/topology',
     keywords='topology',
 
     classifiers=[

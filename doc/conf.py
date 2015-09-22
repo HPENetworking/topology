@@ -13,22 +13,10 @@
 
 import os
 from os.path import join, dirname, abspath
-on_rtd = os.environ.get('READTHEDOCS', None) is not None
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# We could add our modules to the PYTHONPATH in this way, but because we use
-# `tox -e doc` to build it the modules are already installed in the virtualenv
-# and thus the availability of the module (and the correct installation) is
-# checked. The exception is when building directly using sphinx-build, like
-# when pushing in readthedocs.org
-if on_rtd:
-    import sys
-    sys.path.insert(
-        0, join(dirname(dirname(abspath(__file__))), 'lib')
-    )
 
 # -- General configuration ------------------------------------------------
 
@@ -44,7 +32,8 @@ extensions = [
     'sphinx.ext.inheritance_diagram',
     'sphinx.ext.intersphinx',
     'sphinxcontrib.plantuml',
-    'sphinx.ext.graphviz'
+    'sphinx.ext.graphviz',
+    'autoapi.sphinx'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -310,8 +299,14 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
 
-# Reference stubs generation
-autosummary_generate = True
+# Add style overrides
+def setup(app):
+    app.add_stylesheet('styles/custom.css')
+
+# autoapi configuration
+autoapi_modules = {
+    'topology': None
+}
 
 # Configure PlantUML
 plantuml = 'java -jar ' + join(dirname(abspath(__name__)), 'plantuml.8030.jar')
@@ -326,6 +321,7 @@ intersphinx_mapping = {
 }
 
 # Setup theme if not building in readthedocs.org
+on_rtd = os.environ.get('READTHEDOCS', None) is not None
 if not on_rtd:
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'

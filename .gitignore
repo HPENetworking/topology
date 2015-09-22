@@ -9,7 +9,7 @@ build/*
 
 # Sphinx
 doc/_build/*
-doc/_reference/*
+doc/topology/*
 
 # Tox
 .tox/*

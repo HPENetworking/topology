@@ -2,7 +2,7 @@
    :hidden:
 
    developer
-   reference
+   topology/topology
    plugins
 
 ==========================
@@ -20,14 +20,13 @@ Documentation
 =============
 
 - :doc:`Developer Guide. <developer>`
-- :doc:`Plugins Development Guide. <plugins>`
-- :doc:`Internal Documentation Reference. <reference>`
+- :doc:`Internal Documentation Reference. <topology/topology>`
 
 
 Development
 ===========
 
-- `Project repository. <http://magma-git.austin.hp.com/testing/topology>`_
+- `Project repository. <https://github-sc-p.corp.hp.com/hpe-networking/topology>`_
 
 
 License

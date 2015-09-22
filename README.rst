@@ -8,7 +8,7 @@ Network Topology Framework using NML, with support for pytest.
 Documentation
 =============
 
-    http://magma-git.austin.hp.com/testing/topology
+    https://github-sc-p.corp.hp.com/hpe-networking/topology
 
 
 License

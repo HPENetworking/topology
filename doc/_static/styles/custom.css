@@ -1,52 +1,35 @@
 /* Improve autodoc */
+
+/* Show reference in a box */
 dl.class,
-dl.function {
+dl.function,
+dl.exception,
+dl.data {
     background: #f3f6f6 !important;
     border: 1px solid #D3D3D3 !important;
 }
 
+/* Extend reference heads to the width */
 dl.class dt,
-dl.function dt {
-    width: 100%;
+dl.function dt,
+dl.exception dt,
+dl.data dt {
+    width: 100% !important;
 }
 
-dl.class dt {
+/* Improve box spacing */
+dl.class dd,
+dl.function dd,
+dl.exception dd,
+dl.data dd {
+  margin: 0 !important;
+  padding: 15px !important;
 }
 
-dl.class dt code.descclassname {
-    font-size: 70% !important;
-}
-
-dl.class dt em.property {
-    font-size: 120% !important;
-    font-style: normal !important;
-}
-
-dl.class dd dl.attribute em.property {
-    font-size: 100% !important;
-    font-weight: normal !important;
-    font-family: monospace !important;
-}
-
-dl dd {
-    margin: 15px 0px 0px 20px !important;
-}
-
-/* Useful common classes */
-.float-right {
-    float: right;
-    width: auto !important;
-}
-
-.float-left {
-    float: left;
-    width: auto !important;
-}
-
-.float-center {
-    text-align: center;
-}
-
-.clear {
-    clear: both;
+/* Remove namespace in reference, we know where we are thank you */
+dl.class dt code.descclassname,
+dl.function dt code.descclassname,
+dl.exception dt code.descclassname,
+dl.data dt code.descclassname {
+    display: none !important;
 }
