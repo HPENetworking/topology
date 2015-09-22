@@ -24,7 +24,10 @@ See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pytest import config
+from os import getuid
+from six import PY2
+
+from pytest import config, mark
 
 from topology.manager import TopologyManager
 
@@ -42,6 +45,7 @@ sw1: -- hs1
 """
 
 
+@mark.skipif(PY2 and getuid() != 0, reason='Mininet requires root permissions')
 def test_build(topology):
     """
     Test automatic build and unbuild of the topology using pytest plugin.
