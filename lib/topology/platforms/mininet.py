@@ -169,9 +169,7 @@ class MininetNode(BaseNode):
         information.
         """
         if shell is None and self._shells:
-            for key in self._functions:
-                shell = key
-                break
+            shell = list(iterkeys(self._shells))[0]
         elif shell not in self._shells.keys():
             raise Exception(
                 'Shell {} is not supported.'.format(shell)
@@ -195,9 +193,7 @@ class MininetNode(BaseNode):
         information.
         """
         if function is None and self._functions:
-            for key in self._functions:
-                function = key
-                break
+            function = list(iterkeys(self._functions))[0]
         elif function not in self._functions.keys():
             raise Exception(
                 'Function {} is not supported.'.format(function)

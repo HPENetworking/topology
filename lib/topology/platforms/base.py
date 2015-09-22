@@ -47,7 +47,6 @@ class BasePlatform(object):
     :param nmlmanager: Manager holding the NML namespace.
     :type nmlmanager: :class:`pynml.manager.NMLManager`
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, timestamp, nmlmanager):

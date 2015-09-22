@@ -129,9 +129,7 @@ class DebugNode(BaseNode):
             str(self), data, function
         ))
         if function is None and self._functions:
-            for key in self._functions:
-                function = key
-                break
+            function = list(iterkeys(self._functions))[0]
         elif function not in self._functions.keys():
             raise Exception(
                 'Function {} is not supported.'.format(function)
