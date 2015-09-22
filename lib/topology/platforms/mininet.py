@@ -31,6 +31,7 @@ from abc import ABCMeta, abstractmethod
 from six import iterkeys, add_metaclass
 
 from .base import BasePlatform, BaseNode
+from ..libraries.manager import libraries
 
 
 log = logging.getLogger(__name__)
@@ -160,6 +161,12 @@ class MininetNode(BaseNode):
         self._nmlport_port_map = {}
         self._shells = OrderedDict()
         self._functions = OrderedDict()
+
+        # Add support for communication libraries
+        for libname, registry in libraries():
+            for register in registry:
+                key = '{}_{}'.format(libname, register.__name__)
+                self._functions[key] = register
 
     def send_command(self, command, shell=None):
         """

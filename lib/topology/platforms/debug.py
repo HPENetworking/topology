@@ -28,6 +28,7 @@ from collections import OrderedDict
 from six import iterkeys
 
 from .base import BasePlatform, BaseNode
+from ..libraries.manager import libraries
 
 
 log = logging.getLogger(__name__)
@@ -95,6 +96,12 @@ class DebugNode(BaseNode):
     def __init__(self, identifier, **kwargs):
         super(DebugNode, self).__init__(identifier, **kwargs)
         self._functions = OrderedDict()
+
+        # Add support for communication libraries
+        for libname, registry in libraries():
+            for register in registry:
+                key = '{}_{}'.format(libname, register.__name__)
+                self._functions[key] = register
 
     def send_command(self, command, shell=None):
         """
