@@ -28,6 +28,8 @@ import logging
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
+from six import iterkeys
+
 from .base import BasePlatform, BaseNode
 
 
@@ -167,7 +169,9 @@ class MininetNode(BaseNode):
         information.
         """
         if shell is None and self._shells:
-            shell = self._shells.keys()[0]
+            for key in self._functions:
+                shell = key
+                break
         elif shell not in self._shells.keys():
             raise Exception(
                 'Shell {} is not supported.'.format(shell)
@@ -181,7 +185,7 @@ class MininetNode(BaseNode):
         See :meth:`topology.platforms.base.BaseNode.available_shells` for more
         information.
         """
-        return self._shells.keys()
+        return list(iterkeys(self._shells))
 
     def send_data(self, data, function=None):
         """
@@ -191,7 +195,9 @@ class MininetNode(BaseNode):
         information.
         """
         if function is None and self._functions:
-            function = self._functions.keys()[0]
+            for key in self._functions:
+                function = key
+                break
         elif function not in self._functions.keys():
             raise Exception(
                 'Function {} is not supported.'.format(function)
@@ -205,7 +211,7 @@ class MininetNode(BaseNode):
         See :meth:`topology.platforms.base.BaseNode.available_functions` for
         more information.
         """
-        return self._functions.keys()
+        return list(iterkeys(self._functions))
 
 
 class MininetSwitch(MininetNode):

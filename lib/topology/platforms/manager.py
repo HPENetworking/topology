@@ -33,6 +33,7 @@ from pkg_resources import iter_entry_points
 
 from .base import BasePlatform
 from .mininet import MininetPlatform
+from .debug import DebugPlatform
 
 
 log = logging.getLogger(__name__)
@@ -68,7 +69,8 @@ def platforms(cache=True):
 
     # Add default plugin
     available = {
-        'mininet': MininetPlatform
+        'mininet': MininetPlatform,
+        'debug': DebugPlatform
     }
 
     # Iterate over entry points

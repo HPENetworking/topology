@@ -27,10 +27,13 @@ from __future__ import print_function, division
 import logging
 from abc import ABCMeta, abstractmethod
 
+from six import add_metaclass
+
 
 log = logging.getLogger(__name__)
 
 
+@add_metaclass(ABCMeta)
 class BasePlatform(object):
     """
     Base engine platform class.
@@ -140,6 +143,7 @@ class BasePlatform(object):
         pass
 
 
+@add_metaclass(ABCMeta)
 class BaseNode(object):
     """
     Base engine node class.
@@ -152,7 +156,6 @@ class BaseNode(object):
     :param str identifier: Unique identifier of the engine node.
     :var metadata: Additional metadata (kwargs leftovers).
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, identifier, **kwargs):
