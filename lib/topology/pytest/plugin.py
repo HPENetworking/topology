@@ -38,6 +38,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from traceback import format_exc
 
 from six import PY3
 from pytest import fixture, fail
@@ -84,9 +85,10 @@ def topology(request):
             topomgr.build()
         except:
             fail(
-                'Error building topogy in module {}'.format(
-                    module.__name__
-                )
+                'Error building topogy in module {}:\n{}'.format(
+                    module.__name__,
+                    format_exc()
+                ), pytrace=False
             )
 
         request.addfinalizer(topomgr.unbuild)

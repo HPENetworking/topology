@@ -28,6 +28,7 @@ from __future__ import print_function, division
 
 import logging
 from datetime import datetime
+from traceback import format_exc
 from collections import OrderedDict
 from string import ascii_lowercase, digits
 
@@ -41,6 +42,25 @@ log = logging.getLogger(__name__)
 
 
 IDENTIFIER = ascii_lowercase + digits + '_'
+
+
+class ParseException(Exception):
+    """
+    Custom exception thrown by the parser if it could succeded.
+
+    :var lineno: Line number of the parsing error.
+    :var raw_line: Raw line that failed to be parsed.
+    :var exc: Internal failure traceback of the parser.
+    """
+    def __init__(self, lineno, raw_line, exc):
+        super(ParseException, self).__init__(
+            'Unable to parse line #{}: "{}"'.format(
+                lineno, raw_line
+            )
+        )
+        self.lineno = lineno
+        self.raw_line = raw_line
+        self.exc = exc
 
 
 class TopologyManager(object):
@@ -291,23 +311,30 @@ class TopologyManager(object):
 
         for lineno, raw_line in enumerate(txtmeta.splitlines(), 1):
 
-            # Ignore comments and empty line
-            line = raw_line.strip()
-            if not line or line.startswith('#'):
-                continue
+            try:
 
-            # Parse links
-            if '--' in line:
-                link_spec = parse_link(line, raw_line, lineno)
-                data['links'].append(link_spec)
-                log.debug('Line number {}:\n{}'.format(lineno, link_spec))
-                continue
+                # Ignore comments and empty line
+                line = raw_line.strip()
+                if not line or line.startswith('#'):
+                    continue
 
-            # Parse nodes
-            nodes_spec = parse_nodes(line, raw_line, lineno)
-            data['nodes'].append(nodes_spec)
-            log.debug('Line number {}:\n{}'.format(lineno, nodes_spec))
-            continue
+                # Parse links
+                if '--' in line:
+                    link_spec = parse_link(line, raw_line, lineno)
+                    data['links'].append(link_spec)
+                    log.debug('Line number {}:\n{}'.format(lineno, link_spec))
+                    continue
+
+                # Parse nodes
+                nodes_spec = parse_nodes(line, raw_line, lineno)
+                data['nodes'].append(nodes_spec)
+                log.debug('Line number {}:\n{}'.format(lineno, nodes_spec))
+                continue
+            except Exception:
+                e = ParseException(lineno, raw_line, format_exc())
+                log.error(str(e))
+                log.debug(e.exc)
+                raise e
 
         if load:
             self.load(data)
@@ -383,4 +410,4 @@ class TopologyManager(object):
         return self.nodes.get(identifier, None)
 
 
-__all__ = ['TopologyManager']
+__all__ = ['ParseException', 'TopologyManager']
