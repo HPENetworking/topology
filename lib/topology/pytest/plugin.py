@@ -40,7 +40,7 @@ from __future__ import print_function, division
 import logging
 
 from six import PY3
-from pytest import fixture, skip
+from pytest import fixture, fail
 
 from ..manager import TopologyManager
 from ..platforms.manager import platforms
@@ -63,21 +63,32 @@ def topology(request):
 
     # FIXME: Someday mininet... someday... -__-
     if PY3 and engine == 'mininet':
-        raise skip('Mininet does not support Python3')
+        request.config._warn(
+            'Mininet does not support Python3, testing with engine "debug"'
+        )
+        engine = 'debug'
 
+    module = request.module
     topomgr = TopologyManager(engine)
 
-    # Autobuild topology if available
-    # If topology build fails the exception to propagated to the test module :)
-    if hasattr(request.module, 'TOPOLOGY'):
+    # Autobuild topology if available.
+    if hasattr(module, 'TOPOLOGY'):
 
-        topo = request.module.TOPOLOGY
+        topo = module.TOPOLOGY
 
-        if isinstance(topo, dict):
-            topomgr.load(topo)
-        else:
-            topomgr.parse(topo)
-        topomgr.build()
+        try:
+            if isinstance(topo, dict):
+                topomgr.load(topo)
+            else:
+                topomgr.parse(topo)
+            topomgr.build()
+        except:
+            fail(
+                'Error building topogy in module {}'.format(
+                    module.__name__
+                )
+            )
+
         request.addfinalizer(topomgr.unbuild)
 
     return topomgr
