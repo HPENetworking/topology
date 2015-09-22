@@ -24,12 +24,9 @@ See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from sys import version_info
-from os import system, getuid
-from distutils.spawn import find_executable
 from collections import OrderedDict
 
-from pytest import mark
+import pytest  # noqa
 from deepdiff import DeepDiff
 
 from topology.manager import TopologyManager
@@ -48,22 +45,11 @@ sw1: -- hs1
 """
 
 
-def teardown_function(function):
-    """
-    In case something goes wrong clean up mininet state.
-    """
-    if getuid() != 0:
-        return
-    mn_exec = find_executable('mn')
-    if mn_exec is not None:
-        system(mn_exec + ' --clean')
-
-
 def test_txtmeta_parse():
     """
     Test the txtmeta parsing feature of the TopologyManager object.
     """
-    topology = TopologyManager()
+    topology = TopologyManager(engine='debug')
     dictmeta = topology.parse(TOPOLOGY, load=False)
 
     expected = {
@@ -101,13 +87,11 @@ def test_txtmeta_parse():
     assert not ddiff
 
 
-@mark.skipif(version_info[0] == 3, reason="Mininet does not support Python3")
-@mark.skipif(getuid() != 0, reason="Mininet requires root permissions")
 def test_build():
     """
     Test building and unbuilding a topology using the Mininet engine.
     """
-    topology = TopologyManager(engine='mininet')
+    topology = TopologyManager(engine='debug')
 
     # Create topology using the NMLManager
     sw1 = topology.nml.create_node(identifier='sw1', name='My Switch 1')
@@ -127,16 +111,9 @@ def test_build():
     # Build topology
     topology.build()
 
-    mnsw1 = topology.get('sw1')
-
-    from topology.platforms.mininet import MininetSwitch
-    assert isinstance(mnsw1, MininetSwitch)
-
-    # Ping to validate nodes and link
-    ping_response = topology.get('hs1').send_command(
-        'ping -c 1 ' + mnsw1._mininet_node.IP())
+    # Get an engine node
+    assert topology.get('sw1') is not None
+    assert topology.get('hs1') is not None
 
     # Unbuild topology
     topology.unbuild()
-
-    assert '1 packets transmitted, 1 received' in ping_response
