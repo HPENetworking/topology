@@ -8,5 +8,5 @@ sphinx
 sphinx_rtd_theme
 sphinxcontrib-plantuml
 
-# update this when pynml is on pypi
--e git+git@github-sc-p.corp.hp.com:TestingGroup/pynml.git@master#egg=pynml
+# Move to requirements.txt when available in PyPI
+-e git+git@github-sc-p.corp.hp.com:hpe-networking/pynml.git@master#egg=pynml
