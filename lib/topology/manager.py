@@ -35,7 +35,7 @@ from string import ascii_lowercase, digits
 from pynml.manager import ExtendedNMLManager
 
 from .platforms.base import BaseNode
-from .platforms.manager import platforms
+from .platforms.manager import platforms, DEFAULT_PLATFORM
 
 
 log = logging.getLogger(__name__)
@@ -94,7 +94,7 @@ class TopologyManager(object):
      See :func:`platforms` for how to get and discover available platforms.
     """
 
-    def __init__(self, engine='mininet', **kwargs):
+    def __init__(self, engine=DEFAULT_PLATFORM, **kwargs):
         self.nml = ExtendedNMLManager(**kwargs)
         self.engine = engine
         self.nodes = OrderedDict()

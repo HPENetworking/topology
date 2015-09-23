@@ -45,11 +45,10 @@ from __future__ import print_function, division
 import logging
 from traceback import format_exc
 
-from six import PY3
 from pytest import fixture, fail
 
 from ..manager import TopologyManager
-from ..platforms.manager import platforms
+from ..platforms.manager import platforms, DEFAULT_PLATFORM
 
 
 log = logging.getLogger(__name__)
@@ -66,13 +65,6 @@ def topology(request):
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
     engine = request.config.getoption('--engine-platform')
-
-    # FIXME: Someday mininet... someday... -__-
-    if PY3 and engine == 'mininet':
-        request.config._warn(
-            'Mininet does not support Python3, testing with engine "debug"'
-        )
-        engine = 'debug'
 
     module = request.module
     topomgr = TopologyManager(engine)
@@ -108,7 +100,7 @@ def pytest_addoption(parser):
     group = parser.getgroup('general')
     group.addoption(
         '--engine-platform',
-        default='mininet',
+        default=DEFAULT_PLATFORM,
         help='Select platform to run topology tests',
         choices=sorted(platforms())
     )

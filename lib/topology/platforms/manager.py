@@ -28,7 +28,9 @@ from __future__ import print_function, division
 import logging
 from inspect import isclass
 from traceback import format_exc
+from collections import OrderedDict
 
+from six import PY2
 from pkg_resources import iter_entry_points
 
 from .base import BasePlatform
@@ -68,10 +70,10 @@ def platforms(cache=True):
         return platforms.available
 
     # Add default plugin
-    available = {
-        'mininet': MininetPlatform,
-        'debug': DebugPlatform
-    }
+    available = OrderedDict()
+    if PY2:
+        available['mininet'] = MininetPlatform
+    available['debug'] = DebugPlatform
 
     # Iterate over entry points
     for ep in iter_entry_points(group='topology_platform_10'):
@@ -102,4 +104,10 @@ def platforms(cache=True):
     return available
 
 
-__all__ = ['platforms']
+DEFAULT_PLATFORM = list(platforms().keys())[0]
+"""
+Default engine platform.
+"""
+
+
+__all__ = ['platforms', 'DEFAULT_PLATFORM']
