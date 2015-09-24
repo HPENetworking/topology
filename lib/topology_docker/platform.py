@@ -100,7 +100,9 @@ class DockerPlatform(BasePlatform):
         command_template = """ \
             ip link add {intf_a} type veth peer name {intf_b}
             ip link set {intf_a} netns {netns_a}
-            ip link set {intf_b} netns {netns_b} \
+            ip netns exec {netns_a} ip link set dev {intf_a} up
+            ip link set {intf_b} netns {netns_b}
+            ip netns exec {netns_b} ip link set dev {intf_b} up\
             """
         commands = command_template.format(**locals())
 

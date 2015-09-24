@@ -140,26 +140,10 @@ def test_ping():
 
     check_call(
         shplit(
-            'docker exec s1 ifconfig s1p1 up'))
-
-    check_call(
-        shplit(
-            'docker exec s1 ifconfig s1p2 up'))
-
-    check_call(
-        shplit(
             'docker exec s2 ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up'))
     check_call(
         shplit(
             'docker exec s2 ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up'))
-
-    check_call(
-        shplit(
-            'docker exec s2 ifconfig s2p1 up'))
-
-    check_call(
-        shplit(
-            'docker exec s2 ifconfig s2p2 up'))
 
     check_call(
         shplit(
