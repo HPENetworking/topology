@@ -26,7 +26,7 @@ from os import getuid
 
 
 from pytest import mark
-from pynml import Node
+from pynml import Node, BidirectionalPort
 
 from topology_docker.platform import DockerPlatform
 
@@ -47,9 +47,9 @@ def test_build_topology():
 
     s1 = Node(identifier='s1', type='host')
     mn.add_node(s1)
+    p1 = BidirectionalPort(identifier='p1')
 
-    p1 = Node(identifier='p1')
-    p2 = Node(identifier='p2')
+    p2 = BidirectionalPort(identifier='p2')
 
     mn.add_bilink((hs1, p1), (s1, p2), None)
 
@@ -75,3 +75,112 @@ def test_build_topology():
     mn.destroy()
 
     assert '1 packets transmitted, 1 received' in str(ping_result)
+
+
+@mark.skipif(getuid() != 0, reason='Mininet requires root permissions')
+def test_ping():
+    """
+    Connect two host to a switch and ping h2 from h1
+
+    ::
+
+        +------+                               +------+
+        |      |     +------+     +------+     |      |
+        |  h1  <----->  s1  <----->  s2  <----->  h2  |
+        |      |     +------+     +------+     |      |
+        +------+                               +------+
+    """
+    mn = DockerPlatform(None, None)
+    mn.pre_build()
+
+    s1 = Node(identifier='s1', image='testimage')
+    mn.add_node(s1)
+
+    s2 = Node(identifier='s2', image='testimage')
+    mn.add_node(s2)
+
+    h1 = Node(identifier='h1', type='host')
+    mn.add_node(h1)
+
+    h2 = Node(identifier='h2', type='host')
+    mn.add_node(h2)
+
+    s1p1 = BidirectionalPort(identifier='s1p1')
+    s1p2 = BidirectionalPort(identifier='s1p2')
+
+    s2p1 = BidirectionalPort(identifier='s2p1')
+    s2p2 = BidirectionalPort(identifier='s2p2')
+
+    h1p1 = BidirectionalPort(identifier='h1p1')
+    h2p1 = BidirectionalPort(identifier='h2p1')
+
+    mn.add_bilink((s1, s1p1), (h1, h1p1), None)
+    mn.add_bilink((s1, s1p2), (s2, s2p1), None)
+    mn.add_bilink((s2, s2p2), (h2, h2p1), None)
+
+    mn.post_build()
+
+    # FIXME: change this for the node send_command
+    from subprocess import check_call, Popen, PIPE
+    from shlex import split as shplit
+
+    check_call(
+        shplit(
+            'docker exec h1 ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up'))
+    check_call(
+        shplit(
+            'docker exec h2 ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up'))
+
+    check_call(
+        shplit(
+            'docker exec s1 ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up'))
+    check_call(
+        shplit(
+            'docker exec s1 ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up'))
+
+    check_call(
+        shplit(
+            'docker exec s1 ifconfig s1p1 up'))
+
+    check_call(
+        shplit(
+            'docker exec s1 ifconfig s1p2 up'))
+
+    check_call(
+        shplit(
+            'docker exec s2 ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up'))
+    check_call(
+        shplit(
+            'docker exec s2 ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up'))
+
+    check_call(
+        shplit(
+            'docker exec s2 ifconfig s2p1 up'))
+
+    check_call(
+        shplit(
+            'docker exec s2 ifconfig s2p2 up'))
+
+    check_call(
+        shplit(
+            'docker exec s1 route add -net 10.0.30.0 netmask \
+            255.255.255.0 gw 10.0.20.2'))
+    check_call(
+        shplit(
+            'docker exec s2 route add -net 10.0.10.0 netmask \
+            255.255.255.0 gw 10.0.20.1'))
+
+    check_call(
+        shplit(
+            'docker exec h1 route add default gw 10.0.10.2'))
+    check_call(
+        shplit(
+            'docker exec h2 route add default gw 10.0.30.2'))
+
+    ping_result, err = Popen(
+        shplit('docker exec h1 ping -c 1 10.0.30.1'),
+        stdout=PIPE, stderr=PIPE).communicate()
+
+    mn.destroy()
+
+    assert '1 packets transmitted, 1 received' in ping_result
