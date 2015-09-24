@@ -57,4 +57,21 @@ def test_build_topology():
 
     mn.post_build()
 
-    # mn.destroy()
+    # FIXME: change this for the node send_command
+    from subprocess import check_call, Popen, PIPE
+    from shlex import split as shplit
+
+    check_call(
+        shplit(
+            'docker exec hs1 ifconfig p1 10.1.1.1 netmask 255.255.255.0 up'))
+
+    check_call(
+        shplit('docker exec s1 ifconfig p2 10.1.1.2 netmask 255.255.255.0 up'))
+
+    ping_result, err = Popen(
+        shplit('docker exec s1 ping -c 1 10.1.1.1'),
+        stdout=PIPE, stderr=PIPE).communicate()
+
+    assert '1 packets transmitted, 1 received' in ping_result
+
+    mn.destroy()
