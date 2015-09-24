@@ -44,6 +44,32 @@ log = logging.getLogger(__name__)
 IDENTIFIER = ascii_lowercase + digits + '_'
 
 
+def is_identifier(raw):
+    """
+    Check if a string is a identifier.
+
+    >>> is_identifier('a_abbc')
+    True
+    >>> is_identifier('Foo')
+    False
+    >>> is_identifier('1abc')
+    False
+    >>> is_identifier('a-abbc')
+    False
+    >>> is_identifier('BAR')
+    False
+
+    An identifier is any non empty string which letters are ascii
+    lowercase, digits or the underscore character, but needs to start with
+    a letter.
+    """
+    if not raw:
+        return False
+    if not raw[0] in ascii_lowercase:
+        return False
+    return all(l in IDENTIFIER for l in raw)
+
+
 class ParseException(Exception):
     """
     Custom exception thrown by the parser if it could succeded.
@@ -100,20 +126,6 @@ class TopologyManager(object):
         self.nodes = OrderedDict()
         self._platform = None
         self._built = False
-
-    def is_identifier(self, raw):
-        """
-        Check if a string is a identifier.
-
-        An identifier is any non empty string which letters are ascii
-        lowercase, digits or the underscore character, but needs to start with
-        a letter.
-        """
-        if not raw:
-            return False
-        if not raw[0] in ascii_lowercase:
-            return False
-        return all(l in IDENTIFIER for l in raw)
 
     def load(self, dictmeta):
         """
