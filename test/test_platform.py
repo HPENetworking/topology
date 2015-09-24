@@ -72,6 +72,6 @@ def test_build_topology():
         shplit('docker exec s1 ping -c 1 10.1.1.1'),
         stdout=PIPE, stderr=PIPE).communicate()
 
-    assert '1 packets transmitted, 1 received' in ping_result
-
     mn.destroy()
+
+    assert '1 packets transmitted, 1 received' in str(ping_result)
