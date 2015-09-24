@@ -66,20 +66,27 @@ class TopologyPlugin(object):
     :param plot_format platform: Format to plot the topologies.
     """
 
-    def __init__(self, platform, plot_dir, plot_format):
+    def __init__(self, platform, plot_dir, plot_format, nml_dir):
         self.platform = platform
         self.plot_dir = plot_dir
         self.plot_format = plot_format
+        self.nml_dir = nml_dir
 
     def pytest_report_header(self, config):
         """
         pytest hook to print information of the report header.
         """
-        if not self.plot_dir:
-            return "topology: platform='{}'".format(self.platform)
-        return "topology: platform='{}' plot_dir='{}' ({})".format(
-            self.platform, self.plot_dir, self.plot_format
-        )
+        header = ["topology: platform='{}'".format(self.platform)]
+        if self.plot_dir:
+            header.append("          plot_dir='{}' ({})".format(
+                self.plot_dir, self.plot_format
+            ))
+        if self.nml_dir:
+            header.append("          nml_dir='{}'".format(
+                self.nml_dir
+            ))
+
+        return '\n'.join(header)
 
 
 @fixture(scope='module')
@@ -98,17 +105,29 @@ def topology(request):
 
     # Finalizer unbuild the topology and plot it
     def finalizer():
+
+        # Do nothing is topology isn't built
         if not topomgr.is_built():
             return
 
+        # Plot topology
         if plugin.plot_dir:
             plot_file = join(
                 plugin.plot_dir,
                 '{}.{}'.format(module.__name__, plugin.plot_format)
             )
             topomgr.nml.save_graphviz(
-                plot_file,
-                keep_gv=True
+                plot_file, keep_gv=True
+            )
+
+        # Export topology as NML
+        if plugin.nml_dir:
+            nml_file = join(
+                plugin.nml_dir,
+                '{}.xml'.format(module.__name__)
+            )
+            topomgr.nml.save_nml(
+                nml_file, pretty=True
             )
 
         topomgr.unbuild()
@@ -150,13 +169,18 @@ def pytest_addoption(parser):
     )
     group.addoption(
         '--topology-plot-dir',
-        default='',
+        default=None,
         help='Directory to auto-plot topologies'
     )
     group.addoption(
         '--topology-plot-format',
         default='svg',
         help='Format for ploting topologies'
+    )
+    group.addoption(
+        '--topology-nml-dir',
+        default=None,
+        help='Directory to export topologies as NML XML'
     )
 
 
@@ -168,6 +192,7 @@ def pytest_configure(config):
     platform = config.getoption('--topology-platform')
     plot_format = config.getoption('--topology-plot-format')
     plot_dir = config.getoption('--topology-plot-dir')
+    nml_dir = config.getoption('--topology-nml-dir')
 
     # Determine plot directory and create it if required
     if plot_dir:
@@ -176,9 +201,16 @@ def pytest_configure(config):
         if not exists(plot_dir):
             makedirs(plot_dir)
 
+    # Determine NML export directory and create it if required
+    if nml_dir:
+        if not isabs(nml_dir):
+            nml_dir = join(abspath(getcwd()), nml_dir)
+        if not exists(nml_dir):
+            makedirs(nml_dir)
+
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(
-        platform, plot_dir, plot_format.lstrip('.')
+        platform, plot_dir, plot_format.lstrip('.'), nml_dir
     )
     config.pluginmanager.register(config._topology_plugin)
 
