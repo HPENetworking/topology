@@ -1,0 +1,11 @@
+{
+    "author": "Hewlett Packard Enterprise Development LP",
+    "email": "asicapi@hp.com",
+    "repo_url": "https://github-sc-p.corp.hp.com/hpe-networking/topology",
+    "doc_url": "https://github-sc-p.corp.hp.com/hpe-networking/topology",
+    "project_name": "Network Topology Framework",
+    "repo_name": "topology",
+    "short_description": "Network Topology Framework using NML, with support for pytest.",
+    "year": "2015",
+    "version": "0.1.0"
+}

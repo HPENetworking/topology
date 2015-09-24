@@ -280,11 +280,14 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (
-        master_doc, 'topology',
+        master_doc,
+        'topology',
         'Network Topology Framework Documentation',
         author,
         'topology',
-        'Network Topology Framework using NML, with support for pytest.',
+        (
+            'Network Topology Framework using NML, with support for pytest.'
+        ),
         'Miscellaneous'
     ),
 ]
