@@ -1,0 +1,4 @@
+include README.rst LICENSE
+include requirements.txt
+exclude test/*
+global-exclude __pycache__ *.py[co]
