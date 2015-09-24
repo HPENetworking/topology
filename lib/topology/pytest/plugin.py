@@ -31,8 +31,8 @@ prefer to build the topology using the standard NML objects with the
 :class:`pynml.manager.NMLManager` instance enbeed into the
 :class:`topology.manager.TopologyManager`.
 
-To be able to select the engine platform this plugins registers the ``--engine-
-platform`` option that can be set in pytest command line.
+To be able to select the engine platform this plugins registers the
+``--topology-platform`` option that can be set in pytest command line.
 
 For reference see:
 
@@ -43,7 +43,9 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from os import getcwd, makedirs
 from traceback import format_exc
+from os.path import join, abspath, exists
 
 from pytest import fixture, fail
 
@@ -52,6 +54,32 @@ from ..platforms.manager import platforms, DEFAULT_PLATFORM
 
 
 log = logging.getLogger(__name__)
+
+
+class TopologyPlugin(object):
+    """
+    pytest plugin for Topology.
+
+    :param str platform: Engine platform name to run the tests with.
+    :param plot_dir platform: Directory to auto-plot topologies. ``None`` if
+     feature is disabled.
+    :param plot_format platform: Format to plot the topologies.
+    """
+
+    def __init__(self, platform, plot_dir, plot_format):
+        self.platform = platform
+        self.plot_dir = plot_dir
+        self.plot_format = plot_format
+
+    def pytest_report_header(self, config):
+        """
+        pytest hook to print information of the report header.
+        """
+        if not self.plot_dir:
+            return "topology: platform='{}'".format(self.platform)
+        return "topology: platform='{}' plot='{}' ({})".format(
+            self.platform, self.plot_dir, self.plot_format
+        )
 
 
 @fixture(scope='module')
@@ -64,10 +92,26 @@ def topology(request):
     - https://pytest.org/latest/fixture.html
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
-    engine = request.config.getoption('--engine-platform')
-
+    plugin = request.config._topology_plugin
     module = request.module
-    topomgr = TopologyManager(engine)
+    topomgr = TopologyManager(plugin.platform)
+
+    # Finalizer unbuild the topology and plot it
+    def finalizer():
+        if not topomgr.is_built():
+            return
+
+        if plugin.plot_dir:
+            plot_file = join(
+                plugin.plot_dir,
+                '{}.{}'.format(module.__name__, plugin.plot_format)
+            )
+            topomgr.nml.save_graphviz(
+                plot_file,
+                keep_gv=True
+            )
+
+        topomgr.unbuild()
 
     # Autobuild topology if available.
     if hasattr(module, 'TOPOLOGY'):
@@ -88,7 +132,7 @@ def topology(request):
                 ), pytrace=False
             )
 
-        request.addfinalizer(topomgr.unbuild)
+        request.addfinalizer(finalizer)
 
     return topomgr
 
@@ -97,13 +141,59 @@ def pytest_addoption(parser):
     """
     pytest hook to add CLI arguments.
     """
-    group = parser.getgroup('general')
+    group = parser.getgroup('topology', 'Testing of network topologies')
     group.addoption(
-        '--engine-platform',
+        '--topology-platform',
         default=DEFAULT_PLATFORM,
         help='Select platform to run topology tests',
         choices=sorted(platforms())
     )
+    group.addoption(
+        '--topology-plot',
+        default=False,
+        action='store_true',
+        help='Auto-plot topologies'
+    )
+    group.addoption(
+        '--topology-plot-format',
+        default='svg',
+        help='Format for ploting topologies'
+    )
 
 
-__all__ = ['topology', 'pytest_addoption']
+def pytest_configure(config):
+    """
+    pytest hook to configure plugin.
+    """
+    platform = config.getoption('--topology-platform')
+    format = config.getoption('--topology-plot-format')
+    plot = config.getoption('--topology-plot')
+
+    plot_dir = None
+    if plot:
+        plot_dir = join(abspath(getcwd()), 'topologies')
+        if not exists(plot_dir):
+            makedirs(plot_dir)
+
+    config._topology_plugin = TopologyPlugin(
+        platform, plot_dir, format.lstrip('.')
+    )
+    config.pluginmanager.register(config._topology_plugin)
+
+
+def pytest_unconfigure(config):
+    """
+    pytest hook to unconfigure plugin.
+    """
+    plugin = getattr(config, '_topology_plugin', None)
+    if plugin:
+        del config._topology_plugin
+        config.pluginmanager.unregister(plugin)
+
+
+__all__ = [
+    'TopologyPlugin',
+    'topology',
+    'pytest_addoption',
+    'pytest_configure'
+]

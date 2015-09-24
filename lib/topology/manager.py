@@ -99,6 +99,7 @@ class TopologyManager(object):
         self.engine = engine
         self.nodes = OrderedDict()
         self._platform = None
+        self._built = False
 
     def is_identifier(self, raw):
         """
@@ -341,6 +342,15 @@ class TopologyManager(object):
 
         return data
 
+    def is_built(self):
+        """
+        Check if the current topology was built.
+
+        :rtype: bool
+        :return: True if the topology was succesfully built.
+        """
+        return self._built
+
     def build(self):
         """
         Build the topology hold by this manager.
@@ -377,6 +387,8 @@ class TopologyManager(object):
 
         self._platform.post_build()
 
+        self._built = True
+
     def unbuild(self):
         """
         Undo the topology.
@@ -384,7 +396,7 @@ class TopologyManager(object):
         This removes all references to the engine nodes and request the
         platform to destroy the topology.
         """
-        if self._platform is None:
+        if not self._built:
             raise RuntimeError(
                 'You cannot unbuild and never built topology.'
             )
