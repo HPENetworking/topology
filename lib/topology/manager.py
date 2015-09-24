@@ -32,7 +32,7 @@ from collections import OrderedDict
 
 from pynml.manager import ExtendedNMLManager
 
-from .parse import parse_txtmeta
+from .parser import parse_txtmeta
 from .platforms.base import BaseNode
 from .platforms.manager import platforms, DEFAULT_PLATFORM
 
