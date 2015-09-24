@@ -16,7 +16,7 @@
 # under the License.
 
 """
-This module extends from mininet Node class with Docker support.
+Docker engine platform module for topology.
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 
 class DockerPlatform(BasePlatform):
     """
-    Plugin to build a topology on Mininet.
+    Plugin to build a topology using Docker.
 
     See :class:`topology.platforms.base.BasePlatform` for more information.
     """
@@ -76,7 +76,7 @@ class DockerPlatform(BasePlatform):
     def add_biport(self, node, biport):
         """
         See :meth:`BasePlatform.add_biport` for more information.
-        FIXME: find a way to create a port on mininet-ovs.
+        FIXME: add port using TUN tap
         """
         mn_node = self.nmlnode_node_map[node.identifier]
         port_number = len(mn_node._nmlport_port_map) + 1
@@ -109,15 +109,11 @@ class DockerPlatform(BasePlatform):
 
     def post_build(self):
         """
-        Starts the mininet platform.
-
         See :meth:`BasePlatform.post_build` for more information.
         """
 
     def destroy(self):
         """
-        Stops the mininet platform.
-
         See :meth:`BasePlatform.destroy` for more information.
         """
         for enode in self.nmlnode_node_map.values():
@@ -177,10 +173,16 @@ class DockerNode(CommonNode):
             check_call(shplit(command.lstrip()))
 
     def start(self):
+        """
+        Start the docker node and configures a netns for it.
+        """
         self._client.start(self._container_id)
         self._create_netns()
 
     def stop(self):
+        """
+        Stop docker container and remove its netns
+        """
         self._client.stop(self._container_id)
         self._client.wait(self._container_id)
         self._client.remove_container(self._container_id)
