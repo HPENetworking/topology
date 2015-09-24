@@ -228,9 +228,11 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'topology.tex',
-     u'Network Topology Framework Documentation',
-     u'Hewlett Packard Enterprise Development LP', 'manual'),
+    (
+        'index', 'topology.tex',
+        'Network Topology Framework Documentation',
+        'Hewlett Packard Enterprise Development LP', 'manual'
+    ),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -262,7 +264,7 @@ man_pages = [
     (
         'index',
         'topology',
-        u'Network Topology Framework Documentation',
+        'Network Topology Framework Documentation',
         [author], 1
     ),
 ]
@@ -279,10 +281,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc, 'topology',
-        u'Network Topology Framework Documentation',
+        'Network Topology Framework Documentation',
         author,
         'topology',
-        u'Network Topology Framework using NML, with support for pytest.',
+        'Network Topology Framework using NML, with support for pytest.',
         'Miscellaneous'
     ),
 ]
@@ -298,6 +300,7 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
 
 # Add style overrides
 def setup(app):
