@@ -45,7 +45,7 @@ from __future__ import print_function, division
 import logging
 from os import getcwd, makedirs
 from traceback import format_exc
-from os.path import join, abspath, exists
+from os.path import join, isabs, abspath, exists
 
 from pytest import fixture, fail
 
@@ -77,7 +77,7 @@ class TopologyPlugin(object):
         """
         if not self.plot_dir:
             return "topology: platform='{}'".format(self.platform)
-        return "topology: platform='{}' plot='{}' ({})".format(
+        return "topology: platform='{}' plot_dir='{}' ({})".format(
             self.platform, self.plot_dir, self.plot_format
         )
 
@@ -149,10 +149,9 @@ def pytest_addoption(parser):
         choices=sorted(platforms())
     )
     group.addoption(
-        '--topology-plot',
-        default=False,
-        action='store_true',
-        help='Auto-plot topologies'
+        '--topology-plot-dir',
+        default='',
+        help='Directory to auto-plot topologies'
     )
     group.addoption(
         '--topology-plot-format',
@@ -165,20 +164,29 @@ def pytest_configure(config):
     """
     pytest hook to configure plugin.
     """
+    # Get registered options
     platform = config.getoption('--topology-platform')
-    format = config.getoption('--topology-plot-format')
-    plot = config.getoption('--topology-plot')
+    plot_format = config.getoption('--topology-plot-format')
+    plot_dir = config.getoption('--topology-plot-dir')
 
-    plot_dir = None
-    if plot:
-        plot_dir = join(abspath(getcwd()), 'topologies')
+    # Determine plot directory and create it if required
+    if plot_dir:
+        if not isabs(plot_dir):
+            plot_dir = join(abspath(getcwd()), plot_dir)
         if not exists(plot_dir):
             makedirs(plot_dir)
 
+    # Create and register plugin
     config._topology_plugin = TopologyPlugin(
-        platform, plot_dir, format.lstrip('.')
+        platform, plot_dir, plot_format.lstrip('.')
     )
     config.pluginmanager.register(config._topology_plugin)
+
+    # Add test_id marker
+    config.addinivalue_line(
+        'markers',
+        'test_id(id): assign a test identifier to the test'
+    )
 
 
 def pytest_unconfigure(config):
@@ -189,6 +197,24 @@ def pytest_unconfigure(config):
     if plugin:
         del config._topology_plugin
         config.pluginmanager.unregister(plugin)
+
+
+def pytest_runtest_setup(item):
+    """
+    pytest hook to setup test before run.
+    """
+    marker = item.get_marker('test_id')
+
+    # If not marked do nothing
+    if marker is None:
+        return
+
+    # If xml output is not enabled do nothing
+    if not hasattr(item.config, '_xml'):
+        return
+
+    test_id = marker.args[0]
+    item.config._xml.add_custom_property('test_id', test_id)
 
 
 __all__ = [
