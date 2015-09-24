@@ -47,7 +47,7 @@ from os import getcwd, makedirs
 from traceback import format_exc
 from os.path import join, isabs, abspath, exists
 
-from pytest import fixture, fail
+from pytest import fixture, fail, hookimpl
 
 from ..manager import TopologyManager
 from ..platforms.manager import platforms, DEFAULT_PLATFORM
@@ -199,6 +199,7 @@ def pytest_unconfigure(config):
         config.pluginmanager.unregister(plugin)
 
 
+@hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
     """
     pytest hook to setup test before run.

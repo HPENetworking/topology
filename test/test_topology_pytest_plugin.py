@@ -24,7 +24,7 @@ See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pytest import config
+from pytest import config, mark
 
 from topology.manager import TopologyManager
 
@@ -42,6 +42,7 @@ sw1: -- hs1
 """
 
 
+@mark.test_id(1000)
 def test_build(topology):
     """
     Test automatic build and unbuild of the topology using pytest plugin.
@@ -51,3 +52,23 @@ def test_build(topology):
     assert topology.get('sw1') is not None
     assert topology.get('hs1') is not None
     assert topology.get('hs2') is not None
+
+
+@mark.test_id(1001)
+@mark.skipif(True, reason='This test must always skip')
+def test_skipped_test_id():
+    """
+    This test must be skipped always, it allows to test if a test_id is always
+    recorded even when the test is skipped.
+    """
+    assert False
+
+
+@mark.skipif(not hasattr(config, '_xml'), reason='This test must always skip')
+def test_previous_has_test_id():
+    """
+    Test that previous test recorded the test_id.
+    """
+    assert hasattr(config, '_xml')
+    xml = str(config._xml.tests[-2])
+    assert '<property name="test_id" value="1001"/>' in xml
