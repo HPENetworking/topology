@@ -31,7 +31,6 @@ from shlex import split as shplit
 
 from topology.platforms.base import BasePlatform, CommonNode
 
-
 log = logging.getLogger(__name__)
 
 
@@ -67,6 +66,9 @@ class DockerPlatform(BasePlatform):
             enode = DockerHost(str(node.identifier), image=image)
         else:
             raise Exception('Unsupported type {}'.format(node_type))
+
+        # FIXME: consider moving start to post_build
+        enode.start()
 
         self.nmlnode_node_map[node.identifier] = enode
         return enode
@@ -154,10 +156,6 @@ class DockerNode(CommonNode):
             )
         )['Id']
 
-        self._client.start(self._container_id)
-
-        self._create_netns()
-
         super(DockerNode, self).__init__(name, **kwargs)
 
     def _create_netns(self):
@@ -178,11 +176,14 @@ class DockerNode(CommonNode):
         for command in commands.splitlines():
             check_call(shplit(command.lstrip()))
 
+    def start(self):
+        self._client.start(self._container_id)
+        self._create_netns()
+
     def stop(self):
         self._client.stop(self._container_id)
         self._client.wait(self._container_id)
-        # FIXME: remove container
-        # self._client.remove_container(self._container_id, force=True)
+        self._client.remove_container(self._container_id)
 
         # remove netns
         command_template = "ip netns del {self.name}"
