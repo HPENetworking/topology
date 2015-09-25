@@ -170,8 +170,14 @@ def parse_nodes(line, raw_line, lineno):
         attributes = parse_attrs(attrs_part, raw_line, lineno)
 
     nodes = nodes_part.split()
-    nodes_set = set(nodes)
 
+    invalid_ids = [not is_identifier(n) for n in nodes]
+    if any(invalid_ids):
+        raise Exception(
+            'Invalid identifiers {}'.format(', '.join(invalid_ids))
+        )
+
+    nodes_set = set(nodes)
     if len(nodes) != len(nodes_set):
         log.warning(
             'Repeated node names in line #{}: "{}"'.format(
