@@ -92,10 +92,10 @@ class DockerPlatform(BasePlatform):
         """
         enode_a = self.nmlnode_node_map[
             nodeport_a[0].identifier]
-        netns_a = enode_a.name
+        netns_a = enode_a.identifier
         enode_b = self.nmlnode_node_map[
             nodeport_b[0].identifier]
-        netns_b = enode_b.name
+        netns_b = enode_b.identifier
 
         intf_a = nodeport_a[1].identifier
         intf_b = nodeport_b[1].identifier
@@ -135,45 +135,39 @@ class DockerPlatform(BasePlatform):
 
 
 class DockerNode(CommonNode):
-
     """
     An instance of this class will create a detached Docker container.
 
-    :param str name: The name of the node.
+    :param str identifier: The unique identifier of the node.
     :param str image: The image to run on this node.
     :param str command: The command to run when the container is brought up.
     """
 
-    def __init__(self, name, image='ubuntu', command='bash', **kwargs):
-        if name is None:
-            name = str(id(self))
+    def __init__(self, identifier, image='ubuntu', command='bash', **kwargs):
 
-        self.name = name
         self._image = image
         self._command = command
         self._client = Client()
         self._container_id = self._client.create_container(
             image=self._image,
             command=self._command,
-            name=name,
+            name=identifier,
             detach=True,
             tty=True,
             host_config=self._client.create_host_config(
                 privileged=True,     # Container is given access to all devices
                 network_mode='none'  # Avoid connecting to host bridge,
                                      # usually docker0
-
             )
         )['Id']
 
         self._bash = spawn(
-            'docker exec -i -t {} bash'.format(name)
+            'docker exec -i -t {} bash'.format(identifier)
         )
 
         self._port_status = {}
 
-        super(DockerNode, self).__init__(name, **kwargs)
-        self._shells['bash'] = self.bash
+        super(DockerNode, self).__init__(identifier, **kwargs)
 
     def add_port(self, port):
         """
@@ -198,7 +192,7 @@ class DockerNode(CommonNode):
         for port, status in self._port_status.items():
             if status == 'down':
                 self.send_command(
-                    command_template.format(name=self.name, port=port))
+                    command_template.format(port=port))
                 self._port_status[port] = 'up'
 
     def _create_netns(self):
@@ -208,11 +202,10 @@ class DockerNode(CommonNode):
         """
         pid = self._client.inspect_container(
             self._container_id)['State']['Pid']
-        name = self.name
 
         command_template = """ \
             mkdir -p /var/run/netns
-            ln -s /proc/{pid}/ns/net /var/run/netns/{name} \
+            ln -s /proc/{pid}/ns/net /var/run/netns/{self.identifier} \
             """
         commands = command_template.format(**locals())
 
@@ -220,6 +213,9 @@ class DockerNode(CommonNode):
             check_call(shplit(command.lstrip()))
 
     def bash(self, command):
+        """
+        FIXME: Document.
+        """
         self._bash.sendline(command)
         time.sleep(0.2)
         # Without this sleep, the content of self._bash.after is truncated
@@ -246,20 +242,28 @@ class DockerNode(CommonNode):
         self._client.remove_container(self._container_id)
 
         # remove netns
-        command_template = "ip netns del {self.name}"
+        command_template = "ip netns del {self.identifier}"
         command = command_template.format(**locals())
         check_call(shplit(command))
 
 
 class DockerSwitch(DockerNode):
+    """
+    FIXME: Document.
+    """
+
     def __init__(self, name, image='ubuntu', command='bash', **kwargs):
         super(DockerSwitch, self).__init__(name, image, command, **kwargs)
         self._vtysh = spawn(
             'docker exec -i -t {} vtysh'.format(name)
         )
         self._shells['vtysh'] = self.vtysh
+        self._shells['bash'] = self.bash
 
     def vtysh(self, command):
+        """
+        FIXME: Document.
+        """
         self._vtysh.sendline(command)
         time.sleep(0.2)  # FIXME: Find out minimal value that passes 100 tests.
         self._vtysh.expect('.*#')  # FIXME: Add a proper regex.
@@ -267,7 +271,13 @@ class DockerSwitch(DockerNode):
 
 
 class DockerHost(DockerNode):
-    pass
+    """
+    FIXME: Document.
+    """
+
+    def __init__(self, name, image='ubuntu', command='bash', **kwargs):
+        super(DockerHost, self).__init__(name, image, command, **kwargs)
+        self._shells['bash'] = self.bash
 
 
 __all__ = ['DockerHost', 'DockerSwitch']
