@@ -193,13 +193,12 @@ class DockerNode(CommonNode):
         Iterates the node port list and create a tuntap interface for each
         port that was added but not linked.
         """
-        # FIXME: use send_command.
         command_template = \
-            'docker exec {name} ip tuntap add dev {port} mode tap'
+            'ip tuntap add dev {port} mode tap'
         for port, status in self._port_status.items():
             if status == 'down':
-                check_call(shplit(
-                    command_template.format(name=self.name, port=port)))
+                self.send_command(
+                    command_template.format(name=self.name, port=port))
                 self._port_status[port] = 'up'
 
     def _create_netns(self):

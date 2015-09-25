@@ -40,7 +40,7 @@ def test_add_port():
     topo.pre_build()
 
     hs1 = Node(identifier='hs1', type='host')
-    topo.add_node(hs1)
+    topo_hs1 = topo.add_node(hs1)
     assert topo.nmlnode_node_map[hs1.identifier] is not None
 
     # Add ports
@@ -56,13 +56,7 @@ def test_add_port():
 
     topo.post_build()
 
-    # FIXME: change this for the node send_command
-    from subprocess import Popen, PIPE
-    from shlex import split as shplit
-
-    result, err = Popen(
-        shplit('docker exec hs1 ip link list'),
-        stdout=PIPE, stderr=PIPE).communicate()
+    result = topo_hs1.send_command('ip link list')
 
     topo.destroy()
 
@@ -115,42 +109,33 @@ def test_build_topology():
     Builds (and destroys) a basic topology consisting in one switch and one
     host
     """
-    mn = DockerPlatform(None, None)
-    mn.pre_build()
+    topo = DockerPlatform(None, None)
+    topo.pre_build()
 
     hs1 = Node(identifier='hs1', type='host')
-    mn.add_node(hs1)
+    topo_hs1 = topo.add_node(hs1)
 
-    assert mn.nmlnode_node_map[hs1.identifier] is not None
+    assert topo.nmlnode_node_map[hs1.identifier] is not None
 
     s1 = Node(identifier='s1', type='host')
-    mn.add_node(s1)
+    topo_s1 = topo.add_node(s1)
     p1 = BidirectionalPort(identifier='p1')
 
     p2 = BidirectionalPort(identifier='p2')
 
-    mn.add_bilink((hs1, p1), (s1, p2), None)
+    topo.add_bilink((hs1, p1), (s1, p2), None)
 
-    assert mn.nmlnode_node_map[hs1.identifier] is not None
+    assert topo.nmlnode_node_map[hs1.identifier] is not None
 
-    mn.post_build()
+    topo.post_build()
 
-    # FIXME: change this for the node send_command
-    from subprocess import check_call, Popen, PIPE
-    from shlex import split as shplit
+    topo_hs1.send_command('ifconfig p1 10.1.1.1 netmask 255.255.255.0 up')
 
-    check_call(
-        shplit(
-            'docker exec hs1 ifconfig p1 10.1.1.1 netmask 255.255.255.0 up'))
+    topo_s1.send_command('ifconfig p2 10.1.1.2 netmask 255.255.255.0 up')
 
-    check_call(
-        shplit('docker exec s1 ifconfig p2 10.1.1.2 netmask 255.255.255.0 up'))
+    ping_result = topo_s1.send_command('ping -c 1 10.1.1.1')
 
-    ping_result, err = Popen(
-        shplit('docker exec s1 ping -c 1 10.1.1.1'),
-        stdout=PIPE, stderr=PIPE).communicate()
-
-    mn.destroy()
+    topo.destroy()
 
     assert '1 packets transmitted, 1 received' in str(ping_result)
 
@@ -172,16 +157,16 @@ def test_ping():
     mn.pre_build()
 
     s1 = Node(identifier='s1', image='testimage')
-    mn.add_node(s1)
+    topo_s1 = mn.add_node(s1)
 
     s2 = Node(identifier='s2', image='testimage')
-    mn.add_node(s2)
+    topo_s2 = mn.add_node(s2)
 
     h1 = Node(identifier='h1', type='host')
-    mn.add_node(h1)
+    topo_h1 = mn.add_node(h1)
 
     h2 = Node(identifier='h2', type='host')
-    mn.add_node(h2)
+    topo_h2 = mn.add_node(h2)
 
     s1p1 = BidirectionalPort(identifier='s1p1')
     s1p2 = BidirectionalPort(identifier='s1p2')
@@ -198,50 +183,24 @@ def test_ping():
 
     mn.post_build()
 
-    # FIXME: change this for the node send_command
-    from subprocess import check_call, Popen, PIPE
-    from shlex import split as shplit
+    topo_h1.send_command('ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up')
+    topo_h2.send_command('ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up')
 
-    check_call(
-        shplit(
-            'docker exec h1 ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up'))
-    check_call(
-        shplit(
-            'docker exec h2 ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up'))
+    topo_s1.send_command('ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up')
+    topo_s1.send_command('ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up')
 
-    check_call(
-        shplit(
-            'docker exec s1 ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up'))
-    check_call(
-        shplit(
-            'docker exec s1 ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up'))
+    topo_s2.send_command('ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up')
+    topo_s2.send_command('ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up')
 
-    check_call(
-        shplit(
-            'docker exec s2 ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up'))
-    check_call(
-        shplit(
-            'docker exec s2 ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up'))
+    topo_s1.send_command(
+        'route add -net 10.0.30.0 netmask 255.255.255.0 gw 10.0.20.2')
+    topo_s2.send_command(
+        'route add -net 10.0.10.0 netmask 255.255.255.0 gw 10.0.20.1')
 
-    check_call(
-        shplit(
-            'docker exec s1 route add -net 10.0.30.0 netmask \
-            255.255.255.0 gw 10.0.20.2'))
-    check_call(
-        shplit(
-            'docker exec s2 route add -net 10.0.10.0 netmask \
-            255.255.255.0 gw 10.0.20.1'))
+    topo_h1.send_command('route add default gw 10.0.10.2')
+    topo_h2.send_command('route add default gw 10.0.30.2')
 
-    check_call(
-        shplit(
-            'docker exec h1 route add default gw 10.0.10.2'))
-    check_call(
-        shplit(
-            'docker exec h2 route add default gw 10.0.30.2'))
-
-    ping_result, err = Popen(
-        shplit('docker exec h1 ping -c 1 10.0.30.1'),
-        stdout=PIPE, stderr=PIPE).communicate()
+    ping_result = topo_h1.send_command('ping -c 1 10.0.30.1')
 
     mn.destroy()
 
