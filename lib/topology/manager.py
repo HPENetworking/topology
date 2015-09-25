@@ -121,9 +121,9 @@ class TopologyManager(object):
             endpoints = [None, None]
             for idx, (node_id, port) in enumerate(link_spec['endpoints']):
 
-                # FIXME: Implement auto creation features
+                # Auto-create nodes
                 if node_id not in self.nml.namespace:
-                    raise NotImplementedError('Auto-node feature is missing')
+                    self.nml.create_node(identifier=node_id)
 
                 # FIXME: Implement auto creation features
                 if port is None:
@@ -131,7 +131,9 @@ class TopologyManager(object):
 
                 node = self.nml.get_object(node_id)
                 identifier = node_id + '_p{}'.format(port)
-                biport = self.nml.create_biport(node, identifier=identifier)
+                biport = self.nml.create_biport(
+                    node, identifier=identifier, port_number=port
+                )
 
                 # Register endpoint
                 endpoints[idx] = biport
