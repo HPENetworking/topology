@@ -31,14 +31,15 @@ from topology.manager import TopologyManager
 
 TOPOLOGY = """
 # Nodes
-[shell=vtysh] sw1 sw2
-[type=host] hs1
-hs2
+[shell=vtysh name="Switch 1"] sw1
+[shell=vtysh name="Switch 2"]sw2
+[type=host name="Host 1"] hs1
+[type=host name="Host 2"] hs2
 
 # Links
-sw1:1 -- hs1:1
-sw1: -- hs1
-[attr1=1] sw1:4 -- hs2
+hs1:1 -- sw1:1
+hs2:1 -- sw2:1
+[attr1=1] sw1:2 -- sw2:2
 """
 
 
@@ -50,6 +51,7 @@ def test_build(topology):
     assert config.pluginmanager.getplugin('topology')
     assert isinstance(topology, TopologyManager)
     assert topology.get('sw1') is not None
+    assert topology.get('sw2') is not None
     assert topology.get('hs1') is not None
     assert topology.get('hs2') is not None
 

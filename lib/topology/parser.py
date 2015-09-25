@@ -53,6 +53,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from shlex import split as shsplit
 from traceback import format_exc
 from collections import OrderedDict
 from string import ascii_lowercase, digits
@@ -123,7 +124,7 @@ def parse_attrs(subline, raw_line, lineno):
     """
     attrs = OrderedDict()
 
-    attrs_parts = subline.replace('[', '', 1).split()
+    attrs_parts = shsplit(subline.replace('[', '', 1))
     for part in attrs_parts:
 
         key, value = [p.strip() for p in part.split('=')]
@@ -253,6 +254,14 @@ def parse_link(line, raw_line, lineno):
 
 
 def parse_txtmeta(txtmeta):
+    """
+    Parse a textual description of a topology and return a dictionary of it's
+    elements.
+
+    :param str txtmeta: The textual meta-description of the topology.
+    :rtype: dict
+    :return: Topology as dictionary.
+    """
     # Parse txtmeta
     data = {
         'nodes': [],

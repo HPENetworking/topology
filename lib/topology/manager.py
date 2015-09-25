@@ -27,6 +27,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from copy import deepcopy
 from datetime import datetime
 from collections import OrderedDict
 
@@ -80,26 +81,71 @@ class TopologyManager(object):
 
     def load(self, dictmeta):
         """
-        FIXME write some documentation.
+        Load a topology description in a dictionary format.
 
-        FIXME actualy read the dictmeta and load the topology
-        FIXME Specify dictionary format
+        Dictionary format:
+
+        ::
+
+            {
+                'nodes': [
+                    {
+                        'nodes': ('sw1', 'hs1'),
+                        'attributes': {...}
+                    },
+                ],
+                'links': [
+                    {
+                        'endpoints': (('sw1', 1), ('hs1', 1)),
+                        'attributes': {...}
+                    },
+                ]
+            }
+
+        See also the module :mod:`topology.parser`.
+
+        :param dict dictmeta: The dictionary to load the topology from.
         """
-        print('*' * 79)
-        print(dictmeta)
-
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
             attributes = nodes_spec['attributes']
             for node_id in nodes_spec['nodes']:
-                self.nml.create_node(identifier=node_id, **attributes)
+                self.nml.create_node(
+                    identifier=node_id, **attributes
+                )
+
+        # Load links
+        for link_spec in dictmeta.get('links', []):
+
+            # Create biports
+            endpoints = [None, None]
+            for idx, (node_id, port) in enumerate(link_spec['endpoints']):
+
+                # FIXME: Implement auto creation features
+                if node_id not in self.nml.namespace:
+                    raise NotImplementedError('Auto-node feature is missing')
+
+                # FIXME: Implement auto creation features
+                if port is None:
+                    raise NotImplementedError('Auto-port feature is missing')
+
+                node = self.nml.get_object(node_id)
+                identifier = node_id + '_p{}'.format(port)
+                biport = self.nml.create_biport(node, identifier=identifier)
+
+                # Register endpoint
+                endpoints[idx] = biport
+
+            # Create links
+            attrs = deepcopy(link_spec['attributes'])
+            self.nml.create_bilink(*endpoints, **attrs)
 
     def parse(self, txtmeta, load=True):
         """
         Parse a textual topology meta-description.
 
         For a description of the textual format see the module
-        :module:`topology.parser`.
+        :mod:`topology.parser`.
         """
         data = parse_txtmeta(txtmeta)
         if load:
