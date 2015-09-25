@@ -22,13 +22,16 @@ Test suite for module docker platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import getuid
+from os import getuid, environ
 
 
 from pytest import mark
 from pynml import Node, BidirectionalPort
 
 from topology_docker.platform import DockerPlatform
+
+
+OPS_IMAGE = environ.get('OPS_IMAGE', 'ops:latest')
 
 
 @mark.skipif(getuid() != 0, reason='Requires root permissions')
@@ -94,7 +97,7 @@ def test_vtysh():
     topo.pre_build()
 
     nml_host = Node(
-        identifier='nml_host2', type='switch', image='8d94755a1882'
+        identifier='nml_host2', type='switch', image=OPS_IMAGE
     )
     host = topo.add_node(nml_host)
 
@@ -160,10 +163,10 @@ def test_ping():
     topo = DockerPlatform(None, None)
     topo.pre_build()
 
-    s1 = Node(identifier='s1', image='8d94755a1882')
+    s1 = Node(identifier='s1', image=OPS_IMAGE)
     topo_s1 = topo.add_node(s1)
 
-    s2 = Node(identifier='s2', image='8d94755a1882')
+    s2 = Node(identifier='s2', image=OPS_IMAGE)
     topo_s2 = topo.add_node(s2)
 
     h1 = Node(identifier='h1', type='host')
