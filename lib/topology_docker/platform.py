@@ -92,21 +92,24 @@ class DockerPlatform(BasePlatform):
         """
         enode_a = self.nmlnode_node_map[
             nodeport_a[0].identifier]
-        netns_a = enode_a.identifier
+        netns_a = enode_a.pid
+
         enode_b = self.nmlnode_node_map[
             nodeport_b[0].identifier]
-        netns_b = enode_b.identifier
+        netns_b = enode_b.pid
 
-        intf_a = nodeport_a[1].identifier
-        intf_b = nodeport_b[1].identifier
+        intf_a = nodeport_a[1].metadata.get(
+            'port_number', nodeport_a[1].identifier
+        )
+        intf_b = nodeport_b[1].metadata.get(
+            'port_number', nodeport_b[1].identifier
+        )
 
         # Check docs.docker.com/articles/networking/#building-a-point-to-point-connection # noqa
         command_template = """ \
             ip link add {intf_a} type veth peer name {intf_b}
             ip link set {intf_a} netns {netns_a}
-            ip netns exec {netns_a} ip link set dev {intf_a} up
-            ip link set {intf_b} netns {netns_b}
-            ip netns exec {netns_b} ip link set dev {intf_b} up\
+            ip link set {intf_b} netns {netns_b}\
             """
         commands = command_template.format(**locals())
 
@@ -145,6 +148,7 @@ class DockerNode(CommonNode):
 
     def __init__(self, identifier, image='ubuntu', command='bash', **kwargs):
 
+        self.pid = None
         self._image = image
         self._command = command
         self._client = Client()
@@ -195,23 +199,6 @@ class DockerNode(CommonNode):
                     command_template.format(port=port))
                 self._port_status[port] = 'up'
 
-    def _create_netns(self):
-        """
-        Docker creates a netns. This method makes that netns avaible
-        to the host
-        """
-        pid = self._client.inspect_container(
-            self._container_id)['State']['Pid']
-
-        command_template = """ \
-            mkdir -p /var/run/netns
-            ln -s /proc/{pid}/ns/net /var/run/netns/{self.identifier} \
-            """
-        commands = command_template.format(**locals())
-
-        for command in commands.splitlines():
-            check_call(shplit(command.lstrip()))
-
     def bash(self, command):
         """
         FIXME: Document.
@@ -231,7 +218,8 @@ class DockerNode(CommonNode):
         Start the docker node and configures a netns for it.
         """
         self._client.start(self._container_id)
-        self._create_netns()
+        self.pid = self._client.inspect_container(
+            self._container_id)['State']['Pid']
 
     def stop(self):
         """
@@ -241,18 +229,9 @@ class DockerNode(CommonNode):
         self._client.wait(self._container_id)
         self._client.remove_container(self._container_id)
 
-        # remove netns
-        command_template = "ip netns del {self.identifier}"
-        command = command_template.format(**locals())
-        check_call(shplit(command))
-
 
 class DockerSwitch(DockerNode):
-    """
-    FIXME: Document.
-    """
-
-    def __init__(self, name, image='ubuntu', command='bash', **kwargs):
+    def __init__(self, name, image='ubuntu', command='/sbin/init', **kwargs):
         super(DockerSwitch, self).__init__(name, image, command, **kwargs)
         self._vtysh = spawn(
             'docker exec -i -t {} vtysh'.format(name)
@@ -268,6 +247,17 @@ class DockerSwitch(DockerNode):
         time.sleep(0.2)  # FIXME: Find out minimal value that passes 100 tests.
         self._vtysh.expect('.*#')  # FIXME: Add a proper regex.
         return self._vtysh.after
+
+    def add_link(self, port):
+        """
+        Moves link to special vsi namespace inside the docker container
+        """
+        super(DockerSwitch, self).add_link(port)
+        port_name = port.metadata.get(
+            'port_number', port.identifier
+        )
+        self.send_command('ip link set {port_name} netns swns'.format(
+            port_name=port_name))
 
 
 class DockerHost(DockerNode):

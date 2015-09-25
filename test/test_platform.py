@@ -37,7 +37,7 @@ OPS_IMAGE = environ.get('OPS_IMAGE', 'ops:latest')
 @mark.skipif(getuid() != 0, reason='Requires root permissions')
 def test_add_port():
     """
-
+    Add ports and uses 'ip link list' to check they exist
     """
     topo = DockerPlatform(None, None)
     topo.pre_build()
@@ -47,7 +47,7 @@ def test_add_port():
     assert topo.nmlnode_node_map[hs1.identifier] is not None
 
     # Add ports
-    p1 = BidirectionalPort(identifier='p1')
+    p1 = BidirectionalPort(identifier='p1', port_number=2)
     topo.add_biport(hs1, p1)
     p2 = BidirectionalPort(identifier='p2')
     topo.add_biport(hs1, p2)
@@ -63,7 +63,7 @@ def test_add_port():
 
     topo.destroy()
 
-    assert 'p1' in str(result)
+    assert '2: <BROADCAST,MULTICAST> ' in str(result)
     assert 'p2' in str(result)
     assert 'p3' in str(result)
 
@@ -167,6 +167,7 @@ def test_ping():
     topo_s1 = topo.add_node(s1)
 
     s2 = Node(identifier='s2', image=OPS_IMAGE)
+
     topo_s2 = topo.add_node(s2)
 
     h1 = Node(identifier='h1', type='host')
@@ -190,8 +191,14 @@ def test_ping():
 
     topo.post_build()
 
+    topo_h1.send_command('ifconfig h1p1 up')
+    topo_h1.send_command('ifconfig h2p1 up')
+
     topo_h1.send_command('ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up')
     topo_h2.send_command('ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up')
+
+    topo_s1.send_command('ifconfig s1p1 up', shell='bash')
+    topo_s1.send_command('ifconfig s1p2 up', shell='bash')
 
     topo_s1.send_command(
         'ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up', shell='bash'
@@ -199,6 +206,9 @@ def test_ping():
     topo_s1.send_command(
         'ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up', shell='bash'
     )
+
+    topo_s2.send_command('ifconfig s2p1 up', shell='bash')
+    topo_s2.send_command('ifconfig s2p2 up', shell='bash')
 
     topo_s2.send_command(
         'ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up', shell='bash'
