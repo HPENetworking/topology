@@ -146,7 +146,8 @@ class DockerNode(CommonNode):
     :param str command: The command to run when the container is brought up.
     """
 
-    def __init__(self, identifier, image='ubuntu', command='bash', **kwargs):
+    def __init__(self, identifier, image='ubuntu', command='bash',
+                 binds=None, **kwargs):
 
         self.pid = None
         self._image = image
@@ -160,8 +161,9 @@ class DockerNode(CommonNode):
             tty=True,
             host_config=self._client.create_host_config(
                 privileged=True,     # Container is given access to all devices
-                network_mode='none'  # Avoid connecting to host bridge,
+                network_mode='none',  # Avoid connecting to host bridge,
                                      # usually docker0
+                binds=binds
             )
         )['Id']
 
@@ -234,7 +236,14 @@ class DockerNode(CommonNode):
 
 class DockerSwitch(DockerNode):
     def __init__(self, name, image='ubuntu', command='/sbin/init', **kwargs):
-        super(DockerSwitch, self).__init__(name, image, command, **kwargs)
+        super(DockerSwitch, self).__init__(
+            name, image, command,
+            binds=[
+                '/tmp:/tmp',
+                '/dev/log:/dev/log',
+                '/sys/fs/cgroup:/sys/fs/cgroup'
+            ], **kwargs)
+
         self._vtysh = spawn(
             'docker exec -i -t {} vtysh'.format(name)
         )
