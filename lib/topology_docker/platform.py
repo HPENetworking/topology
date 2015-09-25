@@ -196,7 +196,9 @@ class DockerNode(CommonNode):
         for port, status in self._port_status.items():
             if status == 'down':
                 self.send_command(
-                    command_template.format(port=port))
+                    command_template.format(port=port),
+                    shell='bash'
+                )
                 self._port_status[port] = 'up'
 
     def bash(self, command):
@@ -256,8 +258,10 @@ class DockerSwitch(DockerNode):
         port_name = port.metadata.get(
             'port_number', port.identifier
         )
-        self.send_command('ip link set {port_name} netns swns'.format(
-            port_name=port_name))
+        self.send_command(
+            'ip link set {port_name} netns swns'.format(port_name=port_name),
+            shell='bash'
+        )
 
 
 class DockerHost(DockerNode):
