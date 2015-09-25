@@ -215,7 +215,7 @@ class DockerNode(CommonNode):
         # 2 out of 100 times. When I tried with 0.2, it was not truncated
         # after 100 runs.
         self._bash.expect('.*#')  # FIXME: Add a proper regex.
-        return self._bash.after
+        return self._bash.after.decode('utf-8')
 
     def start(self):
         """
@@ -257,7 +257,7 @@ class DockerSwitch(DockerNode):
         self._vtysh.sendline(command)
         time.sleep(0.2)  # FIXME: Find out minimal value that passes 100 tests.
         self._vtysh.expect('.*#')  # FIXME: Add a proper regex.
-        return self._vtysh.after
+        return self._vtysh.after.decode('utf-8')
 
     def add_link(self, port):
         """
