@@ -71,6 +71,44 @@ def test_add_port():
     assert 'p3' in str(result)
 
 
+def test_shell():
+    """
+    Checks that the bash shell of a host sends a proper reply.
+    """
+    topo = DockerPlatform(None, None)
+    topo.pre_build()
+
+    nml_host = Node(identifier='nml_host', type='host')
+    host = topo.add_node(nml_host)
+
+    topo.post_build()
+
+    reply = host.send_command('echo "var"')
+
+    topo.destroy()
+
+    assert 'var' in str(reply)
+
+
+def test_vtysh():
+    """
+    Checks that the vtysh shell of a host sends a proper reply.
+    """
+    topo = DockerPlatform(None, None)
+    topo.pre_build()
+
+    nml_host = Node(identifier='nml_host2', type='switch', image='testimage')
+    host = topo.add_node(nml_host)
+
+    topo.post_build()
+
+    reply = host.send_command('show vlan', shell='vtysh')
+
+    topo.destroy()
+
+    assert 'vlan' in str(reply)
+
+
 @mark.skipif(getuid() != 0, reason="Requires root permissions")
 def test_build_topology():
     """

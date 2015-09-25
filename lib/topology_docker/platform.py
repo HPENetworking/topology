@@ -23,11 +23,13 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+import time
 
 from docker import Client
 
 from subprocess import check_call
 from shlex import split as shplit
+from pexpect import spawn
 
 from topology.platforms.base import BasePlatform, CommonNode
 
@@ -164,9 +166,14 @@ class DockerNode(CommonNode):
             )
         )['Id']
 
+        self._bash = spawn(
+            'docker exec -i -t {} bash'.format(name)
+        )
+
         self._port_status = {}
 
         super(DockerNode, self).__init__(name, **kwargs)
+        self._shells['bash'] = self.bash
 
     def add_port(self, port):
         """
@@ -213,6 +220,17 @@ class DockerNode(CommonNode):
         for command in commands.splitlines():
             check_call(shplit(command.lstrip()))
 
+    def bash(self, command):
+        self._bash.sendline(command)
+        time.sleep(0.2)
+        # Without this sleep, the content of self._bash.after is truncated
+        # most of the time this method is called.
+        # I tried first with a 0.1 value and self._bash.after was truncated
+        # 2 out of 100 times. When I tried with 0.2, it was not truncated
+        # after 100 runs.
+        self._bash.expect('.*#')  # FIXME: Add a proper regex.
+        return self._bash.after
+
     def start(self):
         """
         Start the docker node and configures a netns for it.
@@ -235,7 +253,18 @@ class DockerNode(CommonNode):
 
 
 class DockerSwitch(DockerNode):
-    pass
+    def __init__(self, name, image='ubuntu', command='bash', **kwargs):
+        super(DockerSwitch, self).__init__(name, image, command, **kwargs)
+        self._vtysh = spawn(
+            'docker exec -i -t {} vtysh'.format(name)
+        )
+        self._shells['vtysh'] = self.vtysh
+
+    def vtysh(self, command):
+        self._vtysh.sendline(command)
+        time.sleep(0.2)  # FIXME: Find out minimal value that passes 100 tests.
+        self._vtysh.expect('.*#')  # FIXME: Add a proper regex.
+        return self._vtysh.after
 
 
 class DockerHost(DockerNode):
