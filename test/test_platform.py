@@ -32,6 +32,46 @@ from topology_docker.platform import DockerPlatform
 
 
 @mark.skipif(getuid() != 0, reason="Requires root permissions")
+def test_add_port():
+    """
+
+    """
+    topo = DockerPlatform(None, None)
+    topo.pre_build()
+
+    hs1 = Node(identifier='hs1', type='host')
+    topo.add_node(hs1)
+    assert topo.nmlnode_node_map[hs1.identifier] is not None
+
+    # Add ports
+    p1 = BidirectionalPort(identifier='p1')
+    topo.add_biport(hs1, p1)
+    p2 = BidirectionalPort(identifier='p2')
+    topo.add_biport(hs1, p2)
+    p3 = BidirectionalPort(identifier='p3')
+    topo.add_biport(hs1, p3)
+
+    # Add link
+    topo.add_bilink((hs1, p1), (hs1, p2), None)
+
+    topo.post_build()
+
+    # FIXME: change this for the node send_command
+    from subprocess import Popen, PIPE
+    from shlex import split as shplit
+
+    result, err = Popen(
+        shplit('docker exec hs1 ip link list'),
+        stdout=PIPE, stderr=PIPE).communicate()
+
+    topo.destroy()
+
+    assert 'p1' in str(result)
+    assert 'p2' in str(result)
+    assert 'p3' in str(result)
+
+
+@mark.skipif(getuid() != 0, reason="Requires root permissions")
 def test_build_topology():
     """
     Builds (and destroys) a basic topology consisting in one switch and one
@@ -167,4 +207,4 @@ def test_ping():
 
     mn.destroy()
 
-    assert '1 packets transmitted, 1 received' in ping_result
+    assert '1 packets transmitted, 1 received' in str(ping_result)

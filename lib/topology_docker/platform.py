@@ -75,12 +75,12 @@ class DockerPlatform(BasePlatform):
 
     def add_biport(self, node, biport):
         """
+        Add a port to the docker node.
+
         See :meth:`BasePlatform.add_biport` for more information.
-        FIXME: add port using TUN tap
         """
-        mn_node = self.nmlnode_node_map[node.identifier]
-        port_number = len(mn_node._nmlport_port_map) + 1
-        mn_node._nmlport_port_map[biport.identifier] = port_number
+        enode = self.nmlnode_node_map[node.identifier]
+        enode.add_port(biport)
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
         """
@@ -88,10 +88,12 @@ class DockerPlatform(BasePlatform):
 
         See :meth:`BasePlatform.add_bilink` for more information.
         """
-        netns_a = self.nmlnode_node_map[
-            nodeport_a[0].identifier].name
-        netns_b = self.nmlnode_node_map[
-            nodeport_b[0].identifier].name
+        enode_a = self.nmlnode_node_map[
+            nodeport_a[0].identifier]
+        netns_a = enode_a.name
+        enode_b = self.nmlnode_node_map[
+            nodeport_b[0].identifier]
+        netns_b = enode_b.name
 
         intf_a = nodeport_a[1].identifier
         intf_b = nodeport_b[1].identifier
@@ -109,10 +111,18 @@ class DockerPlatform(BasePlatform):
         for command in commands.splitlines():
             check_call(shplit(command.lstrip()))
 
+        enode_a.add_link(nodeport_a[1])
+        enode_b.add_link(nodeport_b[1])
+
     def post_build(self):
         """
+        Ports are created for each node automatically while adding links.
+        Creates the rest of the ports (no-linked ports)
+
         See :meth:`BasePlatform.post_build` for more information.
         """
+        for enode in self.nmlnode_node_map.values():
+            enode.create_unlinked_ports()
 
     def destroy(self):
         """
@@ -154,7 +164,36 @@ class DockerNode(CommonNode):
             )
         )['Id']
 
+        self._port_status = {}
+
         super(DockerNode, self).__init__(name, **kwargs)
+
+    def add_port(self, port):
+        """
+        Add port to node list, doesn't actually add port to docker.
+        """
+        self._port_status[port.identifier] = 'down'
+
+    def add_link(self, port):
+        """
+        Marks port as linked, meaning that the port was created on docker
+        by a link.
+        """
+        self._port_status[port.identifier] = 'linked'
+
+    def create_unlinked_ports(self):
+        """
+        Iterates the node port list and create a tuntap interface for each
+        port that was added but not linked.
+        """
+        # FIXME: use send_command.
+        command_template = \
+            'docker exec {name} ip tuntap add dev {port} mode tap'
+        for port, status in self._port_status.items():
+            if status == 'down':
+                check_call(shplit(
+                    command_template.format(name=self.name, port=port)))
+                self._port_status[port] = 'up'
 
     def _create_netns(self):
         """
