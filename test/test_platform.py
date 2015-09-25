@@ -16,7 +16,7 @@
 # under the License.
 
 """
-Test suite for module topology.
+Test suite for module docker platform.
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -65,6 +65,7 @@ def test_add_port():
     assert 'p3' in str(result)
 
 
+@mark.skipif(getuid() != 0, reason="Requires root permissions")
 def test_shell():
     """
     Checks that the bash shell of a host sends a proper reply.
@@ -84,6 +85,7 @@ def test_shell():
     assert 'var' in str(reply)
 
 
+@mark.skipif(getuid() != 0, reason="Requires root permissions")
 def test_vtysh():
     """
     Checks that the vtysh shell of a host sends a proper reply.
@@ -140,10 +142,10 @@ def test_build_topology():
     assert '1 packets transmitted, 1 received' in str(ping_result)
 
 
-@mark.skipif(getuid() != 0, reason='Mininet requires root permissions')
+@mark.skipif(getuid() != 0, reason="Requires root permissions")
 def test_ping():
     """
-    Connect two host to a switch and ping h2 from h1
+    Builds the topology described on the following schema and ping h2 from h1
 
     ::
 
@@ -153,20 +155,20 @@ def test_ping():
         |      |     +------+     +------+     |      |
         +------+                               +------+
     """
-    mn = DockerPlatform(None, None)
-    mn.pre_build()
+    topo = DockerPlatform(None, None)
+    topo.pre_build()
 
     s1 = Node(identifier='s1', image='testimage')
-    topo_s1 = mn.add_node(s1)
+    topo_s1 = topo.add_node(s1)
 
     s2 = Node(identifier='s2', image='testimage')
-    topo_s2 = mn.add_node(s2)
+    topo_s2 = topo.add_node(s2)
 
     h1 = Node(identifier='h1', type='host')
-    topo_h1 = mn.add_node(h1)
+    topo_h1 = topo.add_node(h1)
 
     h2 = Node(identifier='h2', type='host')
-    topo_h2 = mn.add_node(h2)
+    topo_h2 = topo.add_node(h2)
 
     s1p1 = BidirectionalPort(identifier='s1p1')
     s1p2 = BidirectionalPort(identifier='s1p2')
@@ -177,11 +179,11 @@ def test_ping():
     h1p1 = BidirectionalPort(identifier='h1p1')
     h2p1 = BidirectionalPort(identifier='h2p1')
 
-    mn.add_bilink((s1, s1p1), (h1, h1p1), None)
-    mn.add_bilink((s1, s1p2), (s2, s2p1), None)
-    mn.add_bilink((s2, s2p2), (h2, h2p1), None)
+    topo.add_bilink((s1, s1p1), (h1, h1p1), None)
+    topo.add_bilink((s1, s1p2), (s2, s2p1), None)
+    topo.add_bilink((s2, s2p2), (h2, h2p1), None)
 
-    mn.post_build()
+    topo.post_build()
 
     topo_h1.send_command('ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up')
     topo_h2.send_command('ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up')
@@ -202,6 +204,6 @@ def test_ping():
 
     ping_result = topo_h1.send_command('ping -c 1 10.0.30.1')
 
-    mn.destroy()
+    topo.destroy()
 
     assert '1 packets transmitted, 1 received' in str(ping_result)
