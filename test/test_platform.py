@@ -197,32 +197,38 @@ def test_ping():
     topo_h1.send_command('ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up')
     topo_h2.send_command('ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up')
 
-    topo_s1.send_command('ifconfig s1p1 up', shell='bash')
-    topo_s1.send_command('ifconfig s1p2 up', shell='bash')
+    topo_s1.send_command('ip netns exec swns ifconfig s1p1 up', shell='bash')
+    topo_s1.send_command('ip netns exec swns ifconfig s1p2 up', shell='bash')
 
     topo_s1.send_command(
-        'ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up', shell='bash'
+        'ip netns exec swns ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up',
+        shell='bash'
     )
     topo_s1.send_command(
-        'ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up', shell='bash'
+        'ip netns exec swns ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up',
+        shell='bash'
     )
 
-    topo_s2.send_command('ifconfig s2p1 up', shell='bash')
-    topo_s2.send_command('ifconfig s2p2 up', shell='bash')
+    topo_s2.send_command('ip netns exec swns ifconfig s2p1 up', shell='bash')
+    topo_s2.send_command('ip netns exec swns ifconfig s2p2 up', shell='bash')
 
     topo_s2.send_command(
-        'ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up', shell='bash'
-    )
-    topo_s2.send_command(
-        'ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up', shell='bash'
-    )
-
-    topo_s1.send_command(
-        'route add -net 10.0.30.0 netmask 255.255.255.0 gw 10.0.20.2',
+        'ip netns exec swns ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up',
         shell='bash'
     )
     topo_s2.send_command(
-        'route add -net 10.0.10.0 netmask 255.255.255.0 gw 10.0.20.1',
+        'ip netns exec swns ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up',
+        shell='bash'
+    )
+
+    topo_s1.send_command(
+        'ip netns exec swns route add -net 10.0.30.0 netmask 255.255.255.0 \
+        gw 10.0.20.2',
+        shell='bash'
+    )
+    topo_s2.send_command(
+        'ip netns exec swns route add -net 10.0.10.0 netmask 255.255.255.0 \
+         gw 10.0.20.1',
         shell='bash'
     )
 
