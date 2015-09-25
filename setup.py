@@ -92,7 +92,7 @@ setup(
     # Entry points
     entry_points={
         'topology_platform_10': [
-            'my = topology_docker.platform:DockerPlatform'
+            'docker = topology_docker.platform:DockerPlatform'
         ]
     }
 )
