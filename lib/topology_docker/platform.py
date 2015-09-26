@@ -17,6 +17,9 @@
 
 """
 Docker engine platform module for topology.
+
+FIXME: Remove OpenSwitch related weird logic.
+FIXME: Create ifaces as <node.identifier>-<port_num>
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -98,19 +101,20 @@ class DockerPlatform(BasePlatform):
             nodeport_b[0].identifier]
         netns_b = enode_b.pid
 
-        intf_a = nodeport_a[1].metadata.get(
-            'port_number', nodeport_a[1].identifier
-        )
-        intf_b = nodeport_b[1].metadata.get(
-            'port_number', nodeport_b[1].identifier
-        )
+        intf_a = nodeport_a[1].identifier
+        if 'port_number' in nodeport_a[1].metadata:
+            intf_a = 'fp{}'.format(nodeport_a[1].metadata['port_number'])
+
+        intf_b = nodeport_b[1].identifier
+        if 'port_number' in nodeport_b[1].metadata:
+            intf_b = 'fp{}'.format(nodeport_b[1].metadata['port_number'])
 
         # Check docs.docker.com/articles/networking/#building-a-point-to-point-connection # noqa
         command_template = """ \
             ip link add {intf_a} type veth peer name {intf_b}
             ip link set {intf_a} netns {netns_a}
             ip link set {intf_b} netns {netns_b}\
-            """
+        """
         commands = command_template.format(**locals())
 
         for command in commands.splitlines():
@@ -264,9 +268,11 @@ class DockerSwitch(DockerNode):
         Moves link to special vsi namespace inside the docker container
         """
         super(DockerSwitch, self).add_link(port)
-        port_name = port.metadata.get(
-            'port_number', port.identifier
-        )
+
+        port_name = port.identifier
+        if 'port_number' in port.metadata:
+            port_name = 'fp{}'.format(port.metadata['port_number'])
+
         self.send_command(
             'ip link set {port_name} netns swns'.format(port_name=port_name),
             shell='bash'
