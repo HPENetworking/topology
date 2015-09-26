@@ -26,15 +26,17 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-import time
-
-from docker import Client
-
+from time import sleep
 from subprocess import check_call
 from shlex import split as shplit
+
 from pexpect import spawn
+from docker import Client
 
 from topology.platforms.base import BasePlatform, CommonNode
+
+from .root import cmd_prefix
+
 
 log = logging.getLogger(__name__)
 
@@ -48,6 +50,9 @@ class DockerPlatform(BasePlatform):
 
     def __init__(self, timestamp, nmlmanager):
         self.nmlnode_node_map = {}
+
+        # Test permissions
+        cmd_prefix()
 
     def pre_build(self):
         """
@@ -117,8 +122,11 @@ class DockerPlatform(BasePlatform):
         """
         commands = command_template.format(**locals())
 
+        prefix = cmd_prefix()
         for command in commands.splitlines():
-            check_call(shplit(command.lstrip()))
+            check_call(shplit(
+                prefix + command.lstrip()
+            ))
 
         enode_a.add_link(nodeport_a[1])
         enode_b.add_link(nodeport_b[1])
@@ -212,7 +220,7 @@ class DockerNode(CommonNode):
         FIXME: Document.
         """
         self._bash.sendline(command)
-        time.sleep(0.2)
+        sleep(0.2)
         # Without this sleep, the content of self._bash.after is truncated
         # most of the time this method is called.
         # I tried first with a 0.1 value and self._bash.after was truncated
@@ -259,7 +267,7 @@ class DockerSwitch(DockerNode):
         FIXME: Document.
         """
         self._vtysh.sendline(command)
-        time.sleep(0.2)  # FIXME: Find out minimal value that passes 100 tests.
+        sleep(0.2)  # FIXME: Find out minimal value that passes 100 tests.
         self._vtysh.expect('.*#')  # FIXME: Add a proper regex.
         return self._vtysh.after.decode('utf-8')
 

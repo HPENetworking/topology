@@ -22,8 +22,7 @@ Test suite for module docker platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import getuid, environ
-
+from os import environ
 
 from pytest import mark
 from pynml import Node, BidirectionalPort
@@ -34,7 +33,6 @@ from topology_docker.platform import DockerPlatform
 OPS_IMAGE = environ.get('OPS_IMAGE', 'ops:latest')
 
 
-@mark.skipif(getuid() != 0, reason='Requires root permissions')
 def test_add_port():
     """
     Add ports and uses 'ip link list' to check they exist
@@ -68,7 +66,6 @@ def test_add_port():
     assert 'p3' in str(result)
 
 
-@mark.skipif(getuid() != 0, reason='Requires root permissions')
 def test_shell():
     """
     Checks that the bash shell of a host sends a proper reply.
@@ -88,7 +85,6 @@ def test_shell():
     assert 'var' in str(reply)
 
 
-@mark.skipif(getuid() != 0, reason='Requires root permissions')
 def test_vtysh():
     """
     Checks that the vtysh shell of a host sends a proper reply.
@@ -110,7 +106,6 @@ def test_vtysh():
     assert 'vlan' in str(reply)
 
 
-@mark.skipif(getuid() != 0, reason='Requires root permissions')
 def test_build_topology():
     """
     Builds (and destroys) a basic topology consisting in one switch and one
@@ -147,7 +142,6 @@ def test_build_topology():
     assert '1 packets transmitted, 1 received' in str(ping_result)
 
 
-@mark.skipif(getuid() != 0, reason='Requires root permissions')
 def test_ping():
     """
     Builds the topology described on the following schema and ping h2 from h1
