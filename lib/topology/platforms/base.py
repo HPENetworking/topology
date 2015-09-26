@@ -165,7 +165,7 @@ class BaseNode(object):
         self.metadata = kwargs
 
     @abstractmethod
-    def send_command(self, cmd, shell=None, wait=True):
+    def send_command(self, cmd, shell=None, silent=False):
         """
         Send a command to this engine node.
 
@@ -173,7 +173,8 @@ class BaseNode(object):
         :param str shell: Shell that must interpret the command.
          `None` for the default shell. Is up to the engine platform to
          determine what the default shell is.
-        :param bool wait: If ``True``, wait for command to finish.
+        :param bool silent: If ``False``, print input command and response to
+         stdout.
         :rtype: str
         :return: The response of the command.
         """
@@ -248,7 +249,7 @@ class CommonNode(BaseNode):
                 key = '{}_{}'.format(libname, register.__name__)
                 self._functions[key] = register
 
-    def send_command(self, command, shell=None):
+    def send_command(self, cmd, shell=None, silent=False):
         """
         Implementation of the ``send_command`` interface.
 
@@ -264,7 +265,14 @@ class CommonNode(BaseNode):
             raise Exception(
                 'Shell {} is not supported.'.format(shell)
             )
-        return self._shells[shell](command)
+
+        response = self._shells[shell](cmd)
+
+        if not silent:
+            print('[{}].send_command({}) ::'.format(self.identifier, cmd))
+            print(response)
+
+        return response
 
     def available_shells(self):
         """
