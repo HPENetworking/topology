@@ -37,14 +37,19 @@ def cmd_prefix():
         return cmd_prefix.prefix
 
     if getuid() == 0:
+        # We better do not allow root
+        raise RuntimeError(
+            'Please do not run as root. '
+            'Please configure the ip command for root execution.'
+        )
         cmd_prefix.prefix = ''
         return cmd_prefix.prefix
 
     with open(devnull, 'w') as f:
-        cmd = shsplit('sudo --non-interactive ip --help')
+        cmd = shsplit('sudo --non-interactive ip link show')
         if call(cmd, stdout=f, stderr=f) != 0:
             raise RuntimeError(
-                'Please configure the ip command for root execution'
+                'Please configure the ip command for root execution.'
             )
 
     cmd_prefix.prefix = 'sudo --non-interactive '

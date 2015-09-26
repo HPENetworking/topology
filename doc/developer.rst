@@ -25,6 +25,28 @@ Setup Development Environment
       flake8 --install-hook
       git config flake8.strict true
 
+#. Configure your environment to run without root:
+
+   ::
+
+      sudo groupadd topology
+      sudo usermod -a -G topology YOURUSER
+      sudo sh -c 'echo "%topology ALL = (root) NOPASSWD: /sbin/ip" > /etc/sudoers.d/topology'
+
+   Now logout and login again. Confirm your you're in the ``topology`` group
+   with:
+
+   ::
+
+      $ id
+      ...,1001(topology)
+
+#. Download and install Docker:
+
+   ::
+
+      FIXME
+
 
 Building Documentation
 ======================
