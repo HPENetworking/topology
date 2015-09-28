@@ -33,6 +33,15 @@ log = logging.getLogger(__name__)
 
 
 def cmd_prefix():
+    """
+    Determine if the current user can run privileged commands and thus
+    determines the command prefix to use.
+
+    :rtype: str
+    :return: The prefix to use for privileged commands.
+    """
+
+    # Return cache if set
     if hasattr(cmd_prefix, 'prefix'):
         return cmd_prefix.prefix
 
@@ -42,8 +51,8 @@ def cmd_prefix():
             'Please do not run as root. '
             'Please configure the ip command for root execution.'
         )
-        cmd_prefix.prefix = ''
-        return cmd_prefix.prefix
+        # cmd_prefix.prefix = ''
+        # return cmd_prefix.prefix
 
     with open(devnull, 'w') as f:
         cmd = shsplit('sudo --non-interactive ip link show')
@@ -54,3 +63,6 @@ def cmd_prefix():
 
     cmd_prefix.prefix = 'sudo --non-interactive '
     return cmd_prefix.prefix
+
+
+__all__ = ['cmd_prefix']
