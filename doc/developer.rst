@@ -30,6 +30,12 @@ Setup Development Environment
       cd ..
       mininet/util/install.sh -a
 
+#. Install Graphviz for topology auto-plotting:
+
+   ::
+
+      sudo apt-get install graphviz
+
 #. Configure git pre-commit hook:
 
    ::
