@@ -297,4 +297,4 @@ class DockerHost(DockerNode):
         self._shells['bash'] = self.bash
 
 
-__all__ = ['DockerHost', 'DockerSwitch']
+__all__ = ['DockerPlatform', 'DockerHost', 'DockerSwitch']

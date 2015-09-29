@@ -16,7 +16,7 @@
 # under the License.
 
 """
-Test suite for module docker platform.
+Test suite for module topology_docker.platform.
 """
 
 from __future__ import unicode_literals, absolute_import
