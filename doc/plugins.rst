@@ -17,8 +17,12 @@ Provide a new Engine Platform
 =============================
 
 An Engine Platform is a system that allows to build and run a topology
-description. The Topology framework provides the built-in and default
-`Mininet <http://mininet.org/>`_ Engine Platform, but you can provide your own.
+description. The Topology framework only provides a built-in Engine Platform
+for debugging. You can provide your own or install any of the known Engine
+Platforms available as plugins like:
+
+- `Docker <https://www.docker.com/>`_.
+- `Mininet <http://mininet.org/>`_.
 
 
 Entry Point

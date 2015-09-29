@@ -30,11 +30,9 @@ from inspect import isclass
 from traceback import format_exc
 from collections import OrderedDict
 
-from six import PY2
 from pkg_resources import iter_entry_points
 
 from .base import BasePlatform
-from .mininet import MininetPlatform
 from .debug import DebugPlatform
 
 
@@ -60,7 +58,7 @@ def platforms(cache=True):
      ::
 
         {
-            'mininet': MininetPlatform,
+            'debug': DebugPlatform,
             'other': OtherPlatform
         }
     """
@@ -71,8 +69,6 @@ def platforms(cache=True):
 
     # Add default plugin
     available = OrderedDict()
-    if PY2:
-        available['mininet'] = MininetPlatform
     available['debug'] = DebugPlatform
 
     # Iterate over entry points

@@ -32,7 +32,7 @@ from topology.manager import TopologyManager
 TOPOLOGY = """
 # Nodes
 [shell=vtysh name="Switch 1"] sw1
-[shell=vtysh name="Switch 2"]sw2
+[shell=vtysh name="Switch 2"] sw2
 [type=host name="Host 1"] hs1
 [type=host name="Host 2"] hs2
 

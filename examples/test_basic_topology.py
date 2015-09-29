@@ -16,7 +16,7 @@
 # under the License.
 
 """
-Mininet  testing suite.
+Topology framework example test.
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -26,23 +26,21 @@ import pytest  # noqa
 
 
 TOPOLOGY = """
-[type=vtysh] sw1
-[type=host] hs1
-sw1:1 -- hs1:1
+# Nodes
+[shell=vtysh name="Switch 1"] sw1
+[shell=vtysh name="Switch 2"] sw2
+[type=host name="Host 1"] hs1
+[type=host name="Host 2"] hs2
+
+# Links
+hs1:1 -- sw1:1
+hs2:1 -- sw2:1
 """
-
-
-def setup_module(module, topology):
-    print('setup_module({})'.format(module.__name__))
-
-
-def teardown_module(module, topology):
-    print('teardown_module({})'.format(module.__name__))
 
 
 def test_ping(topology):
     sw1 = topology.get('sw1')
-    response = sw1.sendcmd('ping -c 1 10.0.30.1')
+    response = sw1.send_command('ping -c 1 10.0.30.1', shell='bash')
 
     # Do something with ping
     print(response)

@@ -17,19 +17,6 @@ Setup Development Environment
       sudo apt-get install python-pip
       sudo pip install tox
 
-#. If using the mininet engine platform:
-
-   Read installation instructions on the `mininet page
-   <http://mininet.org/download/#option-2-native-installation-from-source>`_.
-
-   ::
-
-      git clone git://github.com/mininet/mininet
-      cd mininet
-      git checkout -b 2.2.1 2.2.1
-      cd ..
-      mininet/util/install.sh -a
-
 #. Install Graphviz for topology auto-plotting:
 
    ::
