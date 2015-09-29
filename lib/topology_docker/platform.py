@@ -32,7 +32,6 @@ from topology.platforms.base import BasePlatform, CommonNode
 
 from .root import cmd_prefix
 from .shell import DockerShell
-from .nodes.manager import nodes
 
 
 log = logging.getLogger(__name__)
@@ -57,8 +56,11 @@ class DockerPlatform(BasePlatform):
     """
 
     def __init__(self, timestamp, nmlmanager):
+        from .nodes.manager import nodes
+
         self.nmlnode_node_map = {}
         self.available_node_types = nodes()
+        print(self.available_node_types)
 
         # Test permissions and define privileged commands prefix
         self._cmd_prefix = cmd_prefix()

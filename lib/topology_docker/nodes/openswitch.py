@@ -46,7 +46,7 @@ class OpenSwitchNode(DockerNode):
         # Add binded directories
         if binds is None:
             binds = []
-        binds.extends([
+        binds.extend([
             '/tmp:/tmp',
             '/dev/log:/dev/log',
             '/sys/fs/cgroup:/sys/fs/cgroup'
@@ -69,7 +69,7 @@ class OpenSwitchNode(DockerNode):
             ip netns exec swns ip link set {iface} name {port_number}\
         """
 
-        for port_spec in self._ports.items():
+        for port_spec in self._ports.values():
             netns, rename = cmd_tpl.format(**port_spec).splitlines()
 
             # Set interfaces in swns namespace

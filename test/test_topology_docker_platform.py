@@ -22,15 +22,10 @@ Test suite for module topology_docker.platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
-
 from pytest import mark
 from pynml import Node, BidirectionalPort
 
 from topology_docker.platform import DockerPlatform
-
-
-OPS_IMAGE = environ.get('OPS_IMAGE', 'ops:latest')
 
 
 def test_add_port():
@@ -61,9 +56,9 @@ def test_add_port():
 
     topo.destroy()
 
-    assert '2: <BROADCAST,MULTICAST> ' in str(result)
-    assert 'p2' in str(result)
-    assert 'p3' in str(result)
+    assert '2: <BROADCAST,MULTICAST> ' in result
+    assert 'p2' in result
+    assert 'p3' in result
 
 
 def test_shell():
@@ -82,7 +77,7 @@ def test_shell():
 
     topo.destroy()
 
-    assert 'var' in str(reply)
+    assert 'var' in reply
 
 
 def test_vtysh():
@@ -93,7 +88,7 @@ def test_vtysh():
     topo.pre_build()
 
     nml_host = Node(
-        identifier='nml_host2', type='switch', image=OPS_IMAGE
+        identifier='nml_host2', type='openswitch'
     )
     host = topo.add_node(nml_host)
 
@@ -103,7 +98,7 @@ def test_vtysh():
 
     topo.destroy()
 
-    assert 'vlan' in str(reply)
+    assert 'vlan' in reply
 
 
 def test_build_topology():
@@ -122,8 +117,10 @@ def test_build_topology():
     s1 = Node(identifier='s1', type='host')
     topo_hs2 = topo.add_node(s1)
     p1 = BidirectionalPort(identifier='p1')
+    topo.add_biport(hs1, p1)
 
     p2 = BidirectionalPort(identifier='p2')
+    topo.add_biport(s1, p2)
 
     topo.add_bilink((hs1, p1), (s1, p2), None)
 
@@ -139,7 +136,7 @@ def test_build_topology():
 
     topo.destroy()
 
-    assert '1 packets transmitted, 1 received' in str(ping_result)
+    assert '1 packets transmitted, 1 received' in ping_result
 
 
 def test_ping():
@@ -157,10 +154,10 @@ def test_ping():
     topo = DockerPlatform(None, None)
     topo.pre_build()
 
-    s1 = Node(identifier='s1', image=OPS_IMAGE)
+    s1 = Node(identifier='s1', type='openswitch')
     topo_s1 = topo.add_node(s1)
 
-    s2 = Node(identifier='s2', image=OPS_IMAGE)
+    s2 = Node(identifier='s2', type='openswitch')
 
     topo_s2 = topo.add_node(s2)
 
@@ -171,13 +168,21 @@ def test_ping():
     topo_h2 = topo.add_node(h2)
 
     s1p1 = BidirectionalPort(identifier='s1p1')
+    topo.add_biport(s1, s1p1)
     s1p2 = BidirectionalPort(identifier='s1p2')
+    topo.add_biport(s1, s1p2)
 
     s2p1 = BidirectionalPort(identifier='s2p1')
+    topo.add_biport(s2, s2p1)
+
     s2p2 = BidirectionalPort(identifier='s2p2')
+    topo.add_biport(s2, s2p2)
 
     h1p1 = BidirectionalPort(identifier='h1p1')
+    topo.add_biport(h1, h1p1)
+
     h2p1 = BidirectionalPort(identifier='h2p1')
+    topo.add_biport(h2, h2p1)
 
     topo.add_bilink((s1, s1p1), (h1, h1p1), None)
     topo.add_bilink((s1, s1p2), (s2, s2p1), None)
@@ -233,7 +238,7 @@ def test_ping():
 
     topo.destroy()
 
-    assert '1 packets transmitted, 1 received' in str(ping_result)
+    assert '1 packets transmitted, 1 received' in ping_result
 
 
 @mark.skipif(True, reason='Make this work')
@@ -254,8 +259,8 @@ def test_ping_better():
 
     h1 = Node(identifier='hs1', type='host')
     h2 = Node(identifier='hs2', type='host')
-    s1 = Node(identifier='sw1', image=OPS_IMAGE)
-    s2 = Node(identifier='sw2', image=OPS_IMAGE)
+    s1 = Node(identifier='sw1')
+    s2 = Node(identifier='sw2')
 
     hs1 = platform.add_node(h1)
     hs2 = platform.add_node(h2)

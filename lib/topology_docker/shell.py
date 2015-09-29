@@ -39,6 +39,7 @@ class DockerShell(object):
         self._prompt = prompt
         self._delay = delay
         self._timeout = timeout or -1
+        self._encoding = encoding
         self._spawn = spawn(
             'docker exec -i -t {} {}'.format(container, shell)
         )
@@ -50,8 +51,8 @@ class DockerShell(object):
         # With a value 0.1 the .after content was truncated in 2 of 100 runs.
         # With a value 0.2 the .after content was truncated in 0 of 100 runs.
         sleep(self._delay)
-        self._bash.expect(self._prompt, timeout=self._timeout)
-        return self._bash.after.decode(self._encoding)
+        self._spawn.expect(self._prompt, timeout=self._timeout)
+        return self._spawn.after.decode(self._encoding)
 
 
 __all__ = ['DockerShell']
