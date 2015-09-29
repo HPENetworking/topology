@@ -91,6 +91,9 @@ def nodes(cache=True):
 
         available[name] = node
 
+    if 'host' not in available:
+        available['host'] = DockerNode
+
     nodes.available = available
     return available
 
