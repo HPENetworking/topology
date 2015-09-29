@@ -25,12 +25,6 @@ Setup Development Environment
       flake8 --install-hook
       git config flake8.strict true
 
-#. Install Graphviz for topology auto-plotting:
-
-   ::
-
-      sudo apt-get install graphviz
-
 #. Configure your environment to run without root:
 
    ::
