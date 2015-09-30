@@ -23,8 +23,10 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from os.path import isfile, abspath
 
 from . import __version__
+from .platforms.manager import platforms, DEFAULT_PLATFORM
 
 
 log = logging.getLogger(__name__)
@@ -52,6 +54,11 @@ def validate_args(args):
     logging.basicConfig(format=FORMAT, level=level)
 
     log.debug('Raw arguments:\n{}'.format(args))
+
+    if not isfile(args.topology):
+        log.error('No such file : {}'.format(args.topology))
+        exit(1)
+    args.topology = abspath(args.topology)
 
     return args
 
@@ -83,6 +90,22 @@ def parse_args(argv=None):
         '--version',
         action='version',
         version='Network Topology Framework v{}'.format(__version__)
+    )
+
+    parser.add_argument(
+        '--platform',
+        default=DEFAULT_PLATFORM,
+        help='Select the platform to build the topology',
+        choices=sorted(platforms())
+    )
+    parser.add_argument(
+        '--non-interactive',
+        help='Just build the topology and exit',
+        action='store_true'
+    )
+    parser.add_argument(
+        'topology',
+        help='File with the topology description to build'
     )
 
     args = parser.parse_args(argv)

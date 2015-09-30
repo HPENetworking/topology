@@ -22,8 +22,6 @@ Network Topology Framework executable script.
 See https://github-sc-p.corp.hp.com/hpe-networking/topology
 """
 
-import sys
-
 if __name__ == '__main__':
 
     # Parse arguments
@@ -32,4 +30,4 @@ if __name__ == '__main__':
 
     # Run program
     from topology.main import main
-    sys.exit(main(args))
+    exit(main(args))

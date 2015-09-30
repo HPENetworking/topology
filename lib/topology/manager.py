@@ -171,6 +171,11 @@ class TopologyManager(object):
         This method instance the platform engine and request the build of the
         topology defined.
         """
+        if self._built:
+            raise RuntimeError(
+                'You cannot build a topology twice.'
+            )
+
         timestamp = datetime.now().replace(microsecond=0).isoformat()
         stage = 'instance'
 

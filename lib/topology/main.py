@@ -24,6 +24,10 @@ from __future__ import print_function, division
 
 import logging
 
+from . import __version__
+from .manager import TopologyManager
+from .interact import interact
+
 
 log = logging.getLogger(__name__)
 
@@ -37,6 +41,30 @@ def main(args):
     :return: Exit code.
     :rtype: int
     """
+    print('Starting Network Topology Framework v{}'.format(__version__))
+
+    # Create manager
+    mgr = TopologyManager(args.platform)
+
+    # Read topology
+    if args.topology.endswith('.py'):
+        raise NotImplementedError(
+            'Topology extraction from Python files not implemented yet.'
+        )
+    else:
+        with open(args.topology, 'r') as fd:
+            mgr.parse(fd.read())
+
+    # Build topology
+    print('Building topology, please wait...')
+    mgr.build()
+
+    # Start interactive mode if required
+    if not args.non_interactive:
+        interact(mgr)
+        print('Unbuilding topology, please wait...')
+        mgr.unbuild()
+
     return 0
 
 

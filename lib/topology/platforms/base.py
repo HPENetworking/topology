@@ -184,6 +184,9 @@ class BaseNode(object):
         self.identifier = identifier
         self.metadata = kwargs
 
+    def __call__(self, cmd, shell=None, silent=False):
+        return self.send_command(cmd, shell=shell, silent=silent)
+
     @abstractmethod
     def send_command(self, cmd, shell=None, silent=False):
         """

@@ -100,7 +100,7 @@ class DebugNode(CommonNode):
     def __init__(self, identifier, **kwargs):
         super(DebugNode, self).__init__(identifier, **kwargs)
 
-    def send_command(self, command, shell=None):
+    def send_command(self, cmd, shell=None, silent=False):
         """
         Implementation of the ``send_command`` interface.
 
@@ -110,9 +110,9 @@ class DebugNode(CommonNode):
         information.
         """
         log.debug('{}.send_command({}, shell={})'.format(
-            str(self), command, shell
+            str(self), cmd, shell
         ))
-        return command
+        return cmd
 
     def available_shells(self):
         """
