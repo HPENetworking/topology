@@ -32,7 +32,8 @@ from collections import OrderedDict
 
 from pkg_resources import iter_entry_points
 
-from ..platform import DockerNode
+from .node import DockerNode
+from .openswitch import OpenSwitchNode
 
 
 log = logging.getLogger(__name__)
@@ -67,6 +68,9 @@ def nodes(cache=True):
 
     available = OrderedDict()
 
+    available['host'] = DockerNode
+    available['openswitch'] = OpenSwitchNode
+
     # Iterate over entry points
     for ep in iter_entry_points(group='topology_docker_node_10'):
 
@@ -90,9 +94,6 @@ def nodes(cache=True):
             continue
 
         available[name] = node
-
-    if 'host' not in available:
-        available['host'] = DockerNode
 
     nodes.available = available
     return available

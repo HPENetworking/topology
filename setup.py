@@ -93,9 +93,6 @@ setup(
     entry_points={
         'topology_platform_10': [
             'docker = topology_docker.platform:DockerPlatform'
-        ],
-        'topology_docker_node_10': [
-            'openswitch = topology_docker.nodes.openswitch:OpenSwitchNode'
         ]
     }
 )

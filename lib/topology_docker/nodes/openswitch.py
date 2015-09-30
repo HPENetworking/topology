@@ -26,8 +26,7 @@ from __future__ import print_function, division
 
 from os import environ
 
-from topology_docker.platform import DockerNode
-
+from .node import DockerNode
 from ..shell import DockerShell
 
 
