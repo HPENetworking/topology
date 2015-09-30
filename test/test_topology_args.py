@@ -37,16 +37,19 @@ def teardown_module(module):
     print('teardown_module({})'.format(module.__name__))
 
 
-def test_args():
+def test_args(tmpdir):
 
-    parsed = args.parse_args([])
+    topology = tmpdir.join('topology.txt')
+    topology.write('')
+
+    parsed = args.parse_args([str(topology)])
     assert parsed.verbose == 0
 
-    parsed = args.parse_args(['-v'])
+    parsed = args.parse_args(['-v', str(topology)])
     assert parsed.verbose == 1
 
-    parsed = args.parse_args(['-vv'])
+    parsed = args.parse_args(['-vv', str(topology)])
     assert parsed.verbose == 2
 
-    parsed = args.parse_args(['-vvv'])
+    parsed = args.parse_args(['-vvv', str(topology)])
     assert parsed.verbose == 3

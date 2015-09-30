@@ -29,6 +29,20 @@ import pytest  # noqa
 from topology import args, main
 
 
+TEST_TOPOLOGY = """\
+# Nodes
+[type=openswitch name="Switch 1"] sw1
+[type=openswitch name="Switch 2"] sw2
+[type=host name="Host 1"] hs1
+[type=host name="Host 2"] hs2
+
+# Links
+hs1:1 -- sw1:3
+sw1:4 -- sw2:3
+sw2:4 -- hs2:1
+"""
+
+
 def setup_module(module):
     print('setup_module({})'.format(module.__name__))
 
@@ -37,6 +51,10 @@ def teardown_module(module):
     print('teardown_module({})'.format(module.__name__))
 
 
-def test_main():
-    arguments = ['--help']
+def test_main(tmpdir):
+
+    topology = tmpdir.join('topology.txt')
+    topology.write(TEST_TOPOLOGY)
+
+    arguments = ['--platform=debug', '--non-interactive', str(topology)]
     assert main.main(args.parse_args(arguments)) == 0
