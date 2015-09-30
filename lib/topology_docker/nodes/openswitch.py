@@ -32,7 +32,26 @@ from ..shell import DockerShell
 
 class OpenSwitchNode(DockerNode):
     """
-    FIXME: Document.
+    Custom engine node for the Topology docker platform engine.
+
+    This custom node loads an OpenSwitch image and has vtysh as default
+    console (in addition to bash).
+
+    :param str identifier: The unique identifier of the node.
+    :param str image: The image to run on this node. The image can also be
+     setup using the environment variable ``OPS_IMAGE``. If present, it will
+     take precedence to this argument in runtime.
+    :param str command: The command to run when the container is brought up.
+    :param list binds: A list of directories endpoints to bind in container in
+     the form:
+
+     ::
+
+        [
+            '/tmp:/tmp',
+            '/dev/log:/dev/log',
+            '/sys/fs/cgroup:/sys/fs/cgroup'
+        ]
     """
 
     def __init__(
@@ -63,7 +82,8 @@ class OpenSwitchNode(DockerNode):
 
     def notify_post_build(self):
         """
-        FIXME: Document.
+        Get notified that the post build stage of the topology build was
+        reached.
         """
         super(OpenSwitchNode, self).notify_post_build()
 

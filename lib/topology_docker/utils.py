@@ -16,8 +16,7 @@
 # under the License.
 
 """
-Module to determine root / non-root and define the prefix required for
-commands.
+topology_docker utilities module.
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -34,7 +33,14 @@ log = logging.getLogger(__name__)
 
 def iface_name(node, port):
     """
-    FIXME: Document.
+    Get the interface name for a given specification node and port.
+
+    :param node: The specification node owner of the port.
+    :type node: pynml.nml.Node
+    :param biport: The specification port representing the interface.
+    :type biport: pynml.nml.BidirectionalPort
+    :rtype: str
+    :return: The name of the interface.
     """
     if 'port_number' in port.metadata:
         return '{}-{}'.format(

@@ -29,7 +29,13 @@ from pexpect import spawn
 
 class DockerShell(object):
     """
-    FIXME: Document.
+    Shell helper class.
+
+    This class wrapps a ``docker exec`` call to a given shell command and
+    manages a pexpect spawn object for it.
+
+    It implementes the ``__call__`` method that allows to call the objects
+    as it were the contained shell.
     """
 
     def __init__(

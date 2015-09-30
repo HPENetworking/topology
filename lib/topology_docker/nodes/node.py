@@ -72,7 +72,12 @@ class DockerNode(CommonNode):
 
     def notify_add_biport(self, node, biport):
         """
-        FIXME: Document.
+        Get notified that a new biport was added to this engine node.
+
+        :param node: The specification node that spawn this engine node.
+        :type node: pynml.nml.Node
+        :param biport: The specification bidirectional port added.
+        :type biport: pynml.nml.BidirectionalPort
         """
         iface = iface_name(node, biport)
         self._ports[biport.identifier] = {
@@ -83,14 +88,21 @@ class DockerNode(CommonNode):
 
     def notify_add_bilink(self, nodeport, bilink):
         """
-        FIXME: Document.
+        Get notified that a new bilink was added to a port of this engine node.
+
+        :param nodeport: A tuple with the specification node and port being
+         linked.
+        :type nodeport: (pynml.nml.Node, pynml.nml.BidirectionalPort)
+        :param bilink: The specification bidirectional link added.
+        :type bilink: pynml.nml.BidirectionalLink
         """
         node, biport = nodeport
         self._ports[biport.identifier]['created'] = True
 
     def notify_post_build(self):
         """
-        FIXME: Document.
+        Get notified that the post build stage of the topology build was
+        reached.
         """
         cmd_tpl = 'ip tuntap add dev {iface} mode tap'
 
