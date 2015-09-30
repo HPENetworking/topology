@@ -66,8 +66,8 @@ def nodes(cache=True):
     if cache and hasattr(nodes, 'available'):
         return nodes.available
 
+    # Add built-in node types
     available = OrderedDict()
-
     available['host'] = DockerNode
     available['openswitch'] = OpenSwitchNode
 

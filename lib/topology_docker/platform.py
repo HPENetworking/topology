@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 
 def iface_name(node, port):
     """
+    FIXME: Document.
     """
     if 'port_number' in port.metadata:
         return '{}-{}'.format(
@@ -57,7 +58,6 @@ class DockerPlatform(BasePlatform):
 
         self.nmlnode_node_map = {}
         self.available_node_types = nodes()
-        print(self.available_node_types)
 
         # Test permissions and define privileged commands prefix
         self._cmd_prefix = cmd_prefix()

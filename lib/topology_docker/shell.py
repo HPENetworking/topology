@@ -29,6 +29,7 @@ from pexpect import spawn
 
 class DockerShell(object):
     """
+    FIXME: Document.
     """
 
     def __init__(

@@ -71,6 +71,9 @@ class DockerNode(CommonNode):
         self._ports = {}
 
     def notify_add_biport(self, node, biport):
+        """
+        FIXME: Document.
+        """
         iface = iface_name(node, biport)
         self._ports[biport.identifier] = {
             'iface': iface,
@@ -79,11 +82,16 @@ class DockerNode(CommonNode):
         }
 
     def notify_add_bilink(self, nodeport, bilink):
+        """
+        FIXME: Document.
+        """
         node, biport = nodeport
         self._ports[biport.identifier]['created'] = True
 
     def notify_post_build(self):
-
+        """
+        FIXME: Document.
+        """
         cmd_tpl = 'ip tuntap add dev {iface} mode tap'
 
         for port_spec in self._ports.values():

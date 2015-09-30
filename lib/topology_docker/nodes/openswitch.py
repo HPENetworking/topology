@@ -32,6 +32,7 @@ from ..shell import DockerShell
 
 class OpenSwitchNode(DockerNode):
     """
+    FIXME: Document.
     """
 
     def __init__(
@@ -61,6 +62,9 @@ class OpenSwitchNode(DockerNode):
         self._shells[key] = shell
 
     def notify_post_build(self):
+        """
+        FIXME: Document.
+        """
         super(OpenSwitchNode, self).notify_post_build()
 
         cmd_tpl = """\
