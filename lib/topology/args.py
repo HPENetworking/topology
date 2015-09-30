@@ -104,6 +104,11 @@ def parse_args(argv=None):
         action='store_true'
     )
     parser.add_argument(
+        '--show-build-commands',
+        help='Show commands executed in nodes during build',
+        action='store_true'
+    )
+    parser.add_argument(
         'topology',
         help='File with the topology description to build'
     )

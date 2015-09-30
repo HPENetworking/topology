@@ -22,7 +22,10 @@ Application entry point module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+import sys
 import logging
+
+from six import StringIO
 
 from . import __version__
 from .manager import TopologyManager
@@ -55,9 +58,18 @@ def main(args):
         with open(args.topology, 'r') as fd:
             mgr.parse(fd.read())
 
-    # Build topology
     print('Building topology, please wait...')
+
+    # Capture stdout to hide commands during build
+    if not args.show_build_commands:
+        sys.stdout = StringIO()
+
+    # Build topology
     mgr.build()
+
+    # Restore stdout after build
+    if not args.show_build_commands:
+        sys.stdout = sys.__stdout__
 
     # Start interactive mode if required
     if not args.non_interactive:
