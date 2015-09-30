@@ -144,6 +144,26 @@ class BasePlatform(object):
         """
         pass
 
+    @abstractmethod
+    def rollback(self, stage, enodes, exception):
+        """
+        Platform rollback hook.
+
+        This is called when the build fails, possibly by an exception raised in
+        previous hooks.
+
+        :param str stage: The stage the build failed. One of:
+         - ``pre_build``.
+         - ``add_node``.
+         - ``add_biport``.
+         - ``add_bilink``.
+         - ``post_build``.
+        :param enodes: Engine nodes already registered.
+        :type enodes: OrderedDict of subclasses of :class:`BaseNode`
+        :param Exception exception: The exception caught during build failure.
+        """
+        pass
+
 
 @add_metaclass(ABCMeta)
 class BaseNode(object):

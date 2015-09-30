@@ -83,6 +83,14 @@ class DebugPlatform(BasePlatform):
         """
         log.debug('[HOOK] destroy()')
 
+    def rollback(self, stage, enodes, exception):
+        """
+        See :meth:`BasePlatform.rollback` for more information.
+        """
+        log.debug('[HOOK] rollback({}, {}, {})'.format(
+            stage, enodes, exception
+        ))
+
 
 class DebugNode(CommonNode):
     """

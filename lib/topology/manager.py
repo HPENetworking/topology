@@ -29,6 +29,7 @@ from __future__ import print_function, division
 import logging
 from copy import deepcopy
 from datetime import datetime
+from traceback import format_exc
 from collections import OrderedDict
 
 from pynml.manager import ExtendedNMLManager
@@ -171,33 +172,52 @@ class TopologyManager(object):
         topology defined.
         """
         timestamp = datetime.now().replace(microsecond=0).isoformat()
+        stage = 'instance'
 
         # Instance platform
         plugin = platforms()[self.engine]
         self._platform = plugin(timestamp, self.nml)
 
-        self._platform.pre_build()
+        try:
+            stage = 'pre_build'
+            self._platform.pre_build()
 
-        for node in self.nml.nodes():
-            enode = self._platform.add_node(node)
+            stage = 'add_node'
+            for node in self.nml.nodes():
+                enode = self._platform.add_node(node)
 
-            # Check that engine node implements the minimum interface
-            if not isinstance(enode, BaseNode):
-                msg = 'Platform {} returned an invalid engine node.'.format(
-                    self.engine
-                )
-                log.critical(msg)
-                raise Exception(msg)
+                # Check that engine node implements the minimum interface
+                if not isinstance(enode, BaseNode):
+                    msg = (
+                        'Platform {} returned an invalid '
+                        'engine node {}.'
+                    ).format(self.engine, enode)
+                    log.critical(msg)
+                    raise Exception(msg)
 
-            self.nodes[enode.identifier] = enode
+                self.nodes[enode.identifier] = enode
 
-        for node, biport in self.nml.biports():
-            self._platform.add_biport(node, biport)
+            stage = 'add_biport'
+            for node, biport in self.nml.biports():
+                self._platform.add_biport(node, biport)
 
-        for node_porta, node_portb, bilink in self.nml.bilinks():
-            self._platform.add_bilink(node_porta, node_portb, bilink)
+            stage = 'add_bilink'
+            for node_porta, node_portb, bilink in self.nml.bilinks():
+                self._platform.add_bilink(node_porta, node_portb, bilink)
 
-        self._platform.post_build()
+            stage = 'post_build'
+            self._platform.post_build()
+
+        except Exception as e:
+            log.critical(
+                (
+                    'Build failed at stage "{}" with "{}". '
+                    'Calling plugin rollback routine...'
+                ).format(e, stage)
+            )
+            log.debug(format_exc())
+            self._platform.rollback(stage, self.nodes, e)
+            raise e
 
         self._built = True
 
