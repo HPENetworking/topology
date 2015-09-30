@@ -136,5 +136,11 @@ class DockerPlatform(BasePlatform):
         for enode in self.nmlnode_node_map.values():
             enode.stop()
 
+    def rollback(self, stage, enodes, exception):
+        """
+        See :meth:`BasePlatform.rollback` for more information.
+        """
+        self.destroy()
+
 
 __all__ = ['DockerPlatform']
