@@ -62,6 +62,7 @@ setup(
     version=find_version('lib/topology/__init__.py'),
     package_dir={'': 'lib'},
     packages=find_packages('lib'),
+    scripts=['bin/topology'],
 
     # Dependencies
     install_requires=find_requirements('requirements.txt'),
