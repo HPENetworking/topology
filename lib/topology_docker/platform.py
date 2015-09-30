@@ -28,22 +28,11 @@ from shlex import split as shplit
 
 from topology.platforms.base import BasePlatform
 
-from .root import cmd_prefix
+from .utils import cmd_prefix, iface_name
+from .nodes.manager import nodes
 
 
 log = logging.getLogger(__name__)
-
-
-def iface_name(node, port):
-    """
-    FIXME: Document.
-    """
-    if 'port_number' in port.metadata:
-        return '{}-{}'.format(
-            node.identifier,
-            port.metadata['port_number']
-        )
-    return port.identifier
 
 
 class DockerPlatform(BasePlatform):
@@ -54,7 +43,6 @@ class DockerPlatform(BasePlatform):
     """
 
     def __init__(self, timestamp, nmlmanager):
-        from .nodes.manager import nodes
 
         self.nmlnode_node_map = {}
         self.available_node_types = nodes()
@@ -149,4 +137,4 @@ class DockerPlatform(BasePlatform):
             enode.stop()
 
 
-__all__ = ['iface_name', 'DockerPlatform']
+__all__ = ['DockerPlatform']

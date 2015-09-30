@@ -32,6 +32,18 @@ from shlex import split as shsplit
 log = logging.getLogger(__name__)
 
 
+def iface_name(node, port):
+    """
+    FIXME: Document.
+    """
+    if 'port_number' in port.metadata:
+        return '{}-{}'.format(
+            node.identifier,
+            port.metadata['port_number']
+        )
+    return port.identifier
+
+
 def cmd_prefix():
     """
     Determine if the current user can run privileged commands and thus
@@ -65,4 +77,4 @@ def cmd_prefix():
     return cmd_prefix.prefix
 
 
-__all__ = ['cmd_prefix']
+__all__ = ['iface_name', 'cmd_prefix']

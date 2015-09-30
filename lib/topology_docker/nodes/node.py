@@ -27,7 +27,7 @@ from docker import Client
 from topology.platforms.base import CommonNode
 
 from ..shell import DockerShell
-from ..platform import iface_name
+from ..utils import iface_name
 
 
 class DockerNode(CommonNode):
