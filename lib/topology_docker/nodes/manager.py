@@ -57,8 +57,8 @@ def nodes(cache=True):
      ::
 
         {
-            'openswitch': OpenSwitchNode,
-            'quagga': QuaggaNode
+            'host': DockerNode,
+            'openswitch': OpenSwitchNode
         }
     """
 
