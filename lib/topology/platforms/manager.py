@@ -27,16 +27,19 @@ from __future__ import print_function, division
 
 import logging
 from inspect import isclass
-from traceback import format_exc
-from collections import OrderedDict
 
 from pkg_resources import iter_entry_points
 
 from .base import BasePlatform
-from .debug import DebugPlatform
 
 
 log = logging.getLogger(__name__)
+
+
+DEFAULT_PLATFORM = 'debug'
+"""
+Default engine platform.
+"""
 
 
 def platforms(cache=True):
@@ -44,66 +47,67 @@ def platforms(cache=True):
     List all available engine platforms.
 
     This function lists the default engine plus any other it can discover
-    looking up the entry point. This lookup requires to load all available
-    engine platform plugins, which can be costly or error prone if a plugin
-    misbehave, and because of this a cache is stored after the first call.
+    looking up the entry point.
 
     :param bool cache: If ``True`` return the cached result. If ``False`` force
-     reload of all plugins registered for the entry point.
-    :rtype: dict
-    :return: A dictionary associating the name of the engine platform and the
-     class (subclass of :class:`topology.platforms.base.BasePlatform`)
-     implementing it:
-
-     ::
-
-        {
-            'debug': DebugPlatform,
-            'other': OtherPlatform
-        }
+     lookup for plugins registered for the entry point.
+    :rtype: list
+    :return: A sorted list with all available platforms.
     """
 
     # Return cached value if call is repeated
     if cache and hasattr(platforms, 'available'):
-        return platforms.available
+        return list(platforms.available)
 
     # Add default plugin
-    available = OrderedDict()
-    available['debug'] = DebugPlatform
+    available = []
 
     # Iterate over entry points
     for ep in iter_entry_points(group='topology_platform_10'):
+        available.append(ep.name)
 
-        name = ep.name
+    available.sort()
+    platforms.available = available
+
+    return list(available)
+
+
+def load_platform(name):
+    """
+    Load platform identified by given name.
+
+    :param str name: Name of the platform.
+     This must be a name available in the list returned by :func:`platforms`.
+    :rtype: A :class:`BasePlatform` subclass
+    :return: The implementation class on the platform engine.
+    """
+    if name not in platforms():
+        raise RuntimeError('Unknown platform engine "{}".'.format(name))
+
+    # Iterate over entry points
+    for ep in iter_entry_points(group='topology_platform_10', name=name):
 
         try:
             platform = ep.load()
-        except:
+        except Exception as e:
             log.error(
                 'Unable to load topology engine '
                 'platform plugin {}.'.format(name)
             )
-            log.debug(format_exc())
-            continue
+            raise e
 
         if not isclass(platform) or not issubclass(platform, BasePlatform):
             log.error(
-                'Ignoring platform "{}" as it doesn\'t '
-                'match the required interface: '
+                'Platform "{}" doesn\'t implement the required interface: '
                 'Platform not a subclass of BasePlatform.'.format(name)
             )
             continue
 
-        available[name] = platform
+        return platform
 
-    platforms.available = available
-    return available
-
-
-DEFAULT_PLATFORM = list(platforms().keys())[0]
-"""
-Default engine platform.
-"""
+    raise RuntimeError(
+        'Platform engine "{}"" not in entry points.'.format(name)
+    )
 
 
-__all__ = ['platforms', 'DEFAULT_PLATFORM']
+__all__ = ['platforms', 'load_platform', 'DEFAULT_PLATFORM']

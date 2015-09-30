@@ -36,7 +36,7 @@ from pynml.manager import ExtendedNMLManager
 
 from .parser import parse_txtmeta
 from .platforms.base import BaseNode
-from .platforms.manager import platforms, DEFAULT_PLATFORM
+from .platforms.manager import platforms, load_platform, DEFAULT_PLATFORM
 
 
 log = logging.getLogger(__name__)
@@ -74,6 +74,10 @@ class TopologyManager(object):
     """
 
     def __init__(self, engine=DEFAULT_PLATFORM, **kwargs):
+
+        if engine not in platforms():
+            raise RuntimeError('Unknown platform engine "{}".'.format(engine))
+
         self.nml = ExtendedNMLManager(**kwargs)
         self.engine = engine
         self.nodes = OrderedDict()
@@ -180,7 +184,7 @@ class TopologyManager(object):
         stage = 'instance'
 
         # Instance platform
-        plugin = platforms()[self.engine]
+        plugin = load_platform(self.engine)
         self._platform = plugin(timestamp, self.nml)
 
         try:

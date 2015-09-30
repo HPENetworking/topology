@@ -96,7 +96,7 @@ def parse_args(argv=None):
         '--platform',
         default=DEFAULT_PLATFORM,
         help='Select the platform to build the topology',
-        choices=sorted(platforms())
+        choices=platforms()
     )
     parser.add_argument(
         '--non-interactive',

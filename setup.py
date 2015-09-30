@@ -91,6 +91,9 @@ setup(
 
     # Entry points
     entry_points={
-        'pytest11': ['topology = topology.pytest.plugin']
+        'pytest11': ['topology = topology.pytest.plugin'],
+        'topology_platform_10': [
+            'debug = topology.platforms.debug:DebugPlatform'
+        ]
     }
 )

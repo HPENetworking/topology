@@ -165,7 +165,7 @@ def pytest_addoption(parser):
         '--topology-platform',
         default=DEFAULT_PLATFORM,
         help='Select platform to run topology tests',
-        choices=sorted(platforms())
+        choices=platforms()
     )
     group.addoption(
         '--topology-plot-dir',
