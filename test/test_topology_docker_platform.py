@@ -22,7 +22,6 @@ Test suite for module topology_docker.platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pytest import mark
 from pynml import Node, BidirectionalPort
 
 from topology_docker.platform import DockerPlatform
@@ -141,140 +140,44 @@ def test_build_topology():
 
 def test_ping():
     """
-    Builds the topology described on the following schema and ping h2 from h1
+    Builds the topology described on the following schema and ping h2 from h1.
 
     ::
 
-        +------+                               +------+
-        |      |     +------+     +------+     |      |
-        |  h1  <----->  s1  <----->  s2  <----->  h2  |
-        |      |     +------+     +------+     |      |
-        +------+                               +------+
+       +------+                               +------+
+       |      |     +------+     +------+     |      |
+       |  h1  <----->  s1  <----->  s2  <----->  h2  |
+       |      |     +------+     +------+     |      |
+       +------+                               +------+
     """
-    topo = DockerPlatform(None, None)
-    topo.pre_build()
-
-    s1 = Node(identifier='s1', type='openswitch')
-    topo_s1 = topo.add_node(s1)
-
-    s2 = Node(identifier='s2', type='openswitch')
-
-    topo_s2 = topo.add_node(s2)
-
-    h1 = Node(identifier='h1', type='host')
-    topo_h1 = topo.add_node(h1)
-
-    h2 = Node(identifier='h2', type='host')
-    topo_h2 = topo.add_node(h2)
-
-    s1p1 = BidirectionalPort(identifier='s1p1')
-    topo.add_biport(s1, s1p1)
-    s1p2 = BidirectionalPort(identifier='s1p2')
-    topo.add_biport(s1, s1p2)
-
-    s2p1 = BidirectionalPort(identifier='s2p1')
-    topo.add_biport(s2, s2p1)
-
-    s2p2 = BidirectionalPort(identifier='s2p2')
-    topo.add_biport(s2, s2p2)
-
-    h1p1 = BidirectionalPort(identifier='h1p1')
-    topo.add_biport(h1, h1p1)
-
-    h2p1 = BidirectionalPort(identifier='h2p1')
-    topo.add_biport(h2, h2p1)
-
-    topo.add_bilink((s1, s1p1), (h1, h1p1), None)
-    topo.add_bilink((s1, s1p2), (s2, s2p1), None)
-    topo.add_bilink((s2, s2p2), (h2, h2p1), None)
-
-    topo.post_build()
-
-    topo_h1.send_command('ifconfig h1p1 up')
-    topo_h2.send_command('ifconfig h2p1 up')
-
-    topo_h1.send_command('ifconfig h1p1 10.0.10.1 netmask 255.255.255.0 up')
-    topo_h2.send_command('ifconfig h2p1 10.0.30.1 netmask 255.255.255.0 up')
-
-    topo_s1.send_command('ip netns exec swns ifconfig s1p1 up', shell='bash')
-    topo_s1.send_command('ip netns exec swns ifconfig s1p2 up', shell='bash')
-
-    topo_s1.send_command(
-        'ip netns exec swns ifconfig s1p1 10.0.10.2 netmask 255.255.255.0 up',
-        shell='bash'
-    )
-    topo_s1.send_command(
-        'ip netns exec swns ifconfig s1p2 10.0.20.1 netmask 255.255.255.0 up',
-        shell='bash'
-    )
-
-    topo_s2.send_command('ip netns exec swns ifconfig s2p1 up', shell='bash')
-    topo_s2.send_command('ip netns exec swns ifconfig s2p2 up', shell='bash')
-
-    topo_s2.send_command(
-        'ip netns exec swns ifconfig s2p1 10.0.20.2 netmask 255.255.255.0 up',
-        shell='bash'
-    )
-    topo_s2.send_command(
-        'ip netns exec swns ifconfig s2p2 10.0.30.2 netmask 255.255.255.0 up',
-        shell='bash'
-    )
-
-    topo_s1.send_command(
-        'ip netns exec swns route add -net 10.0.30.0 netmask 255.255.255.0 \
-        gw 10.0.20.2',
-        shell='bash'
-    )
-    topo_s2.send_command(
-        'ip netns exec swns route add -net 10.0.10.0 netmask 255.255.255.0 \
-         gw 10.0.20.1',
-        shell='bash'
-    )
-
-    topo_h1.send_command('route add default gw 10.0.10.2')
-    topo_h2.send_command('route add default gw 10.0.30.2')
-
-    ping_result = topo_h1.send_command('ping -c 1 10.0.30.1')
-
-    topo.destroy()
-
-    assert '1 packets transmitted, 1 received' in ping_result
-
-
-@mark.skipif(True, reason='Make this work')
-def test_ping_better():
-    """
-    Builds the topology described on the following schema and ping h2 from h1
-
-    ::
-
-        +------+                               +------+
-        |      |     +------+     +------+     |      |
-        |  h1  <----->  s1  <----->  s2  <----->  h2  |
-        |      |     +------+     +------+     |      |
-        +------+                               +------+
-    """
+    # Build topology
     platform = DockerPlatform(None, None)
     platform.pre_build()
 
     h1 = Node(identifier='hs1', type='host')
     h2 = Node(identifier='hs2', type='host')
-    s1 = Node(identifier='sw1')
-    s2 = Node(identifier='sw2')
+    s1 = Node(identifier='sw1', type='openswitch')
+    s2 = Node(identifier='sw2', type='openswitch')
 
     hs1 = platform.add_node(h1)
     hs2 = platform.add_node(h2)
     sw1 = platform.add_node(s1)
     sw2 = platform.add_node(s2)
 
-    s1p1 = BidirectionalPort(identifier='s1p1', port_number=3)
-    s1p2 = BidirectionalPort(identifier='s1p2', port_number=4)
+    s1p1 = BidirectionalPort(identifier='sw1-3')
+    s1p2 = BidirectionalPort(identifier='sw1-4')
+    platform.add_biport(s1, s1p1)
+    platform.add_biport(s1, s1p2)
 
-    s2p1 = BidirectionalPort(identifier='s2p1', port_number=3)
-    s2p2 = BidirectionalPort(identifier='s2p2', port_number=4)
+    s2p1 = BidirectionalPort(identifier='sw2-3')
+    s2p2 = BidirectionalPort(identifier='sw2-4')
+    platform.add_biport(s2, s2p1)
+    platform.add_biport(s2, s2p2)
 
-    h1p1 = BidirectionalPort(identifier='h1p1', port_number=1)
-    h2p1 = BidirectionalPort(identifier='h2p1', port_number=1)
+    h1p1 = BidirectionalPort(identifier='hs1-1')
+    h2p1 = BidirectionalPort(identifier='hs2-1')
+    platform.add_biport(h1, h1p1)
+    platform.add_biport(h2, h2p1)
 
     platform.add_bilink((s1, s1p1), (h1, h1p1), None)
     platform.add_bilink((s1, s1p2), (s2, s2p1), None)
@@ -286,65 +189,67 @@ def test_ping_better():
     ###########
 
     # Configure IP and bring UP host 1 interfaces
-    hs1.send_command('ip link set fp1 up')
-    hs1.send_command('ip addr add 10.0.10.1/24 dev fp1')
+    hs1.send_command('ip link set hs1-1 up')
+    hs1.send_command('ip addr add 10.0.10.1/24 dev hs1-1')
 
     # Configure IP and bring UP host 2 interfaces
-    hs2.send_command('ip link set fp1 up')
-    hs2.send_command('ip addr add 10.0.30.1/24 dev fp1')
+    hs2.send_command('ip link set hs2-1 up')
+    hs2.send_command('ip addr add 10.0.30.1/24 dev hs2-1')
 
     # Configure IP and bring UP switch 1 interfaces
     sw1.send_command(
-        'ip netns exec swns ip link set fp3 up',
+        'ip netns exec swns ip link set sw1-3 up',
         shell='bash'
     )
     sw1.send_command(
-        'ip netns exec swns ip link set fp4 up',
+        'ip netns exec swns ip link set sw1-4 up',
         shell='bash'
     )
 
     sw1.send_command(
-        'ip netns exec swns ip addr add 10.0.10.2/24 dev fp3',
+        'ip netns exec swns ip addr add 10.0.10.2/24 dev sw1-3',
         shell='bash'
     )
     sw1.send_command(
-        'ip netns exec swns ip addr add 10.0.20.1/24 dev fp4',
+        'ip netns exec swns ip addr add 10.0.20.1/24 dev sw1-4',
         shell='bash'
     )
 
     # Configure IP and bring UP switch 2 interfaces
     sw2.send_command(
-        'ip netns exec swns ip link set fp3 up', shell='bash'
+        'ip netns exec swns ip link set sw2-3 up',
+        shell='bash'
     )
     sw2.send_command(
-        'ip netns exec swns ip addr add 10.0.20.2/24 dev fp3',
+        'ip netns exec swns ip addr add 10.0.20.2/24 dev sw2-3',
         shell='bash'
     )
 
     sw2.send_command(
-        'ip netns exec swns ip link set fp4 up', shell='bash'
+        'ip netns exec swns ip link set sw2-4 up',
+        shell='bash'
     )
     sw2.send_command(
-        'ip netns exec swns ip addr add 10.0.30.2/24 dev fp4',
+        'ip netns exec swns ip addr add 10.0.30.2/24 dev sw2-4',
         shell='bash'
     )
 
     # Set static routes in switches
     sw1.send_command(
-        'ip netns exec swns ip route add 10.0.30.0/24 dev fp4',
+        'ip netns exec swns ip route add 10.0.30.0/24 via 10.0.20.2',
         shell='bash'
     )
     sw2.send_command(
-        'ip netns exec swns ip route add 10.0.10.0/24 dev fp3',
+        'ip netns exec swns ip route add 10.0.10.0/24 via 10.0.20.1',
         shell='bash'
     )
 
     # Set gateway in hosts
     hs1.send_command(
-        'ip route add default via 10.0.10.1 dev fp1'
+        'ip route add default via 10.0.10.2'
     )
     hs2.send_command(
-        'ip route add default via 10.0.30.1 dev fp1'
+        'ip route add default via 10.0.30.2'
     )
 
     ping_result = hs1.send_command('ping -c 1 10.0.30.1')
