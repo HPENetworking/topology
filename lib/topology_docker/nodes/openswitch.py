@@ -96,7 +96,7 @@ class OpenSwitchNode(DockerNode):
             netns, rename = cmd_tpl.format(**port_spec).splitlines()
 
             # Set interfaces in swns namespace
-            self.send_command(netns.lstrip(), shell='bash')
+            self.send_command(netns.strip(), shell='bash')
 
             # FIXME: Remove this when vtysh is fixed
             # Rename interface to make vtysh work
