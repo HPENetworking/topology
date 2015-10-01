@@ -1,9 +1,10 @@
 .. toctree::
    :hidden:
 
+   user
+   plugins
    developer
    topology/topology
-   plugins
 
 ==========================
 Network Topology Framework
@@ -19,13 +20,15 @@ Network Topology Framework using NML, with support for pytest.
 Documentation
 =============
 
-- :doc:`Developer Guide. <developer>`
-- :doc:`Internal Documentation Reference. <topology/topology>`
+- :doc:`User Guide. <user>`
+- :doc:`Plugin Developer Guide. <plugins>`
 
 
 Development
 ===========
 
+- :doc:`Developer Guide. <developer>`
+- :doc:`Internal Documentation Reference. <topology/topology>`
 - `Project repository. <https://github-sc-p.corp.hp.com/hpe-networking/topology>`_
 
 
