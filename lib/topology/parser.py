@@ -304,11 +304,40 @@ def parse_txtmeta(txtmeta):
     return data
 
 
+def find_topology_in_python(filename):
+    """
+    Find the TOPOLOGY variable inside a Python file.
+
+    This helper functions build a AST tree a grabs the variable from it. Thus,
+    the Python code isn't executed.
+
+    :param str filename: Path to file to search for TOPOLOGY.
+    :rtype: str or None
+    :return: The value of the TOPOLOGY variable if found, None otherwise.
+    """
+    import ast
+
+    try:
+        with open(filename) as fd:
+            tree = ast.parse(fd.read())
+
+        for node in ast.iter_child_nodes(tree):
+            if not isinstance(node, ast.Assign):
+                continue
+            if node.targets[0].id == 'TOPOLOGY':
+                return node.value.s
+
+    except:
+        log.error(format_exc())
+    return None
+
+
 __all__ = [
     'ParseException',
     'is_identifier',
     'parse_attrs',
     'parse_nodes',
     'parse_link',
-    'parse_txtmeta'
+    'parse_txtmeta',
+    'find_topology_in_python'
 ]

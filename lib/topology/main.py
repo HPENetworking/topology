@@ -30,6 +30,7 @@ from six import StringIO
 from . import __version__
 from .manager import TopologyManager
 from .interact import interact
+from .parser import find_topology_in_python
 
 
 log = logging.getLogger(__name__)
@@ -51,9 +52,18 @@ def main(args):
 
     # Read topology
     if args.topology.endswith('.py'):
-        raise NotImplementedError(
-            'Topology extraction from Python files not implemented yet.'
-        )
+
+        topology = find_topology_in_python(args.topology)
+
+        if topology is None:
+            log.error(
+                'TOPOLOGY variable could not be found in file {}'.format(
+                    args.topology
+                )
+            )
+            return 1
+
+        mgr.parse(topology)
     else:
         with open(args.topology, 'r') as fd:
             mgr.parse(fd.read())
