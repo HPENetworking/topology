@@ -53,7 +53,7 @@ class BasePlatform(object):
 
     @abstractmethod
     def __init__(self, timestamp, nmlmanager):
-        pass
+        """ """
 
     @abstractmethod
     def pre_build(self):
@@ -63,7 +63,6 @@ class BasePlatform(object):
         This hook is called at the first stage of the topology build.
         Use it to setup any requirements your platform has.
         """
-        pass
 
     @abstractmethod
     def add_node(self, node):
@@ -79,7 +78,6 @@ class BasePlatform(object):
         :rtype: BaseNode
         :return: Platform specific communication node.
         """
-        pass
 
     @abstractmethod
     def add_biport(self, node, biport):
@@ -97,7 +95,6 @@ class BasePlatform(object):
          platform.
         :type biport: :class:`pynml.nml.BidirectionalPort`
         """
-        pass
 
     @abstractmethod
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
@@ -121,7 +118,6 @@ class BasePlatform(object):
          platform.
         :type biport: :class:`pynml.nml.BidirectionalLink`
         """
-        pass
 
     @abstractmethod
     def post_build(self):
@@ -132,7 +128,6 @@ class BasePlatform(object):
         Use it to setup any final requirements or start any service before
         using the topology.
         """
-        pass
 
     @abstractmethod
     def destroy(self):
@@ -142,7 +137,6 @@ class BasePlatform(object):
         Use this to remove all elements from the platform, perform any clean
         and return resources.
         """
-        pass
 
     @abstractmethod
     def rollback(self, stage, enodes, exception):
@@ -162,7 +156,6 @@ class BasePlatform(object):
         :type enodes: OrderedDict of subclasses of :class:`BaseNode`
         :param Exception exception: The exception caught during build failure.
         """
-        pass
 
 
 @add_metaclass(ABCMeta)

@@ -49,9 +49,6 @@ from os.path import join, isabs, abspath, exists
 
 from pytest import fixture, fail, hookimpl
 
-from ..manager import TopologyManager
-from ..platforms.manager import platforms, DEFAULT_PLATFORM
-
 
 log = logging.getLogger(__name__)
 
@@ -99,6 +96,8 @@ def topology(request):
     - https://pytest.org/latest/fixture.html
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
+    from ..manager import TopologyManager
+
     plugin = request.config._topology_plugin
     module = request.module
     topomgr = TopologyManager(plugin.platform)
@@ -160,6 +159,8 @@ def pytest_addoption(parser):
     """
     pytest hook to add CLI arguments.
     """
+    from ..platforms.manager import platforms, DEFAULT_PLATFORM
+
     group = parser.getgroup('topology', 'Testing of network topologies')
     group.addoption(
         '--topology-platform',

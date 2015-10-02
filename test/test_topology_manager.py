@@ -29,6 +29,11 @@ from collections import OrderedDict
 import pytest  # noqa
 from deepdiff import DeepDiff
 
+# Reload module to properly measure coverage
+from six.moves import reload_module
+import topology.platforms.manager
+reload_module(topology.platforms.manager)
+
 from topology.manager import TopologyManager
 
 

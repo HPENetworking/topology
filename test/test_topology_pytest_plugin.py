@@ -26,6 +26,11 @@ from __future__ import print_function, division
 
 from pytest import config, mark
 
+# Reload module to properly measure coverage
+from six.moves import reload_module
+import topology.pytest.plugin
+reload_module(topology.pytest.plugin)
+
 from topology.manager import TopologyManager
 
 
@@ -66,11 +71,11 @@ def test_skipped_test_id():
     assert False
 
 
-@mark.skipif(not hasattr(config, '_xml'), reason='This test must always skip')
+@mark.skipif(not hasattr(config, '_xml'), reason='XML output not enabled')
 def test_previous_has_test_id():
     """
     Test that previous test recorded the test_id.
     """
     assert hasattr(config, '_xml')
-    xml = str(config._xml.tests[-2])
+    xml = str(config._xml.tests[-1])
     assert '<property name="test_id" value="1001"/>' in xml
