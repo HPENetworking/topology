@@ -23,12 +23,29 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from os import getuid, devnull
+from os import getuid, devnull, makedirs
 from subprocess import call
 from shlex import split as shsplit
 
 
 log = logging.getLogger(__name__)
+
+
+def ensure_dir(path):
+    """
+    Ensure that a path exists.
+
+    :param str path: Directory path to create.
+    """
+    import errno
+    EEXIST = getattr(errno, 'EEXIST', 0)  # noqa
+
+    try:
+        makedirs(path)
+    except OSError as err:
+        # 0 for Jython/Win32
+        if err.errno not in [0, EEXIST]:
+            raise
 
 
 def iface_name(node, port):
@@ -83,4 +100,4 @@ def cmd_prefix():
     return cmd_prefix.prefix
 
 
-__all__ = ['iface_name', 'cmd_prefix']
+__all__ = ['ensure_dir', 'iface_name', 'cmd_prefix']

@@ -26,8 +26,24 @@ from __future__ import print_function, division
 
 from os import environ
 
+from yaml import load
+
 from .node import DockerNode
 from ..shell import DockerShell
+from ..utils import ensure_dir
+
+
+WAIT_FOR_OPENSWITCH = r"""\
+#!/bin/bash
+
+# Wait until cur_hw field in System table becomes greater than 0
+while true
+do
+    [[ `ovsdb-client transact '["OpenSwitch",{ "op": "select","table": "System","where": [ ],"columns" : ["cur_hw"]}]' | sed -e 's/[{}]/''/g' -e 's/\\]//g' | sed s/\\]//g | awk -F: '{print $3}'` -gt 0 ]] && /bin/ls /var/run/openvswitch/ops-switchd.pid && break
+    echo "Waiting for cur_cfg value set to 1"
+    sleep 1
+done
+"""  # noqa
 
 
 class OpenSwitchNode(DockerNode):
@@ -62,11 +78,15 @@ class OpenSwitchNode(DockerNode):
         # Fetch image from environment
         image = environ.get('OPS_IMAGE', image)
 
+        # Determine shared directory
+        shared_dir = '/tmp/topology_{}'.format(identifier)
+        ensure_dir(shared_dir)
+
         # Add binded directories
         if binds is None:
             binds = []
         binds.extend([
-            '/tmp:/tmp',
+            '{}:/tmp'.format(shared_dir),
             '/dev/log:/dev/log',
             '/sys/fs/cgroup:/sys/fs/cgroup'
         ])
@@ -74,6 +94,9 @@ class OpenSwitchNode(DockerNode):
         super(OpenSwitchNode, self).__init__(
             identifier, image=image, command=command, binds=binds, **kwargs
         )
+
+        # Save location of the shared dir in host
+        self.shared_dir = shared_dir
 
         # Add vtysh shell and make it default
         key, shell = self._shells.popitem()
@@ -87,10 +110,18 @@ class OpenSwitchNode(DockerNode):
         """
         super(OpenSwitchNode, self).notify_post_build()
 
+        # Wait for system setup
+        with open('{}/wait_for_openswitch'.format(self.shared_dir), 'w') as fd:
+            fd.write(WAIT_FOR_OPENSWITCH)
+        self.send_command('chmod +x /tmp/wait_for_openswitch', shell='bash')
+        self.send_command('/tmp/wait_for_openswitch', shell='bash')
+
         cmd_tpl = """\
             ip link set {iface} netns swns
             ip netns exec swns ip link set {iface} name {port_number}\
         """
+        # List of all created interfaces
+        ifaces = []
 
         for port_spec in self._ports.values():
             netns, rename = [
@@ -100,11 +131,36 @@ class OpenSwitchNode(DockerNode):
             # Set interfaces in swns namespace
             self.send_command(netns, shell='bash')
 
-            # FIXME: Remove this when vtysh is fixed
-            # Rename interface to make vtysh work
             # Named interfaces are ignored
-            if port_spec['port_number'] is not None:
-                self.send_command(rename, shell='bash')
+            if port_spec['port_number'] is None:
+                ifaces.append(port_spec['iface'])
+                continue
+
+            # Rename numbered interfaces
+            self.send_command(rename, shell='bash')
+            ifaces.append(str(port_spec['port_number']))
+
+        # Read hardware description for ports
+        self.send_command(
+            'cp /etc/openswitch/hwdesc/ports.yaml /tmp/',
+            shell='bash'
+        )
+
+        with open('{}/ports.yaml'.format(self.shared_dir), 'r') as fd:
+            ports_hwdesc = load(fd)
+        hwports = [p['name'] for p in ports_hwdesc['ports']]
+
+        # Create remaining ports
+        cmd_tpl = """\
+            ip tuntap add dev {hwport} mode tap
+            ip link set {hwport} netns swns
+        """
+
+        for hwport in hwports:
+            if hwport in ifaces:
+                continue
+            for cmd in cmd_tpl.format(hwport=hwport).splitlines():
+                self.send_command(cmd.strip(), shell='bash')
 
 
 __all__ = ['OpenSwitchNode']

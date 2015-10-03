@@ -1,3 +1,4 @@
 six
 pexpect
 docker-py
+pyyaml
