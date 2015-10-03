@@ -320,7 +320,7 @@ class CommonNode(BaseNode):
             raise Exception(
                 'Function {} is not supported.'.format(function)
             )
-        return self._functions[function](data)
+        return self._functions[function](self, **data)
 
     def available_functions(self):
         """
