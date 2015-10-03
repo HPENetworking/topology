@@ -30,9 +30,9 @@ from time import sleep
 
 from yaml import load
 
-from .node import DockerNode
-from ..shell import DockerShell
-from ..utils import ensure_dir
+from topology_docker.node import DockerNode
+from topology_docker.shell import DockerShell
+from topology_docker.utils import ensure_dir
 
 
 WAIT_FOR_OPENSWITCH = r"""\
@@ -101,7 +101,6 @@ class OpenSwitchNode(DockerNode):
         self.shared_dir = shared_dir
 
         # Add vtysh (default) and bash shell
-        self._shells.clear()
         self._shells['vtysh'] = DockerShell(
             self.identifier, 'vtysh', 'switch.*#'
         )

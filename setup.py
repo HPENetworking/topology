@@ -93,6 +93,10 @@ setup(
     entry_points={
         'topology_platform_10': [
             'docker = topology_docker.platform:DockerPlatform'
+        ],
+        'topology_docker_node_10': [
+            'host = topology_docker.nodes.host:HostNode',
+            'openswitch = topology_docker.nodes.openswitch:OpenSwitchNode'
         ]
     }
 )

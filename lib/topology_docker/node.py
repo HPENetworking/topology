@@ -22,14 +22,17 @@ topology_docker base node module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from abc import ABCMeta, abstractmethod
+
 from docker import Client
+from six import add_metaclass
 
 from topology.platforms.base import CommonNode
 
-from ..shell import DockerShell
-from ..utils import iface_name
+from .utils import iface_name
 
 
+@add_metaclass(ABCMeta)
 class DockerNode(CommonNode):
     """
     An instance of this class will create a detached Docker container.
@@ -39,6 +42,7 @@ class DockerNode(CommonNode):
     :param str command: The command to run when the container is brought up.
     """
 
+    @abstractmethod
     def __init__(
             self, identifier,
             image='ubuntu', command='bash', binds=None, **kwargs):
@@ -67,9 +71,6 @@ class DockerNode(CommonNode):
             host_config=self._host_config
         )['Id']
 
-        self._shells['bash'] = DockerShell(
-            self.identifier, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
-        )
         self._ports = {}
 
     def notify_add_biport(self, node, biport):
