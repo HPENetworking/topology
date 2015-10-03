@@ -25,6 +25,8 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from os import environ
+from os.path import isfile
+from time import sleep
 
 from yaml import load
 
@@ -88,7 +90,7 @@ class OpenSwitchNode(DockerNode):
         binds.extend([
             '{}:/tmp'.format(shared_dir),
             '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
+            '/sys/fs/cgroup:/sys/fs/cgroup:ro'
         ])
 
         super(OpenSwitchNode, self).__init__(
@@ -98,10 +100,14 @@ class OpenSwitchNode(DockerNode):
         # Save location of the shared dir in host
         self.shared_dir = shared_dir
 
-        # Add vtysh shell and make it default
-        key, shell = self._shells.popitem()
-        self._shells['vtysh'] = DockerShell(self.identifier, 'vtysh', '.*#')
-        self._shells[key] = shell
+        # Add vtysh (default) and bash shell
+        self._shells.clear()
+        self._shells['vtysh'] = DockerShell(
+            self.identifier, 'vtysh', 'switch.*#'
+        )
+        self._shells['bash'] = DockerShell(
+            self.identifier, 'bash', 'bash-.*#'
+        )
 
     def notify_post_build(self):
         """
@@ -110,12 +116,11 @@ class OpenSwitchNode(DockerNode):
         """
         super(OpenSwitchNode, self).notify_post_build()
 
-        # Wait for system setup
-        with open('{}/wait_for_openswitch'.format(self.shared_dir), 'w') as fd:
-            fd.write(WAIT_FOR_OPENSWITCH)
-        self.send_command('chmod +x /tmp/wait_for_openswitch', shell='bash')
-        self.send_command('/tmp/wait_for_openswitch', shell='bash')
+        # Wait for swns to be available
+        while 'swns' not in self.send_command('ip netns list', shell='bash'):
+            sleep(0.1)
 
+        # Move interfaces to swns network namespace and rename port interfaces
         cmd_tpl = """\
             ip link set {iface} netns swns
             ip netns exec swns ip link set {iface} name {port_number}\
@@ -140,6 +145,17 @@ class OpenSwitchNode(DockerNode):
             self.send_command(rename, shell='bash')
             ifaces.append(str(port_spec['port_number']))
 
+        # TODO: Analyse the option to comment this line,
+        #       as it takes too much time. It is really required?
+        self._create_hwdesc_ports(ifaces)
+
+    def _create_hwdesc_ports(self, exclude):
+        """
+        Create all ports in the hardware description.
+
+        :param list exclude: List of ports to exclude. Usually the ports
+         already created.
+        """
         # Read hardware description for ports
         self.send_command(
             'cp /etc/openswitch/hwdesc/ports.yaml /tmp/',
@@ -148,19 +164,40 @@ class OpenSwitchNode(DockerNode):
 
         with open('{}/ports.yaml'.format(self.shared_dir), 'r') as fd:
             ports_hwdesc = load(fd)
-        hwports = [p['name'] for p in ports_hwdesc['ports']]
+        hwports = [str(p['name']) for p in ports_hwdesc['ports']]
 
         # Create remaining ports
         cmd_tpl = """\
             ip tuntap add dev {hwport} mode tap
-            ip link set {hwport} netns swns
+            ip link set {hwport} netns swns\
         """
 
         for hwport in hwports:
-            if hwport in ifaces:
+            if hwport in exclude:
                 continue
-            for cmd in cmd_tpl.format(hwport=hwport).splitlines():
-                self.send_command(cmd.strip(), shell='bash')
+
+            commands = [
+                cmd.strip() for cmd in
+                cmd_tpl.format(hwport=hwport).splitlines()
+            ]
+            for cmd in commands:
+                self.send_command(cmd, shell='bash')
+
+    def wait_system_setup(self):
+        """
+        Wait until OpenSwitch daemons converge.
+
+        FIXME: Refactor this crap, this is ugly :/
+        """
+        wait_script = '{}/wait_for_openswitch'.format(self.shared_dir)
+        if not isfile(wait_script):
+            with open(wait_script, 'w') as fd:
+                fd.write(WAIT_FOR_OPENSWITCH)
+            self.send_command(
+                'chmod +x /tmp/wait_for_openswitch',
+                shell='bash'
+            )
+        self.send_command('/tmp/wait_for_openswitch', shell='bash')
 
 
 __all__ = ['OpenSwitchNode']

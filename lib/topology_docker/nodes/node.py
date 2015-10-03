@@ -67,7 +67,9 @@ class DockerNode(CommonNode):
             host_config=self._host_config
         )['Id']
 
-        self._shells['bash'] = DockerShell(self.identifier, 'bash', '.*#')
+        self._shells['bash'] = DockerShell(
+            self.identifier, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
+        )
         self._ports = {}
 
     def notify_add_biport(self, node, biport):

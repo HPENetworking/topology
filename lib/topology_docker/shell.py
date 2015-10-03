@@ -22,8 +22,6 @@ Docker shell helper class module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from time import sleep
-
 from pexpect import spawn
 
 
@@ -47,19 +45,35 @@ class DockerShell(object):
         self._delay = delay
         self._timeout = timeout or -1
         self._encoding = encoding
-        self._spawn = spawn(
-            'docker exec -i -t {} {}'.format(container, shell)
-        )
+        self._spawn = None
 
     def __call__(self, command):
+        if self._spawn is None:
+            # Lazy-spawn
+            self._spawn = spawn(
+                'docker exec -i -t {} {}'.format(
+                    self._container, self._shell
+                ),
+                echo=False
+            )
+            # Cut output at first prompt
+            self._spawn.expect(self._prompt, timeout=self._timeout)
+
         self._spawn.sendline(command)
-        # Without this sleep, the content of .after is truncated most of the
-        # time. For bash, the results were:
-        # With a value 0.1 the .after content was truncated in 2 of 100 runs.
-        # With a value 0.2 the .after content was truncated in 0 of 100 runs.
-        sleep(self._delay)
         self._spawn.expect(self._prompt, timeout=self._timeout)
-        return self._spawn.after.decode(self._encoding)
+
+        # Convert binary representation to unicode using encoding
+        raw = self._spawn.before.decode(self._encoding)
+
+        # Remove leading and trailing whitespaces and normalize newlines
+        lines = raw.strip().replace('\r', '').splitlines()
+        del raw
+
+        # Remove echo command if it exists
+        if len(lines) > 0 and lines[0] == command:
+            lines.pop(0)
+
+        return '\n'.join(lines)
 
 
 __all__ = ['DockerShell']
