@@ -94,6 +94,9 @@ setup(
         'pytest11': ['topology = topology.pytest.plugin'],
         'topology_platform_10': [
             'debug = topology.platforms.debug:DebugPlatform'
+        ],
+        'topology_library_10': [
+            'assert = topology.libraries.assert:REGISTRY'
         ]
     }
 )
