@@ -47,7 +47,7 @@ from os import getcwd, makedirs
 from traceback import format_exc
 from os.path import join, isabs, abspath, exists
 
-from pytest import fixture, fail, hookimpl
+from pytest import fixture, fail, hookimpl, skip
 
 
 log = logging.getLogger(__name__)
@@ -221,6 +221,13 @@ def pytest_configure(config):
         'test_id(id): assign a test identifier to the test'
     )
 
+    # Add topology_compatible marker
+    config.addinivalue_line(
+        'markers',
+        'platform_incompatible(platform): '
+        'mark a test as incompatible with a given platform engine'
+    )
+
 
 def pytest_unconfigure(config):
     """
@@ -237,18 +244,18 @@ def pytest_runtest_setup(item):
     """
     pytest hook to setup test before run.
     """
-    marker = item.get_marker('test_id')
+    test_id_marker = item.get_marker('test_id')
+    incompatible_marker = item.get_marker('platform_incompatible')
 
-    # If not marked do nothing
-    if marker is None:
-        return
+    # If marked and xml logging enabled
+    if test_id_marker is not None and hasattr(item.config, '_xml'):
+        test_id = test_id_marker.args[0]
+        item.config._xml.add_custom_property('test_id', test_id)
 
-    # If xml output is not enabled do nothing
-    if not hasattr(item.config, '_xml'):
-        return
-
-    test_id = marker.args[0]
-    item.config._xml.add_custom_property('test_id', test_id)
+    if incompatible_marker:
+        platform = item.config._topology_plugin.platform
+        if platform in incompatible_marker.args[0]:
+            skip('Test is incompatible with {} platform'.format(platform))
 
 
 __all__ = [

@@ -79,3 +79,11 @@ def test_previous_has_test_id():
     assert hasattr(config, '_xml')
     xml = str(config._xml.tests[-1])
     assert '<property name="test_id" value="1001"/>' in xml
+
+
+@mark.platform_incompatible(['debug'])
+def test_incompatible_marker():
+    """
+    Test that the incompatible marker is interpreted.
+    """
+    assert False
