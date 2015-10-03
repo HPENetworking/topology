@@ -222,7 +222,7 @@ class TopologyManager(object):
                 (
                     'Build failed at stage "{}" with "{}". '
                     'Calling plugin rollback routine...'
-                ).format(e, stage)
+                ).format(stage, e)
             )
             log.debug(format_exc())
             self._platform.rollback(stage, self.nodes, e)

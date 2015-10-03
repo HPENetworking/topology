@@ -260,7 +260,7 @@ class CommonNode(BaseNode):
         self._functions = OrderedDict()
 
         # Add support for communication libraries
-        for libname, registry in libraries():
+        for libname, registry in libraries().items():
             for register in registry:
                 key = '{}_{}'.format(libname, register.__name__)
                 self._functions[key] = register
