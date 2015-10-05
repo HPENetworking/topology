@@ -35,17 +35,53 @@ from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
 
 
-WAIT_FOR_OPENSWITCH = r"""\
-#!/bin/bash
+WAIT_FOR_OPENSWITCH = """\
+#!/usr/bin/env python
 
-# Wait until cur_hw field in System table becomes greater than 0
-while true
-do
-    [[ `ovsdb-client transact '["OpenSwitch",{ "op": "select","table": "System","where": [ ],"columns" : ["cur_hw"]}]' | sed -e 's/[{}]/''/g' -e 's/\\]//g' | sed s/\\]//g | awk -F: '{print $3}'` -gt 0 ]] && /bin/ls /var/run/openvswitch/ops-switchd.pid && break
-    echo "Waiting for cur_cfg value set to 1"
-    sleep 1
-done
-"""  # noqa
+from time import sleep
+from os.path import exists
+from json import dumps, loads
+from socket import AF_UNIX, SOCK_STREAM, socket
+
+db_sock = '/var/run/openvswitch/db.sock'
+switchd_pid = '/var/run/openvswitch/ops-switchd.pid'
+query = {
+    'method': 'transact',
+    'params': [
+        'OpenSwitch',
+        {
+            'op': 'select',
+            'table': 'System',
+            'where': [],
+            'columns': ['cur_hw']
+        }
+    ],
+    'id': id(db_sock)
+}
+sock = None
+
+
+def cur_cfg_is_set():
+    global sock
+    if sock is None:
+        sock = socket(AF_UNIX, SOCK_STREAM)
+        sock.connect(db_sock)
+    sock.send(dumps(query))
+    response = loads(sock.recv(4096))
+    return response['result'][0]['rows'][0]['cur_hw'] == 1
+
+
+def main():
+    while not exists(db_sock):
+        sleep(0.1)
+    while not cur_cfg_is_set():
+        sleep(0.1)
+    while not exists(switchd_pid):
+        sleep(0.1)
+
+if __name__ == '__main__':
+    main()
+"""
 
 
 class OpenSwitchNode(DockerNode):
@@ -144,9 +180,10 @@ class OpenSwitchNode(DockerNode):
             self.send_command(rename, shell='bash')
             ifaces.append(str(port_spec['port_number']))
 
-        # TODO: Analyse the option to comment this line,
-        #       as it takes too much time. It is really required?
+        # TODO: Analyse the option to comment this lines,
+        #       they take too much time. Are they really required?
         self._create_hwdesc_ports(ifaces)
+        self._wait_system_setup()
 
     def _create_hwdesc_ports(self, exclude):
         """
@@ -155,6 +192,11 @@ class OpenSwitchNode(DockerNode):
         :param list exclude: List of ports to exclude. Usually the ports
          already created.
         """
+        # Wait for daemons to be ready
+        while 'hwdesc' not in self.send_command(
+                'ls /etc/openswitch/', shell='bash').split():
+            sleep(0.1)
+
         # Read hardware description for ports
         self.send_command(
             'cp /etc/openswitch/hwdesc/ports.yaml /tmp/',
@@ -182,11 +224,9 @@ class OpenSwitchNode(DockerNode):
             for cmd in commands:
                 self.send_command(cmd, shell='bash')
 
-    def wait_system_setup(self):
+    def _wait_system_setup(self):
         """
         Wait until OpenSwitch daemons converge.
-
-        FIXME: Refactor this crap, this is ugly :/
         """
         wait_script = '{}/wait_for_openswitch'.format(self.shared_dir)
         if not isfile(wait_script):
