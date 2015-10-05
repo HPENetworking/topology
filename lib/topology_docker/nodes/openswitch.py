@@ -169,7 +169,7 @@ class OpenSwitchNode(DockerNode):
             ]
 
             # Set interfaces in swns namespace
-            self.send_command(netns, shell='bash')
+            assert not self.send_command(netns, shell='bash')
 
             # Named interfaces are ignored
             if port_spec['port_number'] is None:
@@ -177,7 +177,7 @@ class OpenSwitchNode(DockerNode):
                 continue
 
             # Rename numbered interfaces
-            self.send_command(rename, shell='bash')
+            assert not self.send_command(rename, shell='bash')
             ifaces.append(str(port_spec['port_number']))
 
         # TODO: Analyse the option to comment this lines,
@@ -198,7 +198,7 @@ class OpenSwitchNode(DockerNode):
             sleep(0.1)
 
         # Read hardware description for ports
-        self.send_command(
+        assert not self.send_command(
             'cp /etc/openswitch/hwdesc/ports.yaml /tmp/',
             shell='bash'
         )
@@ -222,7 +222,7 @@ class OpenSwitchNode(DockerNode):
                 cmd_tpl.format(hwport=hwport).splitlines()
             ]
             for cmd in commands:
-                self.send_command(cmd, shell='bash')
+                assert not self.send_command(cmd, shell='bash')
 
     def _wait_system_setup(self):
         """
@@ -232,11 +232,11 @@ class OpenSwitchNode(DockerNode):
         if not isfile(wait_script):
             with open(wait_script, 'w') as fd:
                 fd.write(WAIT_FOR_OPENSWITCH)
-            self.send_command(
+            assert not self.send_command(
                 'chmod +x /tmp/wait_for_openswitch',
                 shell='bash'
             )
-        self.send_command('/tmp/wait_for_openswitch', shell='bash')
+        assert not self.send_command('/tmp/wait_for_openswitch', shell='bash')
 
 
 __all__ = ['OpenSwitchNode']
