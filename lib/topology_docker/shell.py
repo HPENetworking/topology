@@ -38,11 +38,10 @@ class DockerShell(object):
 
     def __init__(
             self, container, shell, prompt,
-            delay=0.2, timeout=None, encoding='utf-8'):
+            timeout=None, encoding='utf-8'):
         self._container = container
         self._shell = shell
         self._prompt = prompt
-        self._delay = delay
         self._timeout = timeout or -1
         self._encoding = encoding
         self._spawn = None
