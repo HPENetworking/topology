@@ -282,10 +282,12 @@ class CommonNode(BaseNode):
                 'Shell {} is not supported.'.format(shell)
             )
 
+        if not silent:
+            print('[{}].send_command({}) ::'.format(self.identifier, cmd))
+
         response = self._shells[shell](cmd)
 
         if not silent:
-            print('[{}].send_command({}) ::'.format(self.identifier, cmd))
             print(response)
 
         return response
