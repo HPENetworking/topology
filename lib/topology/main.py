@@ -24,6 +24,7 @@ from __future__ import print_function, division
 
 import sys
 import logging
+from os.path import join, basename, splitext
 
 from six import StringIO
 
@@ -84,8 +85,31 @@ def main(args):
     # Start interactive mode if required
     if not args.non_interactive:
         interact(mgr)
-        print('Unbuilding topology, please wait...')
-        mgr.unbuild()
+
+    try:
+        # Plot and export topology
+        module = splitext(basename(args.topology))[0]
+        if args.plot_dir:
+            plot_file = join(
+                args.plot_dir, '{}.{}'.format(module, args.plot_format)
+            )
+            mgr.nml.save_graphviz(
+                plot_file, keep_gv=True
+            )
+
+        # Export topology as NML
+        if args.nml_dir:
+            nml_file = join(
+                args.nml_dir, '{}.xml'.format(module)
+            )
+            mgr.nml.save_nml(
+                nml_file, pretty=True
+            )
+    finally:
+        # Unbuild topology if required
+        if not args.non_interactive:
+            print('Unbuilding topology, please wait...')
+            mgr.unbuild()
 
     return 0
 

@@ -23,7 +23,8 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from os.path import isfile, abspath
+from os import getcwd, makedirs
+from os.path import join, isabs, abspath, exists, isfile
 
 from . import __version__
 from .platforms.manager import platforms, DEFAULT_PLATFORM
@@ -55,10 +56,25 @@ def validate_args(args):
 
     log.debug('Raw arguments:\n{}'.format(args))
 
+    # Verify topology file exists
     if not isfile(args.topology):
         log.error('No such file : {}'.format(args.topology))
         exit(1)
     args.topology = abspath(args.topology)
+
+    # Determine plot directory and create it if required
+    if args.plot_dir:
+        if not isabs(args.plot_dir):
+            args.plot_dir = join(abspath(getcwd()), args.plot_dir)
+        if not exists(args.plot_dir):
+            makedirs(args.plot_dir)
+
+    # Determine NML export directory and create it if required
+    if args.nml_dir:
+        if not isabs(args.nml_dir):
+            args.nml_dir = join(abspath(getcwd()), args.nml_dir)
+        if not exists(args.nml_dir):
+            makedirs(args.nml_dir)
 
     return args
 
@@ -95,7 +111,7 @@ def parse_args(argv=None):
     parser.add_argument(
         '--platform',
         default=DEFAULT_PLATFORM,
-        help='Select the platform to build the topology',
+        help='Platform engine to build the topology with',
         choices=platforms()
     )
     parser.add_argument(
@@ -108,6 +124,22 @@ def parse_args(argv=None):
         help='Show commands executed in nodes during build',
         action='store_true'
     )
+    parser.add_argument(
+        '--plot-dir',
+        default=None,
+        help='Directory to auto-plot topologies'
+    )
+    parser.add_argument(
+        '--plot-format',
+        default='svg',
+        help='Format for plotting topologies'
+    )
+    parser.add_argument(
+        '--nml-dir',
+        default=None,
+        help='Directory to export topologies as NML XML'
+    )
+
     parser.add_argument(
         'topology',
         help='File with the topology description to build'
