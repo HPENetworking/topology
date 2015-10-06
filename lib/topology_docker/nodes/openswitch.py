@@ -113,8 +113,9 @@ class OpenSwitchNode(DockerNode):
             image='ops:latest', command='/sbin/init', binds=None,
             **kwargs):
 
-        # Fetch image from environment
-        image = environ.get('OPS_IMAGE', image)
+        # Fetch image from environment but only if default image is being used
+        if image == 'ops:latest':
+            image = environ.get('OPS_IMAGE', image)
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}'.format(identifier)
