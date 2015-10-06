@@ -126,7 +126,7 @@ class TopologyManager(object):
             if node_id not in autoports:
                 return 1
             node_autoports = autoports[node_id]
-            bottom = min(node_autoports) + 1
+            bottom = min(min(node_autoports), 1)
             while bottom in node_autoports:
                 bottom += 1
             return bottom
@@ -216,6 +216,8 @@ class TopologyManager(object):
             # Explicit-create links
             attrs = deepcopy(link_spec['attributes'])
             self.nml.create_bilink(*endpoints, **attrs)
+
+        log.debug('Final autoports:{}'.format(autoports))
 
     def parse(self, txtmeta, load=True):
         """

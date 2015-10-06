@@ -162,7 +162,20 @@ def parse_txtmeta(txtmeta):
             return attrs
 
         for attr in parsed.attributes:
-            attrs[attr.key] = attr.value
+
+            value = attr.value
+
+            # Try to convert simple types
+            try:
+                value = int(value)
+            except ValueError:
+                pass
+            if value == 'True':
+                value = True
+            elif value == 'False':
+                value = False
+
+            attrs[attr.key] = value
         return attrs
 
     for lineno, raw_line in enumerate(txtmeta.splitlines(), 1):

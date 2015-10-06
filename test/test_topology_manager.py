@@ -83,7 +83,7 @@ def test_txtmeta_parse():
                 'endpoints': (('sw1', None), ('hs1', None))
             },
             {
-                'attributes': OrderedDict([('attr1', '1')]),
+                'attributes': OrderedDict([('attr1', 1)]),
                 'endpoints': (('sw1', '4'), ('hs2', None))
             }
         ]
@@ -122,4 +122,29 @@ def test_build():
     assert topology.get('hs1') is not None
 
     # Unbuild topology
+    topology.unbuild()
+
+
+def test_autoport():
+    """
+    Test the autoport feature.
+    """
+    topodesc = """
+        [port_number=5] hs1:oobm
+        hs1: -- hs2:
+        hs1:2 -- hs2:2
+        hs1:4 -- hs2:4
+        hs1: -- hs2:
+    """
+
+    topology = TopologyManager(engine='debug')
+    topology.parse(topodesc)
+    topology.build()
+
+    assert topology.get('hs1') is not None
+    assert topology.get('hs2') is not None
+
+    # FIXME: The debug backend currently doesn't record the biports
+    #        so asserting success in complicated.
+
     topology.unbuild()
