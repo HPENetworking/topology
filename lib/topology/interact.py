@@ -180,3 +180,6 @@ def interact(mgr):
     # Python's Interactive
     from code import interact as pyinteract
     pyinteract('', None, ns)
+
+
+__all__ = ['NamespaceCompleter', 'interact']

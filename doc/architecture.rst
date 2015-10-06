@@ -18,7 +18,7 @@ The topology framework was built with the following design principles in mind:
    responsibility to build the topology from the description, using a standard
    interface (:class:`topology.platforms.base.BasePlatform`) and
    :ref:`process <engine-platform-worflow>`.
-#. The *Platform Engine* will return an *Engine Node* that implements and
+#. The *Platform Engine* will return an *Engine Node* that implements an
    standard interface (:class:`topology.platforms.base.BaseNode`) for the user
    to interact with.
 #. Nodes, ports and links support undetermined attributes or *metadata*, it is
@@ -36,6 +36,7 @@ The topology framework was built with the following design principles in mind:
    test suite, reporting Software and any other hardwired limitation.
    Nevertheless, support for the pytest suite is built-it.
 #. Quality, maintainability, good practices and standards compliance above all:
+
    - Full PEP8 compliance.
    - Complete test suite and coverage.
    - Complete internal documentation.
