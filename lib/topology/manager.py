@@ -119,46 +119,70 @@ class TopologyManager(object):
         """
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
-            attributes = nodes_spec['attributes']
             for node_id in nodes_spec['nodes']:
-                self.nml.create_node(
-                    identifier=node_id, **attributes
-                )
 
-        # FIXME: Load ports
+                # Explicit-create node
+                attrs = deepcopy(nodes_spec['attributes'])
+                attrs['identifier'] = node_id
+                self.nml.create_node(**attrs)
 
-        # Load links
-        for link_spec in dictmeta.get('links', []):
-
-            # Create biports
-            endpoints = [None, None]
-            for idx, (node_id, port) in enumerate(link_spec['endpoints']):
+        # Load ports
+        for ports_spec in dictmeta.get('ports', []):
+            for node_id, port in ports_spec['ports']:
 
                 # Auto-create nodes
-                if node_id not in self.nml.namespace:
-                    self.nml.create_node(identifier=node_id)
+                node = self.nml.get_object(node_id)
+                if node is None:
+                    node = self.nml.create_node(identifier=node_id)
 
                 # FIXME: Implement auto creation features
                 if port is None:
                     raise NotImplementedError('Auto-port feature is missing')
 
+                # Explicit-create port
+                attrs = deepcopy(ports_spec['attributes'])
+                attrs['identifier'] = '{}-{}'.format(node_id, port)
+                if 'port_number' not in attrs:
+                    try:
+                        attrs['port_number'] = int(port)
+                    except ValueError:
+                        pass
+
+                self.nml.create_biport(node, **attrs)
+
+        # Load links
+        for link_spec in dictmeta.get('links', []):
+
+            # Get or create biports
+            endpoints = [None, None]
+            for idx, (node_id, port) in enumerate(link_spec['endpoints']):
+
+                # Auto-create nodes
                 node = self.nml.get_object(node_id)
-                identifier = '{}-{}'.format(node_id, port)
+                if node is None:
+                    node = self.nml.create_node(identifier=node_id)
 
-                nml_attrs = {'identifier': identifier}
-                try:
-                    nml_attrs['port_number'] = int(port)
-                except ValueError:
-                    pass
+                # FIXME: Implement auto creation features
+                if port is None:
+                    raise NotImplementedError('Auto-port feature is missing')
 
-                biport = self.nml.create_biport(
-                    node, **nml_attrs
-                )
+                # Get or auto-create port if it doesn't exists
+                port_id = '{}-{}'.format(node_id, port)
+
+                biport = self.nml.get_object(port_id)
+                if biport is None:
+                    attrs = {'identifier': port_id}
+                    try:
+                        attrs['port_number'] = int(port)
+                    except ValueError:
+                        pass
+
+                    biport = self.nml.create_biport(node, **attrs)
 
                 # Register endpoint
                 endpoints[idx] = biport
 
-            # Create links
+            # Explicit-create links
             attrs = deepcopy(link_spec['attributes'])
             self.nml.create_bilink(*endpoints, **attrs)
 
