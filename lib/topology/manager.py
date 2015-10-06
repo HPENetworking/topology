@@ -95,13 +95,19 @@ class TopologyManager(object):
             {
                 'nodes': [
                     {
-                        'nodes': ('sw1', 'hs1'),
+                        'nodes': ['sw1', 'hs1', ...],
                         'attributes': {...}
                     },
                 ],
+                'ports': [
+                    {
+                        'ports': [('sw1', '1'), ('hs1', '1'), ...],
+                        'attributes': {...}
+                    }
+                ]
                 'links': [
                     {
-                        'endpoints': (('sw1', 1), ('hs1', 1)),
+                        'endpoints': (('sw1', '1'), ('hs1', '1')),
                         'attributes': {...}
                     },
                 ]
@@ -119,6 +125,8 @@ class TopologyManager(object):
                     identifier=node_id, **attributes
                 )
 
+        # FIXME: Load ports
+
         # Load links
         for link_spec in dictmeta.get('links', []):
 
@@ -135,9 +143,16 @@ class TopologyManager(object):
                     raise NotImplementedError('Auto-port feature is missing')
 
                 node = self.nml.get_object(node_id)
-                identifier = node_id + '_p{}'.format(port)
+                identifier = '{}-{}'.format(node_id, port)
+
+                nml_attrs = {'identifier': identifier}
+                try:
+                    nml_attrs['port_number'] = int(port)
+                except ValueError:
+                    pass
+
                 biport = self.nml.create_biport(
-                    node, identifier=identifier, port_number=port
+                    node, **nml_attrs
                 )
 
                 # Register endpoint

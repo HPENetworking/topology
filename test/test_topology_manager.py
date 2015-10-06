@@ -45,8 +45,8 @@ hs2
 
 # Links
 sw1:1 -- hs1:1
-sw1: -- hs1
-[attr1=1] sw1:4 -- hs2
+sw1: -- hs1:
+[attr1=1] sw1:4 -- hs2:
 """
 
 
@@ -61,21 +61,22 @@ def test_txtmeta_parse():
         'nodes': [
             {
                 'attributes': OrderedDict([('shell', 'vtysh')]),
-                'nodes': set(['sw2', 'sw1'])
+                'nodes': ['sw1', 'sw2']
             },
             {
                 'attributes': OrderedDict([('type', 'host')]),
-                'nodes': set(['hs1'])
+                'nodes': ['hs1']
             },
             {
                 'attributes': OrderedDict(),
-                'nodes': set(['hs2'])
+                'nodes': ['hs2']
             }
         ],
+        'ports': [],
         'links': [
             {
                 'attributes': OrderedDict(),
-                'endpoints': (('sw1', 1), ('hs1', 1))
+                'endpoints': (('sw1', '1'), ('hs1', '1'))
             },
             {
                 'attributes': OrderedDict(),
@@ -83,7 +84,7 @@ def test_txtmeta_parse():
             },
             {
                 'attributes': OrderedDict([('attr1', '1')]),
-                'endpoints': (('sw1', 4), ('hs2', None))
+                'endpoints': (('sw1', '4'), ('hs2', None))
             }
         ]
     }
