@@ -141,8 +141,22 @@ class OpenSwitchNode(DockerNode):
             self.identifier, 'vtysh', 'switch.*#'
         )
         self._shells['bash'] = DockerShell(
-            self.identifier, 'bash', 'bash-.*#'
+            self.identifier, 'sh -c "TERM=dumb bash"', 'bash-.*#'
         )
+
+    def _check_cmd(self, cmd):
+        """
+        Helper to check that a command returns no error.
+
+        If the command output is not empty then raise an error. We do not use
+        assert because the assert exception doesn't know the value being
+        asserted.
+        """
+        cmd_result = self.send_command(cmd, shell='bash')
+        if cmd_result:
+            raise RuntimeError(
+                'Build command "{}" failed:\n{}'.format(cmd, cmd_result)
+            )
 
     def notify_post_build(self):
         """
@@ -169,7 +183,7 @@ class OpenSwitchNode(DockerNode):
             ]
 
             # Set interfaces in swns namespace
-            assert not self.send_command(netns, shell='bash')
+            self._check_cmd(netns)
 
             # Named interfaces are ignored
             if port_spec['port_number'] is None:
@@ -177,7 +191,7 @@ class OpenSwitchNode(DockerNode):
                 continue
 
             # Rename numbered interfaces
-            assert not self.send_command(rename, shell='bash')
+            self._check_cmd(rename)
             ifaces.append(str(port_spec['port_number']))
 
         # TODO: Analyse the option to comment this lines,
@@ -198,10 +212,7 @@ class OpenSwitchNode(DockerNode):
             sleep(0.1)
 
         # Read hardware description for ports
-        assert not self.send_command(
-            'cp /etc/openswitch/hwdesc/ports.yaml /tmp/',
-            shell='bash'
-        )
+        self._check_cmd('cp /etc/openswitch/hwdesc/ports.yaml /tmp/')
 
         with open('{}/ports.yaml'.format(self.shared_dir), 'r') as fd:
             ports_hwdesc = load(fd)
@@ -222,7 +233,7 @@ class OpenSwitchNode(DockerNode):
                 cmd_tpl.format(hwport=hwport).splitlines()
             ]
             for cmd in commands:
-                assert not self.send_command(cmd, shell='bash')
+                self._check_cmd(cmd)
 
     def _wait_system_setup(self):
         """
@@ -232,11 +243,8 @@ class OpenSwitchNode(DockerNode):
         if not isfile(wait_script):
             with open(wait_script, 'w') as fd:
                 fd.write(WAIT_FOR_OPENSWITCH)
-            assert not self.send_command(
-                'chmod +x /tmp/wait_for_openswitch',
-                shell='bash'
-            )
-        assert not self.send_command('/tmp/wait_for_openswitch', shell='bash')
+            self._check_cmd('chmod +x /tmp/wait_for_openswitch')
+        self._check_cmd('/tmp/wait_for_openswitch')
 
 
 __all__ = ['OpenSwitchNode']
