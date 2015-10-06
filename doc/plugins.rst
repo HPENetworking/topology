@@ -56,6 +56,8 @@ Then specify in your `setup.py`:
     }
 
 
+.. _engine-platform-worflow:
+
 Engine Platform Worflow
 -----------------------
 
@@ -133,6 +135,8 @@ interface.
     destroy N
     U <-- M: <<return>>
 
+
+.. _provide-a-new-communication-library:
 
 Provide a new Communication Library
 ===================================

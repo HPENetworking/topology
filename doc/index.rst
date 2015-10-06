@@ -4,6 +4,7 @@
    user
    plugins
    developer
+   architecture
    topology/topology
 
 ==========================
@@ -28,6 +29,7 @@ Development
 ===========
 
 - :doc:`Developer Guide. <developer>`
+- :doc:`Architecture Overview. <architecture>`
 - :doc:`Internal Documentation Reference. <topology/topology>`
 - `Project repository. <https://github-sc-p.corp.hp.com/hpe-networking/topology>`_
 
