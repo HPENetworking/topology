@@ -176,7 +176,7 @@ def pytest_addoption(parser):
     group.addoption(
         '--topology-plot-format',
         default='svg',
-        help='Format for ploting topologies'
+        help='Format for plotting topologies'
     )
     group.addoption(
         '--topology-nml-dir',
@@ -224,8 +224,8 @@ def pytest_configure(config):
     # Add topology_compatible marker
     config.addinivalue_line(
         'markers',
-        'platform_incompatible(platform): '
-        'mark a test as incompatible with a given platform engine'
+        'platform_incompatible(platforms): '
+        'mark a test as incompatible with a list of platform engines'
     )
 
 
