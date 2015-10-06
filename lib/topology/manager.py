@@ -117,6 +117,53 @@ class TopologyManager(object):
 
         :param dict dictmeta: The dictionary to load the topology from.
         """
+        autoports = {}
+
+        def next_autoport(node_id):
+            """
+            Get the next port available.
+            """
+            if node_id not in autoports:
+                return 1
+            node_autoports = autoports[node_id]
+            bottom = min(node_autoports) + 1
+            while bottom in node_autoports:
+                bottom += 1
+            return bottom
+
+        def add_port_attrs(node_id, port, attrs):
+            """
+            Determine a biport attributes in a multitude of scenarios.
+            """
+            # Auto port
+            if port is None:
+                if 'port_number' not in attrs:
+                    attrs['port_number'] = next_autoport(node_id)
+                port = attrs['port_number']
+
+            # Add port_number if missing
+            elif 'port_number' not in attrs:
+                try:
+                    attrs['port_number'] = int(port)
+                except ValueError:
+                    pass
+
+            # Register port number if exists
+            if 'port_number' in attrs:
+                port_number = attrs['port_number']
+                if node_id not in autoports:
+                    autoports[node_id] = []
+                if port_number in autoports[node_id]:
+                    raise RuntimeError(
+                        'Port #{} for {} was already assigned'.format(
+                            port_number, node_id
+                        )
+                    )
+                autoports[node_id].append(port_number)
+
+            # Set identifier
+            attrs['identifier'] = '{}-{}'.format(node_id, port)
+
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
             for node_id in nodes_spec['nodes']:
@@ -135,19 +182,9 @@ class TopologyManager(object):
                 if node is None:
                     node = self.nml.create_node(identifier=node_id)
 
-                # FIXME: Implement auto creation features
-                if port is None:
-                    raise NotImplementedError('Auto-port feature is missing')
-
                 # Explicit-create port
                 attrs = deepcopy(ports_spec['attributes'])
-                attrs['identifier'] = '{}-{}'.format(node_id, port)
-                if 'port_number' not in attrs:
-                    try:
-                        attrs['port_number'] = int(port)
-                    except ValueError:
-                        pass
-
+                add_port_attrs(node_id, port, attrs)
                 self.nml.create_biport(node, **attrs)
 
         # Load links
@@ -162,21 +199,15 @@ class TopologyManager(object):
                 if node is None:
                     node = self.nml.create_node(identifier=node_id)
 
-                # FIXME: Implement auto creation features
-                if port is None:
-                    raise NotImplementedError('Auto-port feature is missing')
+                # Autoport
+                biport = None
+                if port is not None:
+                    identifier = '{}-{}'.format(node_id, port)
+                    biport = self.nml.get_object(identifier)
 
-                # Get or auto-create port if it doesn't exists
-                port_id = '{}-{}'.format(node_id, port)
-
-                biport = self.nml.get_object(port_id)
                 if biport is None:
-                    attrs = {'identifier': port_id}
-                    try:
-                        attrs['port_number'] = int(port)
-                    except ValueError:
-                        pass
-
+                    attrs = {}
+                    add_port_attrs(node_id, port, attrs)
                     biport = self.nml.create_biport(node, **attrs)
 
                 # Register endpoint
