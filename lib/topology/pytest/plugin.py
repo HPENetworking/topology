@@ -58,9 +58,11 @@ class TopologyPlugin(object):
     pytest plugin for Topology.
 
     :param str platform: Platform engine name to run the tests with.
-    :param plot_dir platform: Directory to auto-plot topologies. ``None`` if
+    :param str plot_dir: Directory to auto-plot topologies. ``None`` if
      feature is disabled.
-    :param plot_format platform: Format to plot the topologies.
+    :param str plot_format: Format to plot the topologies.
+    :param str nml_dir: Directory to auto-export topologies. ``None`` if
+     feature is disabled.
     """
 
     def __init__(self, platform, plot_dir, plot_format, nml_dir):
