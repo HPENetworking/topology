@@ -31,7 +31,7 @@ prefer to build the topology using the standard NML objects with the
 :class:`pynml.manager.NMLManager` instance enbeed into the
 :class:`topology.manager.TopologyManager`.
 
-To be able to select the engine platform this plugins registers the
+To be able to select the platform engine this plugins registers the
 ``--topology-platform`` option that can be set in pytest command line.
 
 For reference see:
@@ -57,7 +57,7 @@ class TopologyPlugin(object):
     """
     pytest plugin for Topology.
 
-    :param str platform: Engine platform name to run the tests with.
+    :param str platform: Platform engine name to run the tests with.
     :param plot_dir platform: Directory to auto-plot topologies. ``None`` if
      feature is disabled.
     :param plot_format platform: Format to plot the topologies.

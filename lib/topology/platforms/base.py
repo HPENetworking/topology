@@ -15,7 +15,7 @@
 # under the License.
 
 """
-Base engine platform module for topology.
+Base platform engine module for topology.
 
 This module defines the functionality that a topology platform plugin must
 provide to be able to create a network using specific hardware.
@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 @add_metaclass(ABCMeta)
 class BasePlatform(object):
     """
-    Base engine platform class.
+    Base platform engine class.
 
     This class represent the base interface that topology engines require to
     implement.
@@ -187,7 +187,7 @@ class BaseNode(object):
 
         :param str cmd: Command to send.
         :param str shell: Shell that must interpret the command.
-         `None` for the default shell. Is up to the engine platform to
+         `None` for the default shell. Is up to the platform engine to
          determine what the default shell is.
         :param bool silent: If ``False``, print input command and response to
          stdout.
@@ -217,7 +217,7 @@ class BaseNode(object):
 
         :param dict data: Data to send.
         :param str function: The name of the function to call with data.
-         `None` is the default function.Is up to the engine platform to
+         `None` is the default function.Is up to the platform engine to
          determine what the default function is.
         :rtype: dict
         :return: The response of the function.

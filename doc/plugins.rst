@@ -13,11 +13,11 @@ vtysh or bash, RESTful API, OpenFlow, OVSDB management protocol, protobuffers,
 etc).
 
 
-Provide a new Engine Platform
+Provide a new Platform Engine
 =============================
 
-An Engine Platform is a system that allows to build and run a topology
-description. The Topology framework only provides a built-in Engine Platform
+An Platform Engine is a system that allows to build and run a topology
+description. The Topology framework only provides a built-in Platform Engine
 for debugging. You can provide your own or install any of the known Engine
 Platforms available as plugins like:
 
@@ -28,7 +28,7 @@ Platforms available as plugins like:
 Entry Point
 -----------
 
-The entry point to provide a new Engine Platform is
+The entry point to provide a new Platform Engine is
 ``topology_platform_<api_version>``, currently ``topology_platform_10``.
 
 To extend `topology` to support your platform first implement in your package a
@@ -58,7 +58,7 @@ Then specify in your `setup.py`:
 
 .. _engine-platform-worflow:
 
-Engine Platform Worflow
+Platform Engine Worflow
 -----------------------
 
 The new platform needs to implement a set of hooks that will be called during
@@ -68,14 +68,14 @@ class.
 
 The following sequence diagram shows the interaction between the
 :class:`topology.manager.TopologyManager`, which drives the lifecycle of a
-topology, and the *Engine Platform* which is responsible of building and
+topology, and the *Platform Engine* which is responsible of building and
 running the topology itself.
 
 The interaction is straightforward, the main detail is that the ``add_node``
 hook receives a *Specification Node* in standard NML format and must return a
 *Engine Node*, which is a different type of node that possess a communication
 interface. Users of the topology interact with *Engine Nodes*, not with
-*Specification Nodes*. Is up to the *Engine Platform* to implement the one
+*Specification Nodes*. Is up to the *Platform Engine* to implement the one
 (or many) *Engine Nodes*. Each *Engine Node* inherits from the
 :class:`topology.platforms.base.BaseNode` class and must implement its
 interface.
@@ -142,9 +142,9 @@ Provide a new Communication Library
 ===================================
 
 A communication library is a component that a allows an *Engine Node* to speak
-in a particular language or medium. Because the *Engine Platform* is the one
+in a particular language or medium. Because the *Platform Engine* is the one
 responsible to provide a functional *Engine Node* is up to the
-*Engine Platform* to support the use of the communication libraries provided
+*Platform Engine* to support the use of the communication libraries provided
 by this extension mechanism (but it is highly recommended to do so).
 
 
@@ -183,7 +183,7 @@ Then specify in your `setup.py`:
         'topology_library_10': ['my = topology_lib_my.library.REGISTRY']
     }
 
-With this, and if your *Engine Platform* builds your *Engine Nodes* to support
+With this, and if your *Platform Engine* builds your *Engine Nodes* to support
 communication libraries (FIXME: Explain how), your functions will be available
 to the ``enode`` like this:
 

@@ -38,13 +38,13 @@ log = logging.getLogger(__name__)
 
 DEFAULT_PLATFORM = 'debug'
 """
-Default engine platform.
+Default platform engine.
 """
 
 
 def platforms(cache=True):
     """
-    List all available engine platforms.
+    List all available platform engines.
 
     This function lists the default engine plus any other it can discover
     looking up the entry point.

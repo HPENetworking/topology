@@ -69,7 +69,7 @@ class TopologyManager(object):
       See :class:`pynml.manager.ExtendedNMLManager` for more information of
       this usage.
 
-    :param str engine: Name of the engine platform to build the topology.
+    :param str engine: Name of the platform engine to build the topology.
      See :func:`platforms` for how to get and discover available platforms.
     """
 
@@ -326,7 +326,7 @@ class TopologyManager(object):
 
     def get(self, identifier):
         """
-        Get a engine platform with given identifier.
+        Get a platform engine with given identifier.
 
         :param str identifier: The node identifier.
         :rtype: A subclass of :class:`topology.platforms.base.BaseNode`

@@ -16,7 +16,7 @@
 # under the License.
 
 """
-Debug engine platform module for topology.
+Debug platform engine module for topology.
 """
 
 from __future__ import unicode_literals, absolute_import
