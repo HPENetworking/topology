@@ -45,8 +45,8 @@ hs2
 
 # Links
 sw1:1 -- hs1:1
-sw1: -- hs1:
-[attr1=1] sw1:4 -- hs2:
+sw1:a -- hs1:a
+[attr1=1] sw1:4 -- hs2:a
 """
 
 
@@ -80,11 +80,11 @@ def test_txtmeta_parse():
             },
             {
                 'attributes': OrderedDict(),
-                'endpoints': (('sw1', None), ('hs1', None))
+                'endpoints': (('sw1', 'a'), ('hs1', 'a'))
             },
             {
                 'attributes': OrderedDict([('attr1', 1)]),
-                'endpoints': (('sw1', '4'), ('hs2', None))
+                'endpoints': (('sw1', '4'), ('hs2', 'a'))
             }
         ]
     }
@@ -131,10 +131,10 @@ def test_autoport():
     """
     topodesc = """
         [port_number=5] hs1:oobm
-        hs1: -- hs2:
+        hs1:a -- hs2:a
         hs1:2 -- hs2:2
         hs1:4 -- hs2:4
-        hs1: -- hs2:
+        hs1:b -- hs2:b
     """
 
     topology = TopologyManager(engine='debug')

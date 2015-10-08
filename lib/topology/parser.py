@@ -112,10 +112,7 @@ def build_parser():
     )
 
     node = identifier('node')
-    port = (
-        node + Literal(':') +
-        Optional(identifier | number, default=None)('port')
-    )
+    port = node + Literal(':') + (identifier | number)('port')
     link = port('endpoint_a') + Literal('--') + port('endpoint_b')
 
     nodes_spec = (
