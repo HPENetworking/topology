@@ -169,8 +169,13 @@ class DockerPlatform(BasePlatform):
         """
         See :meth:`BasePlatform.destroy` for more information.
         """
+        # Request termination of all containers
         for enode in self.nmlnode_node_map.values():
             enode.stop()
+
+        # Remove the linked netns
+        for enode in self.nmlnode_node_map.values():
+            privileged_cmd('rm /var/run/netns/{pid}', pid=enode._pid)
 
     def rollback(self, stage, enodes, exception):
         """
