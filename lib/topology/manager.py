@@ -309,5 +309,29 @@ class TopologyManager(object):
         """
         return self.nodes.get(identifier, None)
 
+    def relink(self, link_id):
+        """
+        Relink back a link specified in the topology.
+
+        :param str link_id: Link identifier to be recreated.
+        """
+        if not self._built:
+            raise RuntimeError(
+                'You cannot relink on a never built topology.'
+            )
+        self.platform.relink(link_id)
+
+    def unlink(self, link_id):
+        """
+        Unlink (break) a link specified in the topology.
+
+        :param str link_id: Link identifier to be recreated.
+        """
+        if not self._built:
+            raise RuntimeError(
+                'You cannot unlink on a never built topology.'
+            )
+        self.platform.unlink(link_id)
+
 
 __all__ = ['TopologyManager']

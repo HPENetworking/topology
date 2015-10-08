@@ -162,6 +162,22 @@ class BasePlatform(object):
         :param Exception exception: The exception caught during build failure.
         """
 
+    @abstractmethod
+    def relink(self, link_id):
+        """
+        Relink back a link specified in the topology.
+
+        :param str link_id: Link identifier to be recreated.
+        """
+
+    @abstractmethod
+    def unlink(self, link_id):
+        """
+        Unlink (break) a link specified in the topology.
+
+        :param str link_id: Link identifier to be recreated.
+        """
+
 
 @add_metaclass(ABCMeta)
 class BaseNode(object):
