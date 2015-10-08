@@ -25,10 +25,11 @@ from __future__ import print_function, division
 import logging
 from subprocess import check_call
 from shlex import split as shplit
+from collections import OrderedDict
 
 from topology.platforms.base import BasePlatform
 
-from .utils import cmd_prefix, iface_name
+from .utils import tmp_iface, cmd_prefix
 from .nodes.manager import nodes
 
 
@@ -44,11 +45,17 @@ class DockerPlatform(BasePlatform):
 
     def __init__(self, timestamp, nmlmanager):
 
-        self.nmlnode_node_map = {}
+        self.nmlnode_node_map = OrderedDict()
+        self.nmlbiport_iface_map = OrderedDict()
         self.available_node_types = nodes()
 
         # Test permissions and define privileged commands prefix
         self._cmd_prefix = cmd_prefix()
+
+        # Create netns folder
+        check_call(shplit(
+            self._cmd_prefix + 'mkdir -p /var/run/netns'
+        ))
 
     def pre_build(self):
         """
@@ -72,6 +79,12 @@ class DockerPlatform(BasePlatform):
         )
         enode.start()
 
+        # Install container netns locally
+        cmd = 'ln -s /proc/{pid}/ns/net /var/run/netns/{pid}'.format(
+            pid=enode._pid
+        )
+        check_call(shplit(self._cmd_prefix + cmd))
+
         # Register and return node
         self.nmlnode_node_map[node.identifier] = enode
         return enode
@@ -83,7 +96,16 @@ class DockerPlatform(BasePlatform):
         See :meth:`BasePlatform.add_biport` for more information.
         """
         enode = self.nmlnode_node_map[node.identifier]
-        enode.notify_add_biport(node, biport)
+        eport = enode.notify_add_biport(node, biport)
+
+        # Register this port for later creation
+        self.nmlbiport_iface_map[biport.identifier] = {
+            'created': False,
+            'iface': eport,
+            'netns': enode._pid
+        }
+
+        return eport
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
         """
@@ -98,26 +120,39 @@ class DockerPlatform(BasePlatform):
         enode_a = self.nmlnode_node_map[node_a.identifier]
         enode_b = self.nmlnode_node_map[node_b.identifier]
 
-        # Determine interfaces names
-        intf_a = iface_name(node_a, port_a)
-        intf_b = iface_name(node_b, port_b)
+        # Determine temporal interfaces names
+        tmp_iface_a = tmp_iface()
+        tmp_iface_b = tmp_iface()
+
+        # Determine final interface names
+        iface_a = self.nmlbiport_iface_map[port_a.identifier]['iface']
+        iface_b = self.nmlbiport_iface_map[port_b.identifier]['iface']
 
         # Create links between nodes:
         #   docs.docker.com/articles/networking/#building-a-point-to-point-connection # noqa
-        command_template = """ \
-            ip link add {intf_a} type veth peer name {intf_b}
-            ip link set {intf_a} netns {enode_a._pid}
-            ip link set {intf_b} netns {enode_b._pid}\
+        cmd_tpl = """\
+        ip link add {tmp_iface_a} type veth peer name {tmp_iface_b}
+        ip link set {tmp_iface_a} netns {enode_a._pid}
+        ip link set {tmp_iface_b} netns {enode_b._pid}
+        ip netns exec {enode_a._pid} ip link set {tmp_iface_a} name {iface_a}
+        ip netns exec {enode_b._pid} ip link set {tmp_iface_b} name {iface_b}\
         """
-        commands = command_template.format(**locals()).splitlines()
+        commands = [
+            cmd.strip() for cmd in cmd_tpl.format(**locals()).splitlines()
+        ]
         for command in commands:
-            check_call(shplit(
-                self._cmd_prefix + command.lstrip()
-            ))
+            if command:
+                check_call(shplit(
+                    self._cmd_prefix + command.lstrip()
+                ))
 
         # Notify enodes of created interfaces
         enode_a.notify_add_bilink(nodeport_a, bilink)
         enode_b.notify_add_bilink(nodeport_b, bilink)
+
+        # Mark interfaces as created
+        self.nmlbiport_iface_map[port_a.identifier]['created'] = True
+        self.nmlbiport_iface_map[port_b.identifier]['created'] = True
 
     def post_build(self):
         """
@@ -126,6 +161,24 @@ class DockerPlatform(BasePlatform):
 
         See :meth:`BasePlatform.post_build` for more information.
         """
+        # Create remaining interfaces
+        cmd_tpl = 'ip netns exec {netns} ip tuntap add dev {iface} mode tap'
+        for port_spec in self.nmlbiport_iface_map.values():
+
+            # Ignore already created interfaces
+            if port_spec['created']:
+                continue
+
+            # Create port as dummy tuntap device
+            cmd = cmd_tpl.format(**port_spec)
+            check_call(shplit(
+                self._cmd_prefix + cmd
+            ))
+
+            # Mark as created
+            port_spec['created'] = True
+
+        # Notify nodes of the post_build event
         for enode in self.nmlnode_node_map.values():
             enode.notify_post_build()
 

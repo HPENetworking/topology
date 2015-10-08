@@ -31,7 +31,7 @@ Setup Development Environment
 
       sudo groupadd topology
       sudo usermod -a -G topology YOURUSER
-      sudo sh -c 'echo "%topology ALL = (root) NOPASSWD: /sbin/ip" > /etc/sudoers.d/topology'
+      sudo sh -c 'echo "%topology ALL = (root) NOPASSWD: /sbin/ip, /bin/mkdir -p /var/run/netns, /bin/rm /var/run/netns/*, /bin/ln -s /proc/*/ns/net /var/run/netns/*" > /etc/sudoers.d/topology'
 
    Now logout and login again. Confirm your you're in the ``topology`` group
    with:

@@ -29,8 +29,6 @@ from six import add_metaclass
 
 from topology.platforms.base import CommonNode
 
-from .utils import iface_name
-
 
 @add_metaclass(ABCMeta)
 class DockerNode(CommonNode):
@@ -71,8 +69,6 @@ class DockerNode(CommonNode):
             host_config=self._host_config
         )['Id']
 
-        self._ports = {}
-
     def notify_add_biport(self, node, biport):
         """
         Get notified that a new biport was added to this engine node.
@@ -81,13 +77,10 @@ class DockerNode(CommonNode):
         :type node: pynml.nml.Node
         :param biport: The specification bidirectional port added.
         :type biport: pynml.nml.BidirectionalPort
+        :rtype: str
+        :return: The assigned interface name of the port.
         """
-        iface = iface_name(node, biport)
-        self._ports[biport.identifier] = {
-            'iface': iface,
-            'created': False,
-            'port_number': biport.metadata.get('port_number', None)
-        }
+        return biport.metadata.get('label', biport.identifier)
 
     def notify_add_bilink(self, nodeport, bilink):
         """
@@ -99,22 +92,12 @@ class DockerNode(CommonNode):
         :param bilink: The specification bidirectional link added.
         :type bilink: pynml.nml.BidirectionalLink
         """
-        node, biport = nodeport
-        self._ports[biport.identifier]['created'] = True
 
     def notify_post_build(self):
         """
         Get notified that the post build stage of the topology build was
         reached.
         """
-        cmd_tpl = 'ip tuntap add dev {iface} mode tap'
-
-        for port_spec in self._ports.values():
-            if not port_spec['created']:
-                self.send_command(
-                    cmd_tpl.format(iface=port_spec['iface']),
-                    shell='bash'
-                )
 
     def start(self):
         """
@@ -126,7 +109,7 @@ class DockerNode(CommonNode):
 
     def stop(self):
         """
-        Stop docker container and remove its netns
+        Request container to stop.
         """
         self._client.stop(self._container_id)
         self._client.wait(self._container_id)

@@ -48,23 +48,26 @@ def ensure_dir(path):
             raise
 
 
-def iface_name(node, port):
-    """
-    Get the interface name for a given specification node and port.
+IFNAMSIZ = 15
+"""
+This is the maximum length a network interface can have.
+Defined in linux/if.h as 16, but counting the termination character.
+"""
 
-    :param node: The specification node owner of the port.
-    :type node: pynml.nml.Node
-    :param biport: The specification port representing the interface.
-    :type biport: pynml.nml.BidirectionalPort
-    :rtype: str
-    :return: The name of the interface.
+
+def tmp_iface():
     """
-    if 'port_number' in port.metadata:
-        return '{}-{}'.format(
-            node.identifier,
-            port.metadata['port_number']
-        )
-    return port.identifier
+    Return a valid temporal interface name.
+
+    :rtype: str
+    :return: A random valid network interface name.
+    """
+    import random
+    import string
+    return ''.join(
+        random.choice(string.ascii_lowercase)
+        for _ in range(IFNAMSIZ)
+    )
 
 
 def cmd_prefix():
@@ -100,4 +103,4 @@ def cmd_prefix():
     return cmd_prefix.prefix
 
 
-__all__ = ['ensure_dir', 'iface_name', 'cmd_prefix']
+__all__ = ['ensure_dir', 'tmp_iface', 'cmd_prefix']

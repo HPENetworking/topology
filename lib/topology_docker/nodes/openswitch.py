@@ -145,6 +145,9 @@ class OpenSwitchNode(DockerNode):
             self.identifier, 'sh -c "TERM=dumb bash"', 'bash-.*#'
         )
 
+        # Store all externally created interfaces
+        self._ifaces = []
+
     def _check_cmd(self, cmd):
         """
         Helper to check that a command returns no error.
@@ -159,45 +162,39 @@ class OpenSwitchNode(DockerNode):
                 'Build command "{}" failed:\n{}'.format(cmd, cmd_result)
             )
 
+    def notify_add_biport(self, node, biport):
+        """
+        Get notified that a new biport was added to this engine node.
+
+        See :meth:`DockerNode.notify_add_biport` for more information.
+        """
+        iface = super(OpenSwitchNode, self).notify_add_biport(node, biport)
+        self._ifaces.append(iface)
+        return iface
+
     def notify_post_build(self):
         """
         Get notified that the post build stage of the topology build was
         reached.
+
+        See :meth:`DockerNode.notify_post_build` for more information.
         """
         super(OpenSwitchNode, self).notify_post_build()
 
-        # Wait for swns to be available
+        # Wait for swns netns to be available
         while 'swns' not in self.send_command('ip netns list', shell='bash'):
             sleep(0.1)
 
-        # Move interfaces to swns network namespace and rename port interfaces
-        cmd_tpl = """\
-            ip link set {iface} netns swns
-            ip netns exec swns ip link set {iface} name {port_number}\
-        """
-        # List of all created interfaces
-        ifaces = []
-
-        for port_spec in self._ports.values():
-            netns, rename = [
-                cmd.strip() for cmd in cmd_tpl.format(**port_spec).splitlines()
-            ]
-
-            # Set interfaces in swns namespace
-            self._check_cmd(netns)
-
-            # Named interfaces are ignored
-            if port_spec['port_number'] is None:
-                ifaces.append(port_spec['iface'])
-                continue
-
-            # Rename numbered interfaces
-            self._check_cmd(rename)
-            ifaces.append(str(port_spec['port_number']))
+        # Move numeric interfaces to the swns netns
+        cmd_tpl = 'ip link set {iface} netns swns'
+        for iface in self._ifaces:
+            if iface.isdigit():
+                cmd = cmd_tpl.format(iface=iface)
+                self._check_cmd(cmd)
 
         # TODO: Analyse the option to comment this lines,
         #       they take too much time. Are they really required?
-        self._create_hwdesc_ports(ifaces)
+        self._create_hwdesc_ports(self._ifaces)
         self._wait_system_setup()
 
     def _create_hwdesc_ports(self, exclude):
