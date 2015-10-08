@@ -32,6 +32,8 @@ from datetime import datetime
 from traceback import format_exc
 from collections import OrderedDict
 
+from six import string_types
+
 from pynml.manager import ExtendedNMLManager
 
 from .parser import parse_txtmeta
@@ -81,6 +83,8 @@ class TopologyManager(object):
         self.nml = ExtendedNMLManager(**kwargs)
         self.engine = engine
         self.nodes = OrderedDict()
+        self.ports = OrderedDict()
+
         self._platform = None
         self._built = False
 
@@ -118,10 +122,12 @@ class TopologyManager(object):
         :param dict dictmeta: The dictionary to load the topology from.
         """
 
-        def mark_num_or_auto(port, attrs):
+        def mark_port(port, attrs):
             """
-            Mark a port as a numeric port or as an automatic port.
+            Mark a port with relevant metadata.
             """
+            attrs['label'] = port
+
             # If explicitly marked do nothing
             if 'auto_port' in attrs or 'port_number' in attrs:
                 return
@@ -153,7 +159,7 @@ class TopologyManager(object):
                 # Explicitly create port
                 attrs = deepcopy(ports_spec['attributes'])
                 attrs['identifier'] = '{}-{}'.format(node_id, port)
-                mark_num_or_auto(port, attrs)
+                mark_port(port, attrs)
                 self.nml.create_biport(node, **attrs)
 
         # Load links
@@ -173,7 +179,7 @@ class TopologyManager(object):
                 biport = self.nml.get_object(port_id)
                 if biport is None:
                     attrs = {}
-                    mark_num_or_auto(port, attrs)
+                    mark_port(port, attrs)
                     biport = self.nml.create_biport(
                         node, identifier=port_id, **attrs
                     )
@@ -242,11 +248,31 @@ class TopologyManager(object):
                     log.critical(msg)
                     raise Exception(msg)
 
+                # Register engine node
                 self.nodes[enode.identifier] = enode
 
             stage = 'add_biport'
             for node, biport in self.nml.biports():
-                self._platform.add_biport(node, biport)
+                eport = self._platform.add_biport(node, biport)
+
+                # Check that engine port is of correct type
+                if not isinstance(eport, string_types):
+                    msg = (
+                        'Platform {} returned an invalid '
+                        'engine port name {}.'
+                    ).format(self.engine, enode)
+                    log.critical(msg)
+                    raise Exception(msg)
+
+                if node.identifier not in self.ports:
+                    self.ports[node.identifier] = OrderedDict()
+
+                # Register engine port
+                label = biport.identifier
+                if 'label' in biport.metadata:
+                    label = biport.metadata['label']
+
+                self.ports[node.identifier][label] = eport
 
             stage = 'add_bilink'
             for node_porta, node_portb, bilink in self.nml.bilinks():

@@ -62,6 +62,9 @@ class DebugPlatform(BasePlatform):
         log.debug('[HOOK] add_biport({}, {})'.format(
             node, biport
         ))
+        if 'label' in biport.metadata:
+            return biport.metadata['label']
+        return biport.identifier
 
     def add_bilink(self, nodeport_a, nodeport_b, bilink):
         """

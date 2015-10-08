@@ -40,17 +40,14 @@ between two endpoints with shared attributes too.
     [speed=1000] sw1:3 sw2:3
 
     # Links
-    [linkattr1=20] sw1: -- sw2:
+    [linkattr1=20] sw1:a -- sw2:a
     [linkattr2=40] sw1:3 -- sw2:3
 
 In the above example two nodes with the attributes ``type`` and ``attr1`` are
 specified. Then a third node `hs1` with no particular attributes is defined.
 Later, we specify some attributes (speed) for a couple of ports. In the same
-way, a link between endpoints MAY have attributes.
-
-An endpoint is a combination of a node and a port name, but the port is
-optional. If the endpoint just specifies the node (``sw1:``) then the next
-available numeric port is implied.
+way, a link between endpoints MAY have attributes. An endpoint is a combination
+of a node and a port name.
 """
 
 from __future__ import unicode_literals, absolute_import

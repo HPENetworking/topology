@@ -94,6 +94,11 @@ class BasePlatform(object):
         :param biport: The specification NMP bidirectional port to add to the
          platform.
         :type biport: :class:`pynml.nml.BidirectionalPort`
+        :rtype: str
+        :return: Real name of the port in the node. This real will be used to
+         populate an internal map between the specification name of the port
+         and the real name, which can be used to reference the port in commands
+         without knowing it's real name in advance.
         """
 
     @abstractmethod

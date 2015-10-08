@@ -131,10 +131,10 @@ def test_autoport():
     """
     topodesc = """
         [port_number=5] hs1:oobm
-        hs1:a -- hs2:a
+        hs1:a -- hs2:x
         hs1:2 -- hs2:2
         hs1:4 -- hs2:4
-        hs1:b -- hs2:b
+        hs1:b -- hs2:y
     """
 
     topology = TopologyManager(engine='debug')
@@ -144,7 +144,24 @@ def test_autoport():
     assert topology.get('hs1') is not None
     assert topology.get('hs2') is not None
 
-    # FIXME: The debug backend currently doesn't record the biports
-    #        so asserting success in complicated.
+    ports = {k: dict(v) for k, v in topology.ports.items()}
+    expected = {
+        'hs1': {
+            'oobm': 'oobm',
+            'a': 'a',
+            '2': '2',
+            '4': '4',
+            'b': 'b',
+        },
+        'hs2': {
+            'x': 'x',
+            '2': '2',
+            '4': '4',
+            'y': 'y',
+        }
+    }
 
     topology.unbuild()
+
+    ddiff = DeepDiff(ports, expected)
+    assert not ddiff
