@@ -23,13 +23,11 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from subprocess import check_call
-from shlex import split as shplit
 from collections import OrderedDict
 
 from topology.platforms.base import BasePlatform
 
-from .utils import tmp_iface, cmd_prefix
+from .utils import tmp_iface, privileged_cmd
 from .nodes.manager import nodes
 
 
@@ -49,13 +47,8 @@ class DockerPlatform(BasePlatform):
         self.nmlbiport_iface_map = OrderedDict()
         self.available_node_types = nodes()
 
-        # Test permissions and define privileged commands prefix
-        self._cmd_prefix = cmd_prefix()
-
         # Create netns folder
-        check_call(shplit(
-            self._cmd_prefix + 'mkdir -p /var/run/netns'
-        ))
+        privileged_cmd('mkdir -p /var/run/netns')
 
     def pre_build(self):
         """
@@ -80,10 +73,10 @@ class DockerPlatform(BasePlatform):
         enode.start()
 
         # Install container netns locally
-        cmd = 'ln -s /proc/{pid}/ns/net /var/run/netns/{pid}'.format(
+        privileged_cmd(
+            'ln -s /proc/{pid}/ns/net /var/run/netns/{pid}',
             pid=enode._pid
         )
-        check_call(shplit(self._cmd_prefix + cmd))
 
         # Register and return node
         self.nmlnode_node_map[node.identifier] = enode
@@ -130,21 +123,14 @@ class DockerPlatform(BasePlatform):
 
         # Create links between nodes:
         #   docs.docker.com/articles/networking/#building-a-point-to-point-connection # noqa
-        cmd_tpl = """\
+        commands = """\
         ip link add {tmp_iface_a} type veth peer name {tmp_iface_b}
         ip link set {tmp_iface_a} netns {enode_a._pid}
         ip link set {tmp_iface_b} netns {enode_b._pid}
         ip netns exec {enode_a._pid} ip link set {tmp_iface_a} name {iface_a}
         ip netns exec {enode_b._pid} ip link set {tmp_iface_b} name {iface_b}\
         """
-        commands = [
-            cmd.strip() for cmd in cmd_tpl.format(**locals()).splitlines()
-        ]
-        for command in commands:
-            if command:
-                check_call(shplit(
-                    self._cmd_prefix + command.lstrip()
-                ))
+        privileged_cmd(commands, **locals())
 
         # Notify enodes of created interfaces
         enode_a.notify_add_bilink(nodeport_a, bilink)
@@ -170,10 +156,7 @@ class DockerPlatform(BasePlatform):
                 continue
 
             # Create port as dummy tuntap device
-            cmd = cmd_tpl.format(**port_spec)
-            check_call(shplit(
-                self._cmd_prefix + cmd
-            ))
+            privileged_cmd(cmd_tpl, **port_spec)
 
             # Mark as created
             port_spec['created'] = True

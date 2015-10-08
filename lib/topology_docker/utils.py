@@ -24,8 +24,8 @@ from __future__ import print_function, division
 
 import logging
 from os import getuid, devnull, makedirs
-from subprocess import call
 from shlex import split as shsplit
+from subprocess import call, check_call
 
 
 log = logging.getLogger(__name__)
@@ -103,4 +103,24 @@ def cmd_prefix():
     return cmd_prefix.prefix
 
 
-__all__ = ['ensure_dir', 'tmp_iface', 'cmd_prefix']
+def privileged_cmd(commands_tpl, **kwargs):
+    """
+    Run a privileged command.
+
+    This function will replace the tokens in the template with the provided
+    keyword arguments, then it will split the lines of the template, strip
+    them and execute them using the prefix for privileged commands, checking
+    that the command returns 0.
+
+    :param str commands_tpl: Single line or multiline template for commands.
+    :param dict kwargs: Replacement tokens.
+    """
+    prefix = cmd_prefix()
+
+    for command in commands_tpl.format(**kwargs).splitlines():
+        command = command.strip()
+        if command:
+            check_call(shsplit(prefix + command))
+
+
+__all__ = ['ensure_dir', 'tmp_iface', 'cmd_prefix', 'privileged_cmd']

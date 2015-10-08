@@ -217,21 +217,15 @@ class OpenSwitchNode(DockerNode):
         hwports = [str(p['name']) for p in ports_hwdesc['ports']]
 
         # Create remaining ports
-        cmd_tpl = """\
-            ip tuntap add dev {hwport} mode tap
-            ip link set {hwport} netns swns\
-        """
+        create_cmd_tpl = 'ip tuntap add dev {hwport} mode tap'
+        netns_cmd_tpl = 'ip link set {hwport} netns swns'
 
         for hwport in hwports:
             if hwport in exclude:
                 continue
 
-            commands = [
-                cmd.strip() for cmd in
-                cmd_tpl.format(hwport=hwport).splitlines()
-            ]
-            for cmd in commands:
-                self._check_cmd(cmd)
+            self._check_cmd(create_cmd_tpl.format(hwport=hwport))
+            self._check_cmd(netns_cmd_tpl.format(hwport=hwport))
 
     def _wait_system_setup(self):
         """
