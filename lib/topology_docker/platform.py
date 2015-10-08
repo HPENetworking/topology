@@ -45,6 +45,7 @@ class DockerPlatform(BasePlatform):
 
         self.nmlnode_node_map = OrderedDict()
         self.nmlbiport_iface_map = OrderedDict()
+        self.nmlbilink_nmlbiports_map = OrderedDict()
         self.available_node_types = nodes()
 
         # Create netns folder
@@ -95,7 +96,8 @@ class DockerPlatform(BasePlatform):
         self.nmlbiport_iface_map[biport.identifier] = {
             'created': False,
             'iface': eport,
-            'netns': enode._pid
+            'netns': enode._pid,
+            'owner': node.identifier
         }
 
         return eport
@@ -140,6 +142,11 @@ class DockerPlatform(BasePlatform):
         self.nmlbiport_iface_map[port_a.identifier]['created'] = True
         self.nmlbiport_iface_map[port_b.identifier]['created'] = True
 
+        # Register this links
+        self.nmlbilink_nmlbiports_map[bilink.identifier] = (
+            port_a.identifier, port_b.identifier
+        )
+
     def post_build(self):
         """
         Ports are created for each node automatically while adding links.
@@ -182,6 +189,57 @@ class DockerPlatform(BasePlatform):
         See :meth:`BasePlatform.rollback` for more information.
         """
         self.destroy()
+
+    def _common_link(self, link_id, action):
+        """
+        Common action to relink / unlink.
+
+        :param str link_id: Identifier of the link to modify.
+        :param str action: Action to perform to the endpoints interfaces. One
+         of: ``['up', 'down']``.
+        """
+        if link_id not in self.nmlbilink_nmlbiports_map:
+            raise Exception('Unknown link "{}"'.format(link_id))
+
+        # iterate endpoints
+        for port_id in self.nmlbilink_nmlbiports_map[link_id]:
+
+            # Get specification for this endpoint
+            port_spec = self.nmlbiport_iface_map[port_id]
+
+            # Get node for the owner of this port
+            node = self.nmlnode_node_map[port_spec['owner']]
+
+            # Execute command
+            command = 'ip link set dev {iface} {action}'.format(
+                iface=port_spec['iface'],
+                action=action
+            )
+
+            # Determine shell to run command
+            available = node.available_shells()
+            for shell in ['bash', 'dash', 'ksh', 'busybox', 'sh']:
+                if shell in available:
+                    node(command, shell=shell)
+                    break
+            else:
+                log.warning(
+                    'Search for suitable shell to manage links was exhausted. '
+                    'Executing in the default shell waiting for the best...'
+                )
+                node(command)
+
+    def relink(self, link_id):
+        """
+        See :meth:`BasePlatform.relink` for more information.
+        """
+        self._common_link(link_id, 'up')
+
+    def unlink(self, link_id):
+        """
+        See :meth:`BasePlatform.unlink` for more information.
+        """
+        self._common_link(link_id, 'down')
 
 
 __all__ = ['DockerPlatform']
