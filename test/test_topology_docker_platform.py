@@ -29,52 +29,61 @@ from topology_docker.platform import DockerPlatform
 
 def test_add_port():
     """
-    Add ports and uses 'ip link list' to check they exist
+    Add ports and uses 'ip link list' to check they exist.
     """
-    topo = DockerPlatform(None, None)
-    topo.pre_build()
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
 
-    hs1 = Node(identifier='hs1', type='host')
-    topo_hs1 = topo.add_node(hs1)
-    assert topo.nmlnode_node_map[hs1.identifier] is not None
+    node1 = Node(identifier='host1', type='host')
+    host1 = platform.add_node(node1)
+    assert platform.nmlnode_node_map[node1.identifier] is not None
 
     # Add ports
-    p1 = BidirectionalPort(identifier='p1', port_number=2)
-    topo.add_biport(hs1, p1)
+    p1 = BidirectionalPort(identifier='p1')
+    platform.add_biport(node1, p1)
     p2 = BidirectionalPort(identifier='p2')
-    topo.add_biport(hs1, p2)
+    platform.add_biport(node1, p2)
     p3 = BidirectionalPort(identifier='p3')
-    topo.add_biport(hs1, p3)
+    platform.add_biport(node1, p3)
 
     # Add link
-    topo.add_bilink((hs1, p1), (hs1, p2), None)
+    platform.add_bilink((node1, p1), (node1, p2), None)
 
-    topo.post_build()
+    platform.post_build()
 
-    result = topo_hs1.send_command('ip link list')
+    result = host1('ip link list')
 
-    topo.destroy()
+    platform.destroy()
 
-    assert '2: <BROADCAST,MULTICAST> ' in result
-    assert 'p2' in result
-    assert 'p3' in result
+    assert 'p1: <BROADCAST,MULTICAST> ' in result
+    assert 'p2: <BROADCAST,MULTICAST> ' in result
+    assert 'p3: <BROADCAST,MULTICAST> ' in result
 
 
 def test_shell():
     """
     Checks that the bash shell of a host sends a proper reply.
     """
-    topo = DockerPlatform(None, None)
-    topo.pre_build()
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
 
-    nml_host = Node(identifier='nml_host', type='host')
-    host = topo.add_node(nml_host)
+    # Add node
+    node1 = Node(identifier='host1', type='host')
+    host1 = platform.add_node(node1)
 
-    topo.post_build()
+    # Add ports
+    p1 = BidirectionalPort(identifier='p1')
+    platform.add_biport(host1, p1)
+    p2 = BidirectionalPort(identifier='p2')
+    platform.add_biport(host1, p2)
+    p3 = BidirectionalPort(identifier='p3')
+    platform.add_biport(host1, p3)
 
-    reply = host.send_command('echo "var"')
+    platform.post_build()
 
-    topo.destroy()
+    reply = host1('echo "var"')
+
+    platform.destroy()
 
     assert 'var' in reply
 
@@ -83,19 +92,26 @@ def test_vtysh():
     """
     Checks that the vtysh shell of a host sends a proper reply.
     """
-    topo = DockerPlatform(None, None)
-    topo.pre_build()
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
 
-    nml_host = Node(
-        identifier='nml_host2', type='openswitch'
-    )
-    host = topo.add_node(nml_host)
+    # Add node
+    node1 = Node(identifier='switch1', type='openswitch')
+    switch1 = platform.add_node(node1)
 
-    topo.post_build()
+    # Add ports
+    p1 = BidirectionalPort(identifier='p1')
+    platform.add_biport(switch1, p1)
+    p2 = BidirectionalPort(identifier='p2')
+    platform.add_biport(switch1, p2)
+    p3 = BidirectionalPort(identifier='p3')
+    platform.add_biport(switch1, p3)
 
-    reply = host.send_command('show vlan', shell='vtysh')
+    platform.post_build()
 
-    topo.destroy()
+    reply = switch1('show vlan')
+
+    platform.destroy()
 
     assert 'vlan' in reply
 
@@ -105,35 +121,42 @@ def test_build_topology():
     Builds (and destroys) a basic topology consisting in one switch and one
     host
     """
-    topo = DockerPlatform(None, None)
-    topo.pre_build()
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
 
-    hs1 = Node(identifier='hs1', type='host')
-    topo_hs1 = topo.add_node(hs1)
+    # Create node 1
+    node1 = Node(identifier='host1', type='host')
+    host1 = platform.add_node(node1)
+    assert platform.nmlnode_node_map[node1.identifier] is not None
 
-    assert topo.nmlnode_node_map[hs1.identifier] is not None
+    # Create node 2
+    node2 = Node(identifier='host2', type='host')
+    host2 = platform.add_node(node2)
+    assert platform.nmlnode_node_map[node2.identifier] is not None
 
-    s1 = Node(identifier='s1', type='host')
-    topo_hs2 = topo.add_node(s1)
+    # Add a port to node 1
     p1 = BidirectionalPort(identifier='p1')
-    topo.add_biport(hs1, p1)
+    platform.add_biport(node1, p1)
 
+    # Add a port to node 2
     p2 = BidirectionalPort(identifier='p2')
-    topo.add_biport(s1, p2)
+    platform.add_biport(node2, p2)
 
-    topo.add_bilink((hs1, p1), (s1, p2), None)
+    # Create a link between both ports
+    platform.add_bilink((node1, p1), (node2, p2), None)
 
-    assert topo.nmlnode_node_map[hs1.identifier] is not None
+    platform.post_build()
 
-    topo.post_build()
+    # Configure network
+    host1('ip link set p1 up')
+    host1('ip addr add 10.1.1.1/24 dev p1')
+    host2('ip link set p2 up')
+    host2('ip addr add 10.1.1.1/24 dev p2')
 
-    topo_hs1.send_command('ifconfig p1 10.1.1.1 netmask 255.255.255.0 up')
+    # Test ping
+    ping_result = host2('ping -c 1 10.1.1.1')
 
-    topo_hs2.send_command('ifconfig p2 10.1.1.2 netmask 255.255.255.0 up')
-
-    ping_result = topo_hs2.send_command('ping -c 1 10.1.1.1')
-
-    topo.destroy()
+    platform.destroy()
 
     assert '1 packets transmitted, 1 received' in ping_result
 
@@ -189,35 +212,35 @@ def test_ping():
     ###########
 
     # Configure IP and bring UP host 1 interfaces
-    hs1.send_command('ip link set hs1-1 up')
-    hs1.send_command('ip addr add 10.0.10.1/24 dev hs1-1')
+    hs1('ip link set hs1-1 up')
+    hs1('ip addr add 10.0.10.1/24 dev hs1-1')
 
     # Configure IP and bring UP host 2 interfaces
-    hs2.send_command('ip link set hs2-1 up')
-    hs2.send_command('ip addr add 10.0.30.1/24 dev hs2-1')
+    hs2('ip link set hs2-1 up')
+    hs2('ip addr add 10.0.30.1/24 dev hs2-1')
 
     # Configure IP and bring UP switch 1 interfaces
-    sw1.send_command('ip link set 3 up')
-    sw1.send_command('ip link set 4 up')
+    sw1('ip link set 3 up')
+    sw1('ip link set 4 up')
 
-    sw1.send_command('ip addr add 10.0.10.2/24 dev 3')
-    sw1.send_command('ip addr add 10.0.20.1/24 dev 4')
+    sw1('ip addr add 10.0.10.2/24 dev 3')
+    sw1('ip addr add 10.0.20.1/24 dev 4')
 
     # Configure IP and bring UP switch 2 interfaces
-    sw2.send_command('ip link set 3 up')
-    sw2.send_command('ip addr add 10.0.20.2/24 dev 3')
+    sw2('ip link set 3 up')
+    sw2('ip addr add 10.0.20.2/24 dev 3')
 
-    sw2.send_command('ip link set 4 up')
-    sw2.send_command('ip addr add 10.0.30.2/24 dev 4')
+    sw2('ip link set 4 up')
+    sw2('ip addr add 10.0.30.2/24 dev 4')
 
     # Set static routes in switches
-    sw1.send_command('ip route add 10.0.30.0/24 via 10.0.20.2')
-    sw2.send_command('ip route add 10.0.10.0/24 via 10.0.20.1')
+    sw1('ip route add 10.0.30.0/24 via 10.0.20.2')
+    sw2('ip route add 10.0.10.0/24 via 10.0.20.1')
 
     # Set gateway in hosts
-    hs1.send_command('ip route add default via 10.0.10.2')
-    hs2.send_command('ip route add default via 10.0.30.2')
+    hs1('ip route add default via 10.0.10.2')
+    hs2('ip route add default via 10.0.30.2')
 
-    ping_result = hs1.send_command('ping -c 1 10.0.30.1')
+    ping_result = hs1('ping -c 1 10.0.30.1')
     platform.destroy()
     assert '1 packets transmitted, 1 received' in ping_result
