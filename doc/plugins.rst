@@ -80,6 +80,13 @@ interface. Users of the topology interact with *Engine Nodes*, not with
 :class:`topology.platforms.base.BaseNode` class and must implement its
 interface.
 
+Another detail is that the *Platform Engine* must return the real or final port
+name of a given *Specification port* in the ``add_biport`` hook. This allows
+to the engine to change names to map to a specific platform or to change layout
+or perform autoport connections. With this mapping the user will be able to
+reference a port using the specification name and it could be mapped to the
+real port name.
+
 .. uml::
     :width: 100%
 
@@ -108,7 +115,8 @@ interface.
 
     loop each biport
         M -> P: add_biport(node, biport)
-        M <<-- P: <<return>>
+        M <<-- P: eport
+        M -> M: register(eport)
     end
 
     loop each bilink
