@@ -121,23 +121,6 @@ class TopologyManager(object):
 
         :param dict dictmeta: The dictionary to load the topology from.
         """
-
-        def mark_port(port, attrs):
-            """
-            Mark a port with relevant metadata.
-            """
-            attrs['label'] = port
-
-            # If explicitly marked do nothing
-            if 'auto_port' in attrs or 'port_number' in attrs:
-                return
-
-            # Determine if auto port or port
-            try:
-                attrs['port_number'] = int(port)
-            except ValueError:
-                attrs['auto_port'] = True
-
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
             for node_id in nodes_spec['nodes']:
@@ -159,7 +142,7 @@ class TopologyManager(object):
                 # Explicitly create port
                 attrs = deepcopy(ports_spec['attributes'])
                 attrs['identifier'] = '{}-{}'.format(node_id, port)
-                mark_port(port, attrs)
+                attrs['label'] = port
                 self.nml.create_biport(node, **attrs)
 
         # Load links
@@ -178,11 +161,11 @@ class TopologyManager(object):
                 port_id = '{}-{}'.format(node_id, port)
                 biport = self.nml.get_object(port_id)
                 if biport is None:
-                    attrs = {}
-                    mark_port(port, attrs)
-                    biport = self.nml.create_biport(
-                        node, identifier=port_id, **attrs
-                    )
+                    attrs = {
+                        'identifier': port_id,
+                        'label': port
+                    }
+                    biport = self.nml.create_biport(node, **attrs)
 
                 # Register endpoint
                 endpoints[idx] = biport
