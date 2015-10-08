@@ -319,7 +319,7 @@ class TopologyManager(object):
             raise RuntimeError(
                 'You cannot relink on a never built topology.'
             )
-        self.platform.relink(link_id)
+        self._platform.relink(link_id)
 
     def unlink(self, link_id):
         """
@@ -331,7 +331,7 @@ class TopologyManager(object):
             raise RuntimeError(
                 'You cannot unlink on a never built topology.'
             )
-        self.platform.unlink(link_id)
+        self._platform.unlink(link_id)
 
 
 __all__ = ['TopologyManager']
