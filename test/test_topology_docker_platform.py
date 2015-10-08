@@ -156,21 +156,21 @@ def test_ping():
 
     h1 = Node(identifier='hs1', type='host')
     h2 = Node(identifier='hs2', type='host')
-    s1 = Node(identifier='sw1', type='openswitch')
-    s2 = Node(identifier='sw2', type='openswitch')
+    s1 = Node(identifier='sw1', type='host')
+    s2 = Node(identifier='sw2', type='host')
 
     hs1 = platform.add_node(h1)
     hs2 = platform.add_node(h2)
     sw1 = platform.add_node(s1)
     sw2 = platform.add_node(s2)
 
-    s1p1 = BidirectionalPort(identifier='sw1-3')
-    s1p2 = BidirectionalPort(identifier='sw1-4')
+    s1p1 = BidirectionalPort(identifier='3')
+    s1p2 = BidirectionalPort(identifier='4')
     platform.add_biport(s1, s1p1)
     platform.add_biport(s1, s1p2)
 
-    s2p1 = BidirectionalPort(identifier='sw2-3')
-    s2p2 = BidirectionalPort(identifier='sw2-4')
+    s2p1 = BidirectionalPort(identifier='3')
+    s2p2 = BidirectionalPort(identifier='4')
     platform.add_biport(s2, s2p1)
     platform.add_biport(s2, s2p2)
 
@@ -197,60 +197,26 @@ def test_ping():
     hs2.send_command('ip addr add 10.0.30.1/24 dev hs2-1')
 
     # Configure IP and bring UP switch 1 interfaces
-    sw1.send_command(
-        'ip netns exec swns ip link set sw1-3 up',
-        shell='bash'
-    )
-    sw1.send_command(
-        'ip netns exec swns ip link set sw1-4 up',
-        shell='bash'
-    )
+    sw1.send_command('ip link set 3 up')
+    sw1.send_command('ip link set 4 up')
 
-    sw1.send_command(
-        'ip netns exec swns ip addr add 10.0.10.2/24 dev sw1-3',
-        shell='bash'
-    )
-    sw1.send_command(
-        'ip netns exec swns ip addr add 10.0.20.1/24 dev sw1-4',
-        shell='bash'
-    )
+    sw1.send_command('ip addr add 10.0.10.2/24 dev 3')
+    sw1.send_command('ip addr add 10.0.20.1/24 dev 4')
 
     # Configure IP and bring UP switch 2 interfaces
-    sw2.send_command(
-        'ip netns exec swns ip link set sw2-3 up',
-        shell='bash'
-    )
-    sw2.send_command(
-        'ip netns exec swns ip addr add 10.0.20.2/24 dev sw2-3',
-        shell='bash'
-    )
+    sw2.send_command('ip link set 3 up')
+    sw2.send_command('ip addr add 10.0.20.2/24 dev 3')
 
-    sw2.send_command(
-        'ip netns exec swns ip link set sw2-4 up',
-        shell='bash'
-    )
-    sw2.send_command(
-        'ip netns exec swns ip addr add 10.0.30.2/24 dev sw2-4',
-        shell='bash'
-    )
+    sw2.send_command('ip link set 4 up')
+    sw2.send_command('ip addr add 10.0.30.2/24 dev 4')
 
     # Set static routes in switches
-    sw1.send_command(
-        'ip netns exec swns ip route add 10.0.30.0/24 via 10.0.20.2',
-        shell='bash'
-    )
-    sw2.send_command(
-        'ip netns exec swns ip route add 10.0.10.0/24 via 10.0.20.1',
-        shell='bash'
-    )
+    sw1.send_command('ip route add 10.0.30.0/24 via 10.0.20.2')
+    sw2.send_command('ip route add 10.0.10.0/24 via 10.0.20.1')
 
     # Set gateway in hosts
-    hs1.send_command(
-        'ip route add default via 10.0.10.2'
-    )
-    hs2.send_command(
-        'ip route add default via 10.0.30.2'
-    )
+    hs1.send_command('ip route add default via 10.0.10.2')
+    hs2.send_command('ip route add default via 10.0.30.2')
 
     ping_result = hs1.send_command('ping -c 1 10.0.30.1')
     platform.destroy()
