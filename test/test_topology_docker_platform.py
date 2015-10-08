@@ -24,6 +24,7 @@ from __future__ import print_function, division
 
 from pynml import Node, BidirectionalPort, BidirectionalLink
 
+from topology.manager import TopologyManager
 from topology_docker.platform import DockerPlatform
 
 
@@ -150,10 +151,10 @@ def test_build_topology():
     platform.post_build()
 
     # Configure network
-    host1('ip link set p1 up')
+    host1('ip link set dev p1 up')
     host1('ip addr add 10.1.1.1/24 dev p1')
-    host2('ip link set p2 up')
-    host2('ip addr add 10.1.1.1/24 dev p2')
+    host2('ip link set dev p2 up')
+    host2('ip addr add 10.1.1.2/24 dev p2')
 
     # Test ping
     ping_result = host2('ping -c 1 10.1.1.1')
@@ -217,25 +218,25 @@ def test_ping():
     ###########
 
     # Configure IP and bring UP host 1 interfaces
-    hs1('ip link set hs1-1 up')
+    hs1('ip link set dev hs1-1 up')
     hs1('ip addr add 10.0.10.1/24 dev hs1-1')
 
     # Configure IP and bring UP host 2 interfaces
-    hs2('ip link set hs2-1 up')
+    hs2('ip link set dev hs2-1 up')
     hs2('ip addr add 10.0.30.1/24 dev hs2-1')
 
     # Configure IP and bring UP switch 1 interfaces
-    sw1('ip link set 3 up')
-    sw1('ip link set 4 up')
+    sw1('ip link set dev 3 up')
+    sw1('ip link set dev 4 up')
 
     sw1('ip addr add 10.0.10.2/24 dev 3')
     sw1('ip addr add 10.0.20.1/24 dev 4')
 
     # Configure IP and bring UP switch 2 interfaces
-    sw2('ip link set 3 up')
+    sw2('ip link set dev 3 up')
     sw2('ip addr add 10.0.20.2/24 dev 3')
 
-    sw2('ip link set 4 up')
+    sw2('ip link set dev 4 up')
     sw2('ip addr add 10.0.30.2/24 dev 4')
 
     # Set static routes in switches
@@ -249,3 +250,54 @@ def test_ping():
     ping_result = hs1('ping -c 1 10.0.30.1')
     platform.destroy()
     assert '1 packets transmitted, 1 received' in ping_result
+
+
+def test_unlink_relink():
+    """
+    Test the unlink and relink calls.
+
+    Creates a topology with two hosts with a port each one and a named link
+    between them. During execution the link gets down and up again and the
+    connection is asserted in all stages.
+    """
+
+    topology = "[identifier=thelink] hs1:a -- hs2:b"
+
+    mgr = TopologyManager(engine='docker')
+    mgr.parse(topology)
+    mgr.build()
+
+    hs1 = mgr.get('hs1')
+    hs2 = mgr.get('hs2')
+
+    try:
+
+        assert hs1 is not None
+        assert hs2 is not None
+
+        # Configure IPs
+        hs1('ip link set dev a up')
+        hs1('ip addr add 10.0.15.1/24 dev a')
+        hs2('ip link set dev b up')
+        hs2('ip addr add 10.0.15.2/24 dev b')
+
+        # Test connection
+        ping_result = hs1('ping -c 1 10.0.15.2')
+        assert '1 packets transmitted, 1 received' in ping_result
+
+        # Unlink
+        mgr.unlink('thelink')
+
+        # Test connection
+        ping_result = hs1('ping -c 1 10.0.15.2')
+        assert 'Network is unreachable' in ping_result
+
+        # Relink
+        mgr.relink('thelink')
+
+        # Test connection
+        ping_result = hs1('ping -c 1 10.0.15.2')
+        assert '1 packets transmitted, 1 received' in ping_result
+
+    finally:
+        mgr.unbuild()
