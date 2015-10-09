@@ -96,7 +96,7 @@ setup(
             'debug = topology.platforms.debug:DebugPlatform'
         ],
         'topology_library_10': [
-            'assert = topology.libraries.assert:REGISTRY'
+            'assert = topology.libraries.assert'
         ]
     }
 )

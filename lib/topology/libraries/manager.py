@@ -26,9 +26,10 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from copy import copy
+from functools import partial
 from inspect import isfunction
 from traceback import format_exc
+from collections import OrderedDict
 
 from pkg_resources import iter_entry_points
 
@@ -49,7 +50,7 @@ def libraries(cache=True):
      reload of all communication libraries registered for the entry point.
     :rtype: dict
     :return: A dictionary associating the name of the communication library and
-     it functions registry:
+     it functions:
 
      ::
 
@@ -73,7 +74,7 @@ def libraries(cache=True):
         name = ep.name
 
         try:
-            registry = ep.load()
+            library = ep.load()
         except:
             log.error(
                 'Unable to load topology communication '
@@ -82,34 +83,63 @@ def libraries(cache=True):
             log.debug(format_exc())
             continue
 
-        # Validate registry
-        if not hasattr(registry, '__iter__'):
+        # Validate library
+        if not hasattr(library, '__all__'):
             log.error(
                 'Ignoring library "{}" as it doesn\'t '
                 'match the required interface: '
-                'Registry is not iterable.'.format(name)
+                '__all__ is missing.'.format(name)
             )
             continue
 
-        # Validate registers
+        # Validate functions
         invalid = [
-            (idx, func) for idx, func in enumerate(registry)
-            if not isfunction(func)
+            func for func in library.__all__
+            if not isfunction(getattr(library, func, None))
         ]
         if invalid:
             log.error(
                 'Ignoring library "{}". '
-                'Registers are not functions: {}.'.format(
-                    name,
-                    ', '.join(['{}:{}'.format(*tup) for tup in invalid])
+                'Found non-functions: {}.'.format(
+                    name, ', '.join(invalid)
                 )
             )
             continue
 
-        available[name] = copy(registry)
+        available[name] = [
+            getattr(library, func, None) for func in library.__all__
+        ]
 
     libraries.available = available
     return available
 
 
-__all__ = ['libraries']
+class LibsProxy(object):
+    """
+    Proxy object to call communication libraries.
+
+    This proxy object is expected to be used by an engine node to add support
+    for communication libraries.
+
+    :param enode: The engine node to communicate with.
+    :type enode: topology.platforms.base.BaseNode
+    """
+    def __init__(self, enode):
+        self._enode = enode
+        self._functions = OrderedDict()
+
+        for libname, functions in libraries().items():
+            for func in functions:
+                key = '{}_{}'.format(libname, func.__name__)
+                self._functions[key] = partial(func, enode)
+
+    def __getattr__(self, name):
+        if name not in self._functions:
+            raise Exception(
+                'Unknown communication library function {}. '
+                'Are you missing a dependency?'.format(name)
+            )
+        return self._functions[name]
+
+
+__all__ = ['LibsProxy', 'libraries']

@@ -143,28 +143,6 @@ class DebugNode(CommonNode):
         log.debug('{}.available_shells()'.format(str(self)))
         return []
 
-    def send_data(self, data, function=None):
-        """
-        Implementation of the ``send_data`` interface.
-
-        See :meth:`topology.platforms.base.CommonNode.send_data` for more
-        information.
-        """
-        log.debug('{}.send_data({}, data={}, function={})'.format(
-            str(self), data, function
-        ))
-        return super(DebugNode, self).send_data(data, function=function)
-
-    def available_functions(self):
-        """
-        Implementation of the ``available_functions`` interface.
-
-        See :meth:`topology.platforms.base.CommonNode.available_functions` for
-        more information.
-        """
-        log.debug('{}.available_functions()'.format(str(self)))
-        return super(DebugNode, self).available_functions()
-
     def __str__(self):
         return 'DebugNode(identifier={}, metadata={})'.format(
             self.identifier, self.metadata

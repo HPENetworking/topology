@@ -30,7 +30,7 @@ from collections import OrderedDict
 
 from six import add_metaclass, iterkeys
 
-from ..libraries.manager import libraries
+from ..libraries.manager import LibsProxy
 
 
 log = logging.getLogger(__name__)
@@ -226,34 +226,6 @@ class BaseNode(object):
          default (if any).
         """
 
-    @abstractmethod
-    def send_data(self, data, function=None):
-        """
-        Send data to a function and return it's result.
-
-        This interface is particularly useful to implement communication with
-        this node when the node has a Restful API or other programmatic
-        interface. Another option is to provide wrapper functions to
-        known CLI commands while implementing parser for their outputs.
-
-        :param dict data: Data to send.
-        :param str function: The name of the function to call with data.
-         `None` is the default function.Is up to the platform engine to
-         determine what the default function is.
-        :rtype: dict
-        :return: The response of the function.
-        """
-
-    @abstractmethod
-    def available_functions(self):
-        """
-        Get the list of available functions.
-
-        :rtype: List of str.
-        :return: The list of all available functions. The first one is the
-         default (if any).
-        """
-
 
 @add_metaclass(ABCMeta)
 class CommonNode(BaseNode):
@@ -281,10 +253,7 @@ class CommonNode(BaseNode):
         self._functions = OrderedDict()
 
         # Add support for communication libraries
-        for libname, registry in libraries().items():
-            for register in registry:
-                key = '{}_{}'.format(libname, register.__name__)
-                self._functions[key] = register
+        self.libs = LibsProxy(self)
 
     def send_command(self, cmd, shell=None, silent=False):
         """
@@ -323,38 +292,6 @@ class CommonNode(BaseNode):
         See :meth:`BaseNode.available_shells` for more information.
         """
         return list(iterkeys(self._shells))
-
-    def send_data(self, data, function=None):
-        """
-        Implementation of the ``send_data`` interface.
-
-        This method will lookup for the function argument in an internal
-        ordered dictionary to fetch a function to delegate the command to.
-        If None is  provided, the first key of the dictionary will be used.
-
-        Note that this internal dictionary is populated at instantiation of the
-        node using the :func:`topology.libraries.manager.libraries` function.
-
-        See :meth:`BaseNode.send_data` for more information.
-        """
-        if function is None and self._functions:
-            function = list(iterkeys(self._functions))[0]
-        elif function not in self._functions.keys():
-            raise Exception(
-                'Function {} is not supported.'.format(function)
-            )
-        return self._functions[function](self, **data)
-
-    def available_functions(self):
-        """
-        Implementation of the ``available_functions`` interface.
-
-        This method will just list the available keys in the internal ordered
-        dictionary.
-
-        See :meth:`BaseNode.available_functions` for more information.
-        """
-        return list(iterkeys(self._functions))
 
 
 __all__ = ['BasePlatform', 'BaseNode', 'CommonNode']

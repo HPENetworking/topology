@@ -180,7 +180,7 @@ For example, in your module ``topology_lib_my.library``:
     def bar_function(enode, myarg1=None, myarg2=100):
        return {'ham': 200}
 
-    REGISTRY = [foo_function, bar_function]
+    __all__ = ['foo_function', 'bar_function']
 
 Then specify in your `setup.py`:
 
@@ -188,29 +188,40 @@ Then specify in your `setup.py`:
 
     # Entry points
     entry_points={
-        'topology_library_10': ['my = topology_lib_my.library.REGISTRY']
+        'topology_library_10': ['my = topology_lib_my.library']
     }
 
 With this, and if your *Platform Engine* builds your *Engine Nodes* to support
-communication libraries (FIXME: Explain how), your functions will be available
+communication libraries (see below), your functions will be available
 to the ``enode`` like this:
 
 ::
 
-    >>> sw1.send_data({'myarg1': 275}, function='my_foo_function')
+    >>> sw1.libs.my_foo_function(myarg1=275)
     {'ham': 275}
 
 Please note, all your functions are registered with the name of your
 communication library as prefix as your specified in the ``setup.py``.
 
 Also, please note that all communication functions receive the *Engine Node* as
-first parameter, all other parameters must be keyword arguments. The ``enode``
+first parameter, all other parameters are up to the function. The ``enode``
 argument can be used to store state or data for the library or to
 trigger calls to other libraries or commands as part of the communication flow.
 
-It is recommended to always check first the availability of any dependency
-shell or functions using the methods
-:meth:`topology.platforms.base.BaseNode.available_shells` and
-:meth:`topology.platforms.base.BaseNode.available_functions`. See
-:class:`topology.platforms.base.BaseNode` for more information about the
+It is recommended to check first the availability of any dependency shell
+using the method :meth:`topology.platforms.base.BaseNode.available_shells`.
+See :class:`topology.platforms.base.BaseNode` for more information about the
 *Engine Node* interface.
+
+To build an *Engine Node* to support communications libraries make sure to
+create and attribute ``libs`` with an instance of
+:class:`topology.libraries.manager.LibsProxy`:
+
+.. code:: python
+
+   class MyEngineNode(BaseNode):
+       def __init__(self, identifier, **kwargs):
+           super(MyEngineNode, self).__init__(identifier, **kwargs)
+
+           # Add support for communication libraries
+           self.libs = LibsProxy(self)

@@ -24,9 +24,8 @@ The topology framework was built with the following design principles in mind:
 #. Nodes, ports and links support undetermined attributes or *metadata*, it is
    up to the *Platform Engine* to interpret and determine what metadata to use
    and how.
-#. The *Engine Nodes* implement a base communication interface for *shells* and
-   *functions*. A shell is a command line driven textual interface, a function
-   is a Python complex data (dictionary) driven interface.
+#. The *Engine Nodes* implement a base communication interface for *shells*.
+   A shell is a command line driven textual interface.
 #. Optionally, a *Platform Engine* can support *Communication Libraries* for
    their *Engine Nodes*, which is a
    :ref:`extensible <provide-a-new-communication-library>` way to provide the

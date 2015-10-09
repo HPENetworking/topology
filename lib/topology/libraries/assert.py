@@ -24,7 +24,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 
-def batch(enode, commands=None, replace=None, shell=None):
+def batch(enode, commands, replace=None, shell=None):
     """
     Execute a batch of return-less template commands in the enode shell.
 
@@ -49,10 +49,7 @@ def batch(enode, commands=None, replace=None, shell=None):
             continue
 
         # Assert that commands return nothing
-        assert not enode.send_command(cmd, shell=shell)
-
-
-REGISTRY = [batch]
+        assert not enode(cmd, shell=shell)
 
 
 __all__ = [
