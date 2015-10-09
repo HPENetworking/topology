@@ -144,6 +144,11 @@ class OpenSwitchNode(DockerNode):
         self._shells['bash'] = DockerShell(
             self.identifier, 'sh -c "TERM=dumb bash"', 'bash-.*#'
         )
+        self._shells['bash_swns'] = DockerShell(
+            self.identifier,
+            'sh -c "TERM=dumb ip netns exec swns bash"',
+            'bash-.*#'
+        )
 
         # Store all externally created interfaces
         self._ifaces = []
