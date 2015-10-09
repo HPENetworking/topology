@@ -49,7 +49,8 @@ def batch(enode, commands, replace=None, shell=None):
             continue
 
         # Assert that commands return nothing
-        assert not enode(cmd, shell=shell)
+        response = enode(cmd, shell=shell)
+        assert not response
 
 
 __all__ = [
