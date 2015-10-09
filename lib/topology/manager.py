@@ -207,6 +207,7 @@ class TopologyManager(object):
                 'You cannot build a topology twice.'
             )
 
+        node_enode_map = OrderedDict()
         timestamp = datetime.now().replace(microsecond=0).isoformat()
         stage = 'instance'
 
@@ -232,6 +233,7 @@ class TopologyManager(object):
                     raise Exception(msg)
 
                 # Register engine node
+                node_enode_map[node.identifier] = enode.identifier
                 self.nodes[enode.identifier] = enode
 
             stage = 'add_biport'
@@ -251,17 +253,22 @@ class TopologyManager(object):
                     self.ports[node.identifier] = OrderedDict()
 
                 # Register engine port
-                label = biport.identifier
-                if 'label' in biport.metadata:
-                    label = biport.metadata['label']
-
-                self.ports[node.identifier][label] = eport
+                label = biport.metadata.get('label', biport.identifier)
+                enode_id = node_enode_map[node.identifier]
+                self.ports[enode_id][label] = eport
 
             stage = 'add_bilink'
             for node_porta, node_portb, bilink in self.nml.bilinks():
                 self._platform.add_bilink(node_porta, node_portb, bilink)
 
             stage = 'post_build'
+
+            # Assign the port mapping to the enode so they know their mapping
+            # and be able to change it if required
+            # (and globally, we do not use deepcopy).
+            for enode_id, enode in self.nodes.items():
+                enode.ports = self.ports[enode_id]
+
             self._platform.post_build()
 
         except Exception as e:
