@@ -35,6 +35,7 @@ from topology_docker.utils import ensure_dir
 
 
 SETUP_SCRIPT = """\
+import logging
 from sys import argv
 from time import sleep
 from os.path import exists
@@ -66,32 +67,33 @@ sock = None
 
 
 def create_interfaces():
+    # Read ports from hardware description
     with open('{}/ports.yaml'.format(hwdesc_dir), 'r') as fd:
         ports_hwdesc = yaml.load(fd)
-
     hwports = [str(p['name']) for p in ports_hwdesc['ports']]
-    exclude = argv[1:]
-    present = check_output(shsplit(
+
+    # Get list of already created ports
+    not_in_swns = check_output(shsplit(
+        'ls /sys/class/net/'
+    )).split()
+    in_swns = check_output(shsplit(
         'ip netns exec swns ls /sys/class/net/'
     )).split()
 
-    # Create remaining ports
     create_cmd_tpl = 'ip tuntap add dev {hwport} mode tap'
     netns_cmd_tpl = 'ip link set {hwport} netns swns'
 
     for hwport in hwports:
-        if hwport in present:
-            print('  - Port {} already present.'.format(hwport))
+        if hwport in in_swns:
+            logging.info('  - Port {} already present.'.format(hwport))
             continue
 
-        if hwport in exclude:
-            # Move numeric interfaces to the swns netns
-            if hwport.isdigit():
-                print('  - Port {} moved to swns netns.'.format(hwport))
-                check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
+        if hwport in not_in_swns:
+            logging.info('  - Port {} moved to swns netns.'.format(hwport))
+            check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
             continue
 
-        print('  - Port {} created.'.format(hwport))
+        logging.info('  - Port {} created.'.format(hwport))
         check_call(shsplit(create_cmd_tpl.format(hwport=hwport)))
         check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
 
@@ -107,27 +109,33 @@ def cur_cfg_is_set():
 
 
 def main():
-    print('Waiting for swns netns...')
+
+    if '-d' in argv:
+        logging.basicConfig(level=logging.DEBUG)
+
+    logging.info('Waiting for swns netns...')
     while not exists(swns_netns):
         sleep(0.1)
-    print('Waiting for hwdesc directory...')
+
+    logging.info('Waiting for hwdesc directory...')
     while not exists(hwdesc_dir):
         sleep(0.1)
 
-    print('Creating interfaces...')
+    logging.info('Creating interfaces...')
     create_interfaces()
 
-    print('Waiting for DB socket...')
+    logging.info('Waiting for DB socket...')
     while not exists(db_sock):
         sleep(0.1)
 
-    print('Waiting for cur_cfg...')
+    logging.info('Waiting for cur_cfg...')
     while not cur_cfg_is_set():
         sleep(0.1)
 
-    print('Waiting for switchd pid...')
+    logging.info('Waiting for switchd pid...')
     while not exists(switchd_pid):
         sleep(0.1)
+
 
 if __name__ == '__main__':
     main()
@@ -204,19 +212,6 @@ class OpenSwitchNode(DockerNode):
             prefix='ovs-vsctl ', timeout=60
         )
 
-        # Store all externally created interfaces
-        self._ifaces = []
-
-    def notify_add_biport(self, node, biport):
-        """
-        Get notified that a new biport was added to this engine node.
-
-        See :meth:`DockerNode.notify_add_biport` for more information.
-        """
-        iface = super(OpenSwitchNode, self).notify_add_biport(node, biport)
-        self._ifaces.append(iface)
-        return iface
-
     def notify_post_build(self):
         """
         Get notified that the post build stage of the topology build was
@@ -225,20 +220,14 @@ class OpenSwitchNode(DockerNode):
         See :meth:`DockerNode.notify_post_build` for more information.
         """
         super(OpenSwitchNode, self).notify_post_build()
+        self._setup_system()
 
-        # TODO: Analyse the option to comment this lines,
-        #       they take too much time. Are they really required?
-        self._setup_system(self._ifaces)
-
-    def _setup_system(self, exclude):
+    def _setup_system(self):
         """
         Setup the OpenSwitch image for testing.
 
         #. Create remaining interfaces.
         #. Wait for daemons to converge.
-
-        :param list exclude: List of ports to exclude. Usually the ports
-         already created.
         """
         setup_script = '{}/openswitch_setup.py'.format(self.shared_dir)
         if not isfile(setup_script):
@@ -246,8 +235,8 @@ class OpenSwitchNode(DockerNode):
                 fd.write(SETUP_SCRIPT)
 
         check_call(shsplit(
-            'docker exec {} python /tmp/openswitch_setup.py {}'.format(
-                self.container_id, ' '.join(exclude)
+            'docker exec {} python /tmp/openswitch_setup.py'.format(
+                self.container_id
             )
         ))
 
