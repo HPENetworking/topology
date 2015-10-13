@@ -35,14 +35,12 @@ from topology_docker.utils import ensure_dir
 
 
 SETUP_SCRIPT = """\
-#!/usr/bin/env python
-
 from sys import argv
 from time import sleep
 from os.path import exists
 from json import dumps, loads
-from subprocess import check_call
 from shlex import split as shsplit
+from subprocess import check_call, check_output
 from socket import AF_UNIX, SOCK_STREAM, socket
 
 import yaml
@@ -73,19 +71,27 @@ def create_interfaces():
 
     hwports = [str(p['name']) for p in ports_hwdesc['ports']]
     exclude = argv[1:]
+    present = check_output(shsplit(
+        'ip netns exec swns ls /sys/class/net/'
+    )).split()
 
     # Create remaining ports
     create_cmd_tpl = 'ip tuntap add dev {hwport} mode tap'
     netns_cmd_tpl = 'ip link set {hwport} netns swns'
 
     for hwport in hwports:
-        if hwport in exclude:
+        if hwport in present:
+            print('  - Port {} already present.'.format(hwport))
+            continue
 
+        if hwport in exclude:
             # Move numeric interfaces to the swns netns
             if hwport.isdigit():
+                print('  - Port {} moved to swns netns.'.format(hwport))
                 check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
             continue
 
+        print('  - Port {} created.'.format(hwport))
         check_call(shsplit(create_cmd_tpl.format(hwport=hwport)))
         check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
 
@@ -101,17 +107,25 @@ def cur_cfg_is_set():
 
 
 def main():
+    print('Waiting for swns netns...')
     while not exists(swns_netns):
         sleep(0.1)
+    print('Waiting for hwdesc directory...')
     while not exists(hwdesc_dir):
         sleep(0.1)
 
+    print('Creating interfaces...')
     create_interfaces()
 
+    print('Waiting for DB socket...')
     while not exists(db_sock):
         sleep(0.1)
+
+    print('Waiting for cur_cfg...')
     while not cur_cfg_is_set():
         sleep(0.1)
+
+    print('Waiting for switchd pid...')
     while not exists(switchd_pid):
         sleep(0.1)
 
