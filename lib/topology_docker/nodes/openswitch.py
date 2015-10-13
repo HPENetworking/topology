@@ -26,23 +26,29 @@ from __future__ import print_function, division
 
 from os import environ
 from os.path import isfile
-from time import sleep
-
-from yaml import load
+from subprocess import check_call
+from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
 
 
-WAIT_FOR_OPENSWITCH = """\
+SETUP_SCRIPT = """\
 #!/usr/bin/env python
 
+from sys import argv
 from time import sleep
 from os.path import exists
 from json import dumps, loads
+from subprocess import check_call
+from shlex import split as shsplit
 from socket import AF_UNIX, SOCK_STREAM, socket
 
+import yaml
+
+swns_netns = '/var/run/netns/swns'
+hwdesc_dir = '/etc/openswitch/hwdesc'
 db_sock = '/var/run/openvswitch/db.sock'
 switchd_pid = '/var/run/openvswitch/ops-switchd.pid'
 query = {
@@ -61,6 +67,29 @@ query = {
 sock = None
 
 
+def create_interfaces():
+    with open('{}/ports.yaml'.format(hwdesc_dir), 'r') as fd:
+        ports_hwdesc = yaml.load(fd)
+
+    hwports = [str(p['name']) for p in ports_hwdesc['ports']]
+    exclude = argv[1:]
+
+    # Create remaining ports
+    create_cmd_tpl = 'ip tuntap add dev {hwport} mode tap'
+    netns_cmd_tpl = 'ip link set {hwport} netns swns'
+
+    for hwport in hwports:
+        if hwport in exclude:
+
+            # Move numeric interfaces to the swns netns
+            if hwport.isdigit():
+                check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
+            continue
+
+        check_call(shsplit(create_cmd_tpl.format(hwport=hwport)))
+        check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
+
+
 def cur_cfg_is_set():
     global sock
     if sock is None:
@@ -72,6 +101,13 @@ def cur_cfg_is_set():
 
 
 def main():
+    while not exists(swns_netns):
+        sleep(0.1)
+    while not exists(hwdesc_dir):
+        sleep(0.1)
+
+    create_interfaces()
+
     while not exists(db_sock):
         sleep(0.1)
     while not cur_cfg_is_set():
@@ -157,20 +193,6 @@ class OpenSwitchNode(DockerNode):
         # Store all externally created interfaces
         self._ifaces = []
 
-    def _check_cmd(self, cmd):
-        """
-        Helper to check that a command returns no error.
-
-        If the command output is not empty then raise an error. We do not use
-        assert because the assert exception doesn't know the value being
-        asserted.
-        """
-        cmd_result = self.send_command(cmd, shell='bash')
-        if cmd_result:
-            raise RuntimeError(
-                'Build command "{}" failed:\n{}'.format(cmd, cmd_result)
-            )
-
     def notify_add_biport(self, node, biport):
         """
         Get notified that a new biport was added to this engine node.
@@ -190,62 +212,30 @@ class OpenSwitchNode(DockerNode):
         """
         super(OpenSwitchNode, self).notify_post_build()
 
-        # Wait for swns netns to be available
-        while 'swns' not in self.send_command('ip netns list', shell='bash'):
-            sleep(0.1)
-
-        # Move numeric interfaces to the swns netns
-        cmd_tpl = 'ip link set {iface} netns swns'
-        for iface in self._ifaces:
-            if iface.isdigit():
-                cmd = cmd_tpl.format(iface=iface)
-                self._check_cmd(cmd)
-
         # TODO: Analyse the option to comment this lines,
         #       they take too much time. Are they really required?
-        self._create_hwdesc_ports(self._ifaces)
-        self._wait_system_setup()
+        self._setup_system(self._ifaces)
 
-    def _create_hwdesc_ports(self, exclude):
+    def _setup_system(self, exclude):
         """
-        Create all ports in the hardware description.
+        Setup the OpenSwitch image for testing.
+
+        #. Create remaining interfaces.
+        #. Wait for daemons to converge.
 
         :param list exclude: List of ports to exclude. Usually the ports
          already created.
         """
-        # Wait for daemons to be ready
-        while 'hwdesc' not in self.send_command(
-                'ls /etc/openswitch/', shell='bash').split():
-            sleep(0.1)
+        setup_script = '{}/openswitch_setup.py'.format(self.shared_dir)
+        if not isfile(setup_script):
+            with open(setup_script, 'w') as fd:
+                fd.write(SETUP_SCRIPT)
 
-        # Read hardware description for ports
-        self._check_cmd('cp /etc/openswitch/hwdesc/ports.yaml /tmp/')
-
-        with open('{}/ports.yaml'.format(self.shared_dir), 'r') as fd:
-            ports_hwdesc = load(fd)
-        hwports = [str(p['name']) for p in ports_hwdesc['ports']]
-
-        # Create remaining ports
-        create_cmd_tpl = 'ip tuntap add dev {hwport} mode tap'
-        netns_cmd_tpl = 'ip link set {hwport} netns swns'
-
-        for hwport in hwports:
-            if hwport in exclude:
-                continue
-
-            self._check_cmd(create_cmd_tpl.format(hwport=hwport))
-            self._check_cmd(netns_cmd_tpl.format(hwport=hwport))
-
-    def _wait_system_setup(self):
-        """
-        Wait until OpenSwitch daemons converge.
-        """
-        wait_script = '{}/wait_for_openswitch'.format(self.shared_dir)
-        if not isfile(wait_script):
-            with open(wait_script, 'w') as fd:
-                fd.write(WAIT_FOR_OPENSWITCH)
-            self._check_cmd('chmod +x /tmp/wait_for_openswitch')
-        self._check_cmd('/tmp/wait_for_openswitch')
+        check_call(shsplit(
+            'docker exec {} python /tmp/openswitch_setup.py {}'.format(
+                self.container_id, ' '.join(exclude)
+            )
+        ))
 
 
 __all__ = ['OpenSwitchNode']
