@@ -38,15 +38,20 @@ class DockerShell(object):
 
     def __init__(
             self, container, shell, prompt,
-            timeout=None, encoding='utf-8'):
+            prefix=None, timeout=None, encoding='utf-8'):
         self._container = container
         self._shell = shell
         self._prompt = prompt
+        self._prefix = prefix
         self._timeout = timeout or -1
         self._encoding = encoding
         self._spawn = None
 
     def __call__(self, command):
+
+        if self._prefix is not None:
+            command = self._prefix + command
+
         if self._spawn is None:
             # Lazy-spawn
             self._spawn = spawn(
