@@ -151,7 +151,7 @@ class OpenSwitchNode(DockerNode):
         )
         self._shells['vsctl'] = DockerShell(
             self.container_id, 'sh -c "TERM=dumb bash"', 'bash-.*#',
-            prefix='ovs-vsctl '
+            prefix='ovs-vsctl ', timeout=60
         )
 
         # Store all externally created interfaces
