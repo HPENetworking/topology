@@ -60,10 +60,9 @@ class DockerNode(CommonNode):
             binds=binds
         )
 
-        self._container_id = self._client.create_container(
+        self.container_id = self._client.create_container(
             image=self._image,
             command=self._command,
-            name=identifier,
             detach=True,
             tty=True,
             host_config=self._host_config
@@ -103,17 +102,17 @@ class DockerNode(CommonNode):
         """
         Start the docker node and configures a netns for it.
         """
-        self._client.start(self._container_id)
+        self._client.start(self.container_id)
         self._pid = self._client.inspect_container(
-            self._container_id)['State']['Pid']
+            self.container_id)['State']['Pid']
 
     def stop(self):
         """
         Request container to stop.
         """
-        self._client.stop(self._container_id)
-        self._client.wait(self._container_id)
-        self._client.remove_container(self._container_id)
+        self._client.stop(self.container_id)
+        self._client.wait(self.container_id)
+        self._client.remove_container(self.container_id)
 
 
 __all__ = ['DockerNode']
