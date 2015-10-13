@@ -6,7 +6,6 @@ sphinx
 sphinx_rtd_theme
 sphinxcontrib-plantuml
 autoapi
-pytest-xdist
 
 # Remove when topology is in PyPI
 -e git+git@github-sc-p.corp.hp.com:hpe-networking/pynml.git@master#egg=pynml
