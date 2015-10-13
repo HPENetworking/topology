@@ -49,11 +49,8 @@ class DockerShell(object):
 
     def __call__(self, command):
 
-        if self._prefix is not None:
-            command = self._prefix + command
-
+        # Lazy-spawn
         if self._spawn is None:
-            # Lazy-spawn
             self._spawn = spawn(
                 'docker exec -i -t {} {}'.format(
                     self._container, self._shell
@@ -62,6 +59,10 @@ class DockerShell(object):
             )
             # Cut output at first prompt
             self._spawn.expect(self._prompt, timeout=self._timeout)
+
+        # Prefix command if required
+        if self._prefix is not None:
+            command = self._prefix + command
 
         self._spawn.sendline(command)
         self._spawn.expect(self._prompt, timeout=self._timeout)
