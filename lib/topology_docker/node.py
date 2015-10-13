@@ -63,6 +63,7 @@ class DockerNode(CommonNode):
         self.container_id = self._client.create_container(
             image=self._image,
             command=self._command,
+            name='{}_{}'.format(identifier, str(id(self))),
             detach=True,
             tty=True,
             host_config=self._host_config

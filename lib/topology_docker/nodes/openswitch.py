@@ -154,7 +154,7 @@ class OpenSwitchNode(DockerNode):
             image = environ.get('OPS_IMAGE', image)
 
         # Determine shared directory
-        shared_dir = '/tmp/topology_{}'.format(identifier)
+        shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))
         ensure_dir(shared_dir)
 
         # Add binded directories
