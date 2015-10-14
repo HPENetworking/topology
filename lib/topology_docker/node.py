@@ -115,5 +115,17 @@ class DockerNode(CommonNode):
         self._client.wait(self.container_id)
         self._client.remove_container(self.container_id)
 
+    def pause(self):
+        """
+        Pause the current node.
+        """
+        self._client.pause(self.container_id)
+
+    def unpause(self):
+        """
+        Unpause the current node.
+        """
+        self._client.unpause(self.container_id)
+
 
 __all__ = ['DockerNode']
