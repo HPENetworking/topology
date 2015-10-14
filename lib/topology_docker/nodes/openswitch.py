@@ -42,7 +42,7 @@ from os.path import exists
 from json import dumps, loads
 from shlex import split as shsplit
 from subprocess import check_call, check_output
-from socket import AF_UNIX, SOCK_STREAM, socket
+from socket import AF_UNIX, SOCK_STREAM, socket, gethostname
 
 import yaml
 
@@ -136,6 +136,9 @@ def main():
     while not exists(switchd_pid):
         sleep(0.1)
 
+    logging.info('Wait for final hostname...')
+    while gethostname() != 'switch':
+        sleep(0.1)
 
 if __name__ == '__main__':
     main()
