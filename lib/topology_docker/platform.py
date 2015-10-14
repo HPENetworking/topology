@@ -147,6 +147,36 @@ class DockerPlatform(BasePlatform):
             port_a.identifier, port_b.identifier
         )
 
+        # Apply some attributes
+        for enode, port, iface in \
+                ((enode_a, port_a, iface_a), (enode_b, port_b, iface_b)):
+
+            prefix = 'ip netns exec {pid} '.format(pid=enode._pid)
+
+            # Set ipv4 and ipv6 addresses
+            for version in [4, 6]:
+                attribute = 'ipv{}'.format(version)
+                if attribute not in port.metadata:
+                    continue
+
+                addr = port.metadata[attribute]
+                cmd = 'ip -{version} addr add {addr} dev {iface}'.format(
+                    **locals()
+                )
+                privileged_cmd(prefix + cmd)
+
+            # Bring-up or down
+            if bilink.metadata.get('up', None) is None and \
+                    port.metadata.get('up', None) is None:
+                continue
+
+            up = bilink.metadata.get('up', True) and \
+                port.metadata.get('up', True)
+
+            state = 'up' if up else 'down'
+            cmd = 'ip link set dev {iface} {state}'.format(**locals())
+            privileged_cmd(prefix + cmd)
+
     def post_build(self):
         """
         Ports are created for each node automatically while adding links.

@@ -102,11 +102,11 @@ def test_vtysh():
     switch1 = platform.add_node(node1)
 
     # Add ports
-    p1 = BidirectionalPort(identifier='p1')
+    p1 = BidirectionalPort(identifier='p1', label=1)
     platform.add_biport(switch1, p1)
-    p2 = BidirectionalPort(identifier='p2')
+    p2 = BidirectionalPort(identifier='p2', label=2)
     platform.add_biport(switch1, p2)
-    p3 = BidirectionalPort(identifier='p3')
+    p3 = BidirectionalPort(identifier='p3', label=3)
     platform.add_biport(switch1, p3)
 
     platform.post_build()
