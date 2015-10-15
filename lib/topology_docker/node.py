@@ -119,12 +119,16 @@ class DockerNode(CommonNode):
         """
         Pause the current node.
         """
+        for portlbl in self.ports:
+            self.port_state(portlbl, False)
         self._client.pause(self.container_id)
 
     def unpause(self):
         """
         Unpause the current node.
         """
+        for portlbl in self.ports:
+            self.port_state(portlbl, True)
         self._client.unpause(self.container_id)
 
     def port_state(self, portlbl, state):
