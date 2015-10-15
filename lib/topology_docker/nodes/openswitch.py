@@ -243,5 +243,21 @@ class OpenSwitchNode(DockerNode):
             )
         ))
 
+    def port_state(self, portlbl, state):
+        """
+        Set the given port label to the given state.
+
+        See :meth:`DockerNode.port_state` for more information.
+        """
+        iface = self.ports[portlbl]
+
+        not_in_netns = self('ls /sys/class/net/', shell='bash').split()
+        shell = 'bash' if iface in not_in_netns else 'bash_swns'
+
+        self(
+            'ip link set dev {} {}'.format(iface, 'up' if state else 'down'),
+            shell=shell
+        )
+
 
 __all__ = ['OpenSwitchNode']

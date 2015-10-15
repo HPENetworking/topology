@@ -97,7 +97,8 @@ class DockerPlatform(BasePlatform):
             'created': False,
             'iface': eport,
             'netns': enode._pid,
-            'owner': node.identifier
+            'owner': node.identifier,
+            'label': biport.metadata.get('label', biport.identifier)
         }
 
         return eport
@@ -225,8 +226,7 @@ class DockerPlatform(BasePlatform):
         Common action to relink / unlink.
 
         :param str link_id: Identifier of the link to modify.
-        :param str action: Action to perform to the endpoints interfaces. One
-         of: ``['up', 'down']``.
+        :param bool action: True if up, False if down.
         """
         if link_id not in self.nmlbilink_nmlbiports_map:
             raise Exception('Unknown link "{}"'.format(link_id))
@@ -238,38 +238,20 @@ class DockerPlatform(BasePlatform):
             port_spec = self.nmlbiport_iface_map[port_id]
 
             # Get node for the owner of this port
-            node = self.nmlnode_node_map[port_spec['owner']]
-
-            # Execute command
-            command = 'ip link set dev {iface} {action}'.format(
-                iface=port_spec['iface'],
-                action=action
-            )
-
-            # Determine shell to run command
-            available = node.available_shells()
-            for shell in ['bash', 'dash', 'ksh', 'busybox', 'sh']:
-                if shell in available:
-                    node(command, shell=shell)
-                    break
-            else:
-                log.warning(
-                    'Search for suitable shell to manage links was exhausted. '
-                    'Executing in the default shell waiting for the best...'
-                )
-                node(command)
+            enode = self.nmlnode_node_map[port_spec['owner']]
+            enode.port_state(port_spec['label'], action)
 
     def relink(self, link_id):
         """
         See :meth:`BasePlatform.relink` for more information.
         """
-        self._common_link(link_id, 'up')
+        self._common_link(link_id, True)
 
     def unlink(self, link_id):
         """
         See :meth:`BasePlatform.unlink` for more information.
         """
-        self._common_link(link_id, 'down')
+        self._common_link(link_id, False)
 
 
 __all__ = ['DockerPlatform']

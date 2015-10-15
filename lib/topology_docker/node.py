@@ -127,5 +127,22 @@ class DockerNode(CommonNode):
         """
         self._client.unpause(self.container_id)
 
+    def port_state(self, portlbl, state):
+        """
+        Set the given port label to the given state.
+
+        :param str portlbl: The label of the port.
+        :param bool state: True for up, False for down.
+        """
+        # Given the fact that bash is the default command in the constructor,
+        # it is a good assumption that the node has a bash shell. Is not
+        # guaranteed, but if it is not the case, the node has the capability
+        # to override this function to provide the correct logic.
+        iface = self.ports[portlbl]
+        self(
+            'ip link set dev {} {}'.format(iface, 'up' if state else 'down'),
+            shell='bash'
+        )
+
 
 __all__ = ['DockerNode']
