@@ -173,11 +173,15 @@ class StepLogger(object):
         frame, filename, line_number, function_name, lines, index = \
             stack()[1]
         print(
-            '>>> [:03d] :: {}:{}'.format(
+            '>>> [{:03d}] :: {}:{}'.format(
                 self.step, function_name, line_number
             )
         )
-        print('\n... '.join(msg.strip().splitlines()))
+        print(
+            '\n'.join(
+                ['... {}'.format(l) for l in msg.strip().splitlines()]
+            )
+        )
 
 
 @fixture(scope='function')
