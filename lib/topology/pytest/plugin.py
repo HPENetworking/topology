@@ -192,6 +192,8 @@ def step(request):
         step.STEPPER.step = 0
     request.addfinalizer(finalizer)
 
+    return step.STEPPER
+
 
 def pytest_addoption(parser):
     """
