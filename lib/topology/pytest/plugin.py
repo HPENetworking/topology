@@ -43,6 +43,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from inspect import stack
 from os import getcwd, makedirs
 from traceback import format_exc
 from os.path import join, isabs, abspath, exists
@@ -155,6 +156,41 @@ def topology(request):
         request.addfinalizer(finalizer)
 
     return topomgr
+
+
+class StepLogger(object):
+    """
+    Stepper logging class.
+
+    This class will log a message and will show the step number and the caller
+    name and line number.
+    """
+    def __init__(self):
+        self.step = 0
+
+    def __call__(self, msg):
+        self.step += 1
+        frame, filename, line_number, function_name, lines, index = \
+            stack()[1]
+        print(
+            '>>> [:03d] :: {}:{}'.format(
+                self.step, function_name, line_number
+            )
+        )
+        print('\n... '.join(msg.strip().splitlines()))
+
+
+@fixture(scope='function')
+def step(request):
+    """
+    Fixture to log a step in a test.
+    """
+    if not hasattr(step, 'STEPPER'):
+        step.STEPPER = StepLogger()
+
+    def finalizer():
+        step.STEPPER.step = 0
+    request.addfinalizer(finalizer)
 
 
 def pytest_addoption(parser):
