@@ -250,7 +250,6 @@ class CommonNode(BaseNode):
     def __init__(self, identifier, **kwargs):
         super(CommonNode, self).__init__(identifier, **kwargs)
         self._shells = OrderedDict()
-        self._functions = OrderedDict()
 
         # Add support for communication libraries
         self.libs = LibsProxy(self)
