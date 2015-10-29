@@ -164,8 +164,8 @@ The entry point to provide a new *Communication Library* is
 ``topology_library_10``.
 
 To extend `topology` to support your communication library you must implement
-in your package a module with all your public functions and create a registry
-entry (see below).
+in your package a module with all your public functions and classes and create
+a registry entry (see below).
 
 It is recommended, but not required, that your package is called
 ``topology_lib_<library_name>``.
@@ -180,7 +180,11 @@ For example, in your module ``topology_lib_my.library``:
     def bar_function(enode, myarg1=None, myarg2=100):
        return {'ham': 200}
 
-    __all__ = ['foo_function', 'bar_function']
+    class FooClass(object):
+        def __init__(self, enode, myarg):
+            print(123)
+
+    __all__ = ['foo_function', 'bar_function', 'FooClass']
 
 Then specify in your `setup.py`:
 
@@ -197,15 +201,17 @@ to the ``enode`` like this:
 
 ::
 
-    >>> sw1.libs.my_foo_function(myarg1=275)
+    >>> sw1.libs.my.foo_function(myarg1=275)
     {'ham': 275}
+    >>> sw1.libs.my.FooClass("hi")
+    123
 
-Please note, all your functions are registered with the name of your
-communication library as prefix as your specified in the ``setup.py``.
+Please note, all your functions and classes are registered inside a namespace
+with the name of the communication library as you specified in the ``setup.py``
 
-Also, please note that all communication functions receive the *Engine Node* as
-first parameter, all other parameters are up to the function. The ``enode``
-argument can be used to store state or data for the library or to
+Also, please note that all communication functions and classes receive the
+*Engine Node* as first parameter, all other parameters are up to the function.
+The ``enode`` argument can be used to store state or data for the library or to
 trigger calls to other libraries or commands as part of the communication flow.
 
 It is recommended to check first the availability of any dependency shell

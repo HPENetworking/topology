@@ -51,7 +51,7 @@ def libraries(cache=True):
      reload of all communication libraries registered for the entry point.
     :rtype: dict
     :return: A dictionary associating the name of the communication library and
-     it functions:
+     it functions or classes:
 
      ::
 
