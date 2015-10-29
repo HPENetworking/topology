@@ -158,7 +158,7 @@ def interact(mgr):
 
     # Create and populate shell namespace
     ns = {
-        'topology': mgr.nml
+        'topology': mgr
     }
     for key, enode in mgr.nodes.items():
         ns[key] = enode

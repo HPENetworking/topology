@@ -53,7 +53,7 @@ class BasePlatform(object):
 
     @abstractmethod
     def __init__(self, timestamp, nmlmanager):
-        """ """
+        pass
 
     @abstractmethod
     def pre_build(self):
