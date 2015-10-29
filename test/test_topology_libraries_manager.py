@@ -36,4 +36,4 @@ def test_libraries():
     enode = DebugNode('myenode')
 
     with pytest.raises(AssertionError):
-        enode.libs.assert_batch('my command')
+        enode.libs.common.assert_batch('my command')

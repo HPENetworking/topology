@@ -27,9 +27,10 @@ from __future__ import print_function, division
 
 import logging
 from functools import partial
-from inspect import isfunction
+from inspect import isfunction, isclass
 from traceback import format_exc
 from collections import OrderedDict
+from argparse import Namespace
 
 from pkg_resources import iter_entry_points
 
@@ -95,8 +96,10 @@ def libraries(cache=True):
         # Validate functions
         invalid = [
             func for func in library.__all__
-            if not isfunction(getattr(library, func, None))
+            if not isfunction(getattr(library, func, None)) and
+            not isclass(getattr(library, func, None))
         ]
+
         if invalid:
             log.error(
                 'Ignoring library "{}". '
@@ -126,20 +129,27 @@ class LibsProxy(object):
     """
     def __init__(self, enode):
         self._enode = enode
-        self._functions = OrderedDict()
+        self._libraries = OrderedDict()
 
-        for libname, functions in libraries().items():
-            for func in functions:
-                key = '{}_{}'.format(libname, func.__name__)
-                self._functions[key] = partial(func, enode)
+        for libname, callables in libraries().items():
+            # We create a dictionary using dictionary comprehension syntax
+            # that will map for each callable in the library the name of
+            # such callable with a new partial function that will bind the
+            # first argument to the enode. Then, we expand that dictionary and
+            # feed it as kwargs to the Namespace class, that will allow us
+            # to use the dictionary keys as instance attributes.
+            # Very nice Python magic indeed.
+            self._libraries[libname] = Namespace(**{
+                c.__name__: partial(c, enode) for c in callables
+            })
 
     def __getattr__(self, name):
-        if name not in self._functions:
+        if name not in self._libraries:
             raise Exception(
                 'Unknown communication library function {}. '
                 'Are you missing a dependency?'.format(name)
             )
-        return self._functions[name]
+        return self._libraries[name]
 
 
 __all__ = ['LibsProxy', 'libraries']
