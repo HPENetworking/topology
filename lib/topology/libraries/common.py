@@ -15,16 +15,16 @@
 # under the License.
 
 """
-Assert built-in helper communication library implementation.
+Common helpers communication library implementation.
 
-This library defines some assert helpers as a communication library.
+This library defines some helpers as a communication library.
 """
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 
-def batch(enode, commands, replace=None, shell=None):
+def assert_batch(enode, commands, replace=None, shell=None):
     """
     Execute a batch of return-less template commands in the enode shell.
 
@@ -54,5 +54,5 @@ def batch(enode, commands, replace=None, shell=None):
 
 
 __all__ = [
-    'batch'
+    'assert_batch'
 ]
