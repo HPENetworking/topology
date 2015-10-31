@@ -46,6 +46,7 @@ from socket import AF_UNIX, SOCK_STREAM, socket, gethostname
 
 import yaml
 
+config_timeout = 100
 swns_netns = '/var/run/netns/swns'
 hwdesc_dir = '/etc/openswitch/hwdesc'
 db_sock = '/var/run/openvswitch/db.sock'
@@ -114,31 +115,61 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
 
     logging.info('Waiting for swns netns...')
-    while not exists(swns_netns):
-        sleep(0.1)
+    for i in range(0, config_timeout):
+        if not exists(swns_netns):
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for swns.')
 
     logging.info('Waiting for hwdesc directory...')
-    while not exists(hwdesc_dir):
-        sleep(0.1)
+    for i in range(0, config_timeout):
+        if not exists(hwdesc_dir):
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for hwdesc directory.')
 
     logging.info('Creating interfaces...')
     create_interfaces()
 
     logging.info('Waiting for DB socket...')
-    while not exists(db_sock):
-        sleep(0.1)
+    for i in range(0, config_timeout):
+        if not exists(db_sock):
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for DB socket.')
 
     logging.info('Waiting for cur_cfg...')
-    while not cur_cfg_is_set():
-        sleep(0.1)
+    for i in range(0, config_timeout):
+        if not cur_cfg_is_set():
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for cur_cfg.')
 
     logging.info('Waiting for switchd pid...')
-    while not exists(switchd_pid):
-        sleep(0.1)
+    for i in range(0, config_timeout):
+        if not exists(switchd_pid):
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for switchd pid.')
 
     logging.info('Wait for final hostname...')
-    while gethostname() != 'switch':
-        sleep(0.1)
+    for i in range(0, config_timeout):
+        if gethostname() != 'switch':
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for final hostname.')
 
 if __name__ == '__main__':
     main()
