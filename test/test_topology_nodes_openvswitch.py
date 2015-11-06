@@ -22,7 +22,7 @@ Test suite for module topology_docker.platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pynml import Node, BidirectionalPort
+from pynml import Node, BidirectionalPort, BidirectionalLink
 
 from topology_docker.platform import DockerPlatform
 
@@ -68,9 +68,14 @@ def test_ping_openvswitch():
     platform.add_biport(h1, h1p1)
     platform.add_biport(h2, h2p1)
 
-    platform.add_bilink((s1, s1p1), (h1, h1p1), None)
-    platform.add_bilink((s1, s1p2), (s2, s2p1), None)
-    platform.add_bilink((s2, s2p2), (h2, h2p1), None)
+    link1 = BidirectionalLink(identifier='link1')
+    platform.add_bilink((s1, s1p1), (h1, h1p1), link1)
+
+    link2 = BidirectionalLink(identifier='link2')
+    platform.add_bilink((s1, s1p2), (s2, s2p1), link2)
+
+    link3 = BidirectionalLink(identifier='link3')
+    platform.add_bilink((s2, s2p2), (h2, h2p1), link3)
 
     platform.post_build()
 

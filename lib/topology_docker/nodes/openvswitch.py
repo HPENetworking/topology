@@ -67,7 +67,7 @@ class OpenvSwitchNode(DockerNode):
 
         # Add bash shell
         self._shells['sh'] = DockerShell(
-            self.identifier, 'sh', '/ .*#'
+            self.container_id, 'sh', '/ .*#'
         )
 
     def notify_post_build(self):
@@ -76,12 +76,6 @@ class OpenvSwitchNode(DockerNode):
         reached.
         """
         super(OpenvSwitchNode, self).notify_post_build()
-
-    def start(self):
-        """
-        Start the docker node.
-        """
-        super(OpenvSwitchNode, self).start()
 
         # FIXME: this is a workaround
         self("sed -i -e 's/port = 9001/port = 127.0.0.1:9001/g' "
