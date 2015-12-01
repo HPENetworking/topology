@@ -60,9 +60,6 @@ def test_controller_link(topology):
     assert hs2 is not None
     assert sw1 is not None
 
-    # Wait for supervisor
-    time.sleep(10)
-
     # ---- OVS Setup ----
 
     # Create a bridge

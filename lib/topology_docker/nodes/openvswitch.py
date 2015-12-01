@@ -26,6 +26,9 @@ Check https://hub.docker.com/r/socketplane/openvswitch/ for docker container.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from os import environ
+from time import sleep
+
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
 
@@ -57,6 +60,10 @@ class OpenvSwitchNode(DockerNode):
             command='sh', binds=None,
             **kwargs):
 
+        # Fetch image from environment but only if default image is being used
+        if image == 'socketplane/openvswitch:latest':
+            image = environ.get('OPENVSWITCH_IMAGE', image)
+
         # Add binded directories
         if binds is None:
             binds = []
@@ -82,5 +89,21 @@ class OpenvSwitchNode(DockerNode):
              "-e 's/nodaemon=true/nodaemon=false/g' "
              "/etc/supervisord.conf")
         self('supervisord')
+
+        # Wait for the configure-ovs script to exit by polling supervisorctl
+        config_timeout = 100
+
+        i = 0
+        while i < config_timeout:
+            config_status = self('supervisorctl status configure-ovs')
+
+            if 'EXITED' not in config_status:
+                sleep(0.1)
+            else:
+                break
+            i += 1
+
+        if i == config_timeout:
+            raise RuntimeError("configure-ovs did not exit!")
 
 __all__ = ['OpenvSwitchNode']

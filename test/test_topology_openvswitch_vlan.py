@@ -1,0 +1,119 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2015 Hewlett Packard Enterprise Development LP <asicapi@hp.com>
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+"""
+VLAN test for the P4 switch node. Tests the SAI API and switch behavior
+by setting up two VLANS in a small network.
+"""
+
+from __future__ import unicode_literals, absolute_import
+from __future__ import print_function, division
+
+import time
+
+TOPOLOGY = """
+
+#        +-------+         +-------+
+#        |  sw1  |---------|  sw2  |
+#        +-------+         +-------+
+#        |    |               |    |
+# +-------+ +-------+   +-------+ +-------+
+# |  hs1  | |  hs2  |   |  hs3  | |  hs4  |
+# +-------+ +-------+   +-------+ +-------+
+
+# Nodes
+[type=openvswitch name="Switch 1"] sw1
+[type=openvswitch name="Switch 2"] sw2
+[type=host name="Host 1"] hs1
+[type=host name="Host 2"] hs2
+[type=host name="Host 1"] hs3
+[type=host name="Host 2"] hs4
+
+# Ports
+[up=True] sw1:1
+[up=True] sw1:2
+[up=True] sw1:3
+[up=True] sw2:1
+[up=True] sw2:2
+[up=True] sw2:3
+[ipv4="192.168.0.1/24" up=True] hs1:1
+[ipv4="192.168.0.2/24" up=True] hs2:1
+[ipv4="192.168.0.3/24" up=True] hs3:1
+[ipv4="192.168.0.4/24" up=True] hs4:1
+
+# Links
+sw1:1 -- hs1:1
+sw1:2 -- hs2:1
+sw2:1 -- hs3:1
+sw2:2 -- hs4:1
+sw1:3 -- sw2:3
+"""
+
+
+def test_ping(topology):
+
+    hs1 = topology.get('hs1')
+    hs2 = topology.get('hs2')
+    hs3 = topology.get('hs3')
+    hs4 = topology.get('hs4')
+    sw1 = topology.get('sw1')
+    sw2 = topology.get('sw2')
+
+    assert hs1 is not None
+    assert hs2 is not None
+    assert hs3 is not None
+    assert hs4 is not None
+    assert sw1 is not None
+    assert sw2 is not None
+
+    # ---- OVS Setup ----
+    # Create a bridge
+    sw1('ovs-vsctl add-br br0')
+    sw2('ovs-vsctl add-br br0')
+
+    # Bring up ovs interface
+    sw1('ip link set br0 up')
+    sw2('ip link set br0 up')
+
+    # Add the front ports
+    sw1('ovs-vsctl add-port br0 1 tag=100')
+    sw1('ovs-vsctl add-port br0 2 tag=200')
+    sw1('ovs-vsctl add-port br0 3')
+
+    sw2('ovs-vsctl add-port br0 1 tag=100')
+    sw2('ovs-vsctl add-port br0 2 tag=200')
+    sw2('ovs-vsctl add-port br0 3')
+
+    # Wait for OVS
+    time.sleep(1)
+
+    # Ping between the hosts
+    # Should work, hosts are in same VLAN
+    ping_hs1_to_hs3 = hs1('ping -c 1 192.168.0.3')
+    assert '1 packets transmitted, 1 received' in ping_hs1_to_hs3
+
+    # Should not work, different VLANs
+    ping_hs1_to_hs4 = hs1('ping -c 1 192.168.0.4')
+    assert '1 packets transmitted, 0 received' in ping_hs1_to_hs4
+
+    # Should work, hosts are in same VLAN
+    ping_hs2_to_hs4 = hs2('ping -c 1 192.168.0.4')
+    assert '1 packets transmitted, 1 received' in ping_hs2_to_hs4
+
+    # Should not work, different VLANs
+    ping_hs2_to_hs3 = hs2('ping -c 1 192.168.0.3')
+    assert '1 packets transmitted, 0 received' in ping_hs2_to_hs3

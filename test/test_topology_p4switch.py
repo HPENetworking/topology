@@ -16,7 +16,7 @@
 # under the License.
 
 """
-Test for basic switching behaviour
+Test for basic switching behavior in the P4 switch node
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -36,10 +36,14 @@ TOPOLOGY = """
 [type=host name="Host 1"] hs1
 [type=host name="Host 2"] hs2
 
+# Ports
+[ipv4="192.168.0.1/24" up=True] hs1:1
+[ipv4="192.168.0.2/24" up=True] hs2:1
+
 # Links
-hs1:1 -- sw1:3
-sw1:4 -- sw2:3
-sw2:4 -- hs2:1
+hs1:1 -- sw1:1
+sw1:2 -- sw2:1
+sw2:2 -- hs2:1
 """
 
 
@@ -55,11 +59,10 @@ def test_ping(topology):
     assert sw1 is not None
     assert sw2 is not None
 
-    hs1('ip link set dev 1 up')
-    hs1('ip addr add 10.0.30.1/24 dev 1')
-    hs2('ip link set dev 1 up')
-
     # Test ping
-    ping_result = hs2('ping -c 1 10.0.30.1')
+    ping_result = hs1('ping -c 1 192.168.0.2')
+    print(ping_result)
+    assert '1 packets transmitted, 1 received' in ping_result
+    ping_result = hs2('ping -c 1 192.168.0.1')
     print(ping_result)
     assert '1 packets transmitted, 1 received' in ping_result

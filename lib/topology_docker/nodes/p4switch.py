@@ -57,7 +57,7 @@ class P4SwitchNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='p4dockerswitch:latest', command='/bin/bash', binds=None,
+            image='p4ofdockerswitch:latest', command='/bin/bash', binds=None,
             **kwargs):
 
         # Fetch image from environment but only if default image is being used
@@ -88,6 +88,47 @@ class P4SwitchNode(DockerNode):
         # Add bash shell
         self._shells['bash'] = DockerShell(
             self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
+        )
+
+        # Add SAI shell (https://github.com/p4lang/switchsai)
+        self._shells['sai'] = DockerShell(
+            self.container_id,
+            'sh -c "TERM=dumb bash"',
+            'root@.*:.*# ',
+            '/p4factory/targets/switch/tests/pd_thrift/switch_sai_rpc-remote '
+            '-h localhost:9092 '
+        )
+
+        # Add switchapi shell (https://github.com/p4lang/switchapi)
+        self._shells['api'] = DockerShell(
+            self.container_id,
+            'sh -c "TERM=dumb bash"',
+            'root@.*:.*# ',
+            '/p4factory/targets/switch/tests/pd_thrift/switch_api_rpc-remote '
+            '-h localhost:9091 '
+        )
+
+        # Add PD shells
+        self._shells['pd_conn_mgr'] = DockerShell(
+            self.container_id,
+            'sh -c "TERM=dumb bash"',
+            'root@.*:.*# ',
+            '/p4factory/targets/switch/tests/pd_thrift/conn_mgr-remote '
+            '-h localhost:9090 '
+        )
+        self._shells['pd_mc'] = DockerShell(
+            self.container_id,
+            'sh -c "TERM=dumb bash"',
+            'root@.*:.*# ',
+            '/p4factory/targets/switch/tests/pd_thrift/mc-remote '
+            '-h localhost:9090 '
+        )
+        self._shells['pd_p4'] = DockerShell(
+            self.container_id,
+            'sh -c "TERM=dumb bash"',
+            'root@.*:.*# ',
+            '/p4factory/targets/switch/tests/pd_thrift/dc-remote '
+            '-h localhost:9090 '
         )
 
     def notify_post_build(self):
@@ -123,8 +164,6 @@ class P4SwitchNode(DockerNode):
 
         args = [
             '/p4factory/targets/switch/behavioral-model',
-            '--pd-server',
-            '127.0.0.1:22000',
             '--no-veth',
             '--no-pcap'
         ]

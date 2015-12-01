@@ -24,7 +24,9 @@ Custom Topology Docker Node for OpenSwitch.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
+from shutil import copy
+from os import environ, path
+from time import sleep
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -85,6 +87,11 @@ class RyuControllerNode(DockerNode):
         # Save location of the shared dir in host
         self.shared_dir = shared_dir
 
+        # Copy the ryu app into the container
+        self.app_name = self.metadata.get('app', None)
+        if self.app_name is not None:
+            copy(self.app_name, self.shared_dir)
+
         # Add bash shell
         self._shells['bash'] = DockerShell(
             self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
@@ -113,21 +120,31 @@ class RyuControllerNode(DockerNode):
         for portlbl in self.ports:
             self.port_state(portlbl, True)
 
+        # Get the app file (or default)
+        if self.app_name is not None:
+            app_path = '/tmp/' + path.basename(self.app_name)
+        else:
+            app_path = '/root/ryu-master/ryu/app/simple_switch.py'
+
         # run ryu app using ryu-manager
-        args = [
-            'PYTHONPATH=.',
-            '/root/ryu-master/bin/ryu-manager',
-            '/root/ryu-master/ryu/app/simple_switch.py',
-            '--verbose'
-        ]
+        self('RYU_APP={} supervisord'.format(app_path))
 
-        # redirect stdout & stderr to log file
-        # run in background
-        args.extend(['&>/tmp/ryu.log', '&'])
+        # Wait for ryu-manager to start
+        config_timeout = 100
+        i = 0
+        while i < config_timeout:
+            config_status = self('supervisorctl status ryu-manager')
 
-        # run command
-        # TODO: check for posible error code
-        self(' '.join(args))
+            if 'RUNNING' not in config_status:
+                sleep(0.1)
+            else:
+                break
+            i += 1
+
+        if i == config_timeout:
+            raise RuntimeError(
+                'ryu-manager did not reach RUNNING state on supervisor!'
+            )
 
 
 __all__ = ['RyuControllerNode']
