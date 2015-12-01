@@ -75,9 +75,6 @@ def test_controller_link(topology):
     assert hs2 is not None
     assert sw1 is not None
 
-    # Wait for supervisor
-    time.sleep(10)
-
     # ---- OVS Setup ----
 
     # Create a bridge
@@ -108,7 +105,7 @@ def test_controller_link(topology):
     sw1('ovs-vsctl set-controller br0 tcp:10.0.10.1:6633')
 
     # Wait for OVS to connect to controller
-    time.sleep(10)
+    time.sleep(5)
 
     # Assert that switch is connected to Ryu
     vsctl_sw1_show = sw1('ovs-vsctl show')

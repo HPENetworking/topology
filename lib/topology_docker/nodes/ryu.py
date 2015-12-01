@@ -116,35 +116,35 @@ class RyuControllerNode(DockerNode):
         #. Run ryu-manager
         """
 
-        # Bring up interfaces
-        for portlbl in self.ports:
-            self.port_state(portlbl, True)
+        # Ryu should be started by Topology
+        if self.metadata.get('autostart', True):
 
-        # Get the app file (or default)
-        if self.app_name is not None:
-            app_path = '/tmp/' + path.basename(self.app_name)
-        else:
-            app_path = '/root/ryu-master/ryu/app/simple_switch.py'
-
-        # run ryu app using ryu-manager
-        self('RYU_APP={} supervisord'.format(app_path))
-
-        # Wait for ryu-manager to start
-        config_timeout = 100
-        i = 0
-        while i < config_timeout:
-            config_status = self('supervisorctl status ryu-manager')
-
-            if 'RUNNING' not in config_status:
-                sleep(0.1)
+            # Get the app file (or default)
+            if self.app_name is not None:
+                app_path = '/tmp/' + path.basename(self.app_name)
             else:
-                break
-            i += 1
+                app_path = '/root/ryu-master/ryu/app/simple_switch.py'
 
-        if i == config_timeout:
-            raise RuntimeError(
-                'ryu-manager did not reach RUNNING state on supervisor!'
-            )
+            # run ryu app using ryu-manager
+            self('RYU_COMMAND="/root/ryu-master/bin/ryu-manager {}'
+                 ' --verbose" supervisord'.format(app_path))
+
+            # Wait for ryu-manager to start
+            config_timeout = 100
+            i = 0
+            while i < config_timeout:
+                config_status = self('supervisorctl status ryu-manager')
+
+                if 'RUNNING' not in config_status:
+                    sleep(0.1)
+                else:
+                    break
+                i += 1
+
+            if i == config_timeout:
+                raise RuntimeError(
+                    'ryu-manager did not reach RUNNING state on supervisor!'
+                )
 
 
 __all__ = ['RyuControllerNode']

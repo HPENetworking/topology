@@ -79,9 +79,6 @@ class P4SwitchNode(DockerNode):
             identifier, image=image, command=command, binds=binds, **kwargs
         )
 
-        # Get ip of SDN controller
-        self._ofip = kwargs.get('ofip', None)
-
         # Save location of the shared dir in host
         self.shared_dir = shared_dir
 
@@ -151,40 +148,43 @@ class P4SwitchNode(DockerNode):
         #. Run the switch program
         """
 
-        self(
-            'ip link add name veth250 type veth peer name veth251',
-            shell='bash'
-        )
-        self('ip link set dev veth250 up', shell='bash')
-        self('ip link set dev veth251 up', shell='bash')
+        if self.metadata.get('autostart', True):
 
-        # Bring up interfaces
-        for portlbl in self.ports:
-            self.port_state(portlbl, True)
+            self(
+                'ip link add name veth250 type veth peer name veth251',
+                shell='bash'
+            )
+            self('ip link set dev veth250 up', shell='bash')
+            self('ip link set dev veth251 up', shell='bash')
 
-        args = [
-            '/p4factory/targets/switch/behavioral-model',
-            '--no-veth',
-            '--no-pcap'
-        ]
+            # Bring up all interfaces
+            # FIXME: attach only interfaces brought up by the user
+            for portlbl in self.ports:
+                self.port_state(portlbl, True)
 
-        # set openflow controller IP if necessary
-        if self._ofip is not None:
-            args.extend(['--of-ip', self._ofip])
+            args = [
+                '/p4factory/targets/switch/behavioral-model',
+                '--no-veth',
+                '--no-pcap'
+            ]
 
-        # ifaces are ready in post_build
-        # start the switch program with options:
-        #  -i 1 -i 2 -i 3 -i 4 ...
-        for iface in self.ports.values():
-            args.extend(['-i', iface])
+            # set openflow controller IP if necessary
+            if self.metadata.get('ofip', None) is not None:
+                args.extend(['--of-ip', self._ofip])
 
-        # redirect stdout & stderr to log file
-        # run in background
-        args.extend(['&>/tmp/switch.log', '&'])
+            # ifaces are ready in post_build
+            # start the switch program with options:
+            #  -i 1 -i 2 -i 3 -i 4 ...
+            for iface in self.ports.values():
+                args.extend(['-i', iface])
 
-        # run command
-        # TODO: check for posible error code
-        self(' '.join(args))
+            # redirect stdout & stderr to log file
+            # run in background
+            args.extend(['&>/tmp/switch.log', '&'])
+
+            # run command
+            # TODO: check for posible error code
+            self(' '.join(args))
 
 
 __all__ = ['P4SwitchNode']
