@@ -16,6 +16,7 @@ The P4 switch makes available several shells for configuring the switch:
   You should be able to run commands as, for example:
 
   ::
+
     sw1('command arg1 arg2',shell="pd_p4")
 
   The help should be viewable when calling with no arguments. However, the auto-generated shells may have an issue with argument parsing. In case of issues print the help by calling the script directly:
@@ -91,17 +92,17 @@ The build process is as follows:
 
   - The switch uses the interfaces veth250 and veth251. One of them is the CPU port (undocummented). Create them and bring them up with:
 
-  ::
+    ::
   
-     ip link add name veth250 type veth peer name veth251
-     ip link set dev veth250 up
-     ip link set dev veth251 up
+       ip link add name veth250 type veth peer name veth251
+       ip link set dev veth250 up
+       ip link set dev veth251 up
 
   - The switch automatically looks for veth interfaces as front ports. To disable this feature and manually set the interfaces to use as front ports use the --no-veth option and pass a list of interfaces using the -i option:
 
-  ::
+    ::
   
-     ./behavioral-model --no-veth -i eth1 -i eth2 -i eth3
+       ./behavioral-model --no-veth -i eth1 -i eth2 -i eth3
   
   - The switch automatically creates pcap files for every port as log files. To disable them use the `--no-pcap` option.
   

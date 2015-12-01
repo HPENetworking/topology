@@ -28,6 +28,7 @@ For example, you may bring up a bridge with:
 Interfaces should be up before the call to add-port. You can create them and bring them up manually or using the topology definition:
 
 ::
+
    [up=True] sw1:1
    [up=True] sw1:2
 
@@ -35,9 +36,9 @@ Interfaces should be up before the call to add-port. You can create them and bri
 Using the Ryu Controller
 ------------------------
 
-The Ryu controller is made available as a Topology node. The implementation is based on `osrg's ryu Dockerfiles <https://github.com/osrg/dockerfiles>`_ available at:
+The Ryu controller is made available as a Topology node. The implementation is based on `osrg's ryu Dockerfiles <https://github.com/osrg/dockerfiles>`_.
 
-Ryu supports applications, which are written in Python as described in the `Ryu documentation <http://ryu.readthedocs.org/en/latest/>`_:
+Ryu supports applications, which are written in Python as described in the `Ryu documentation <http://ryu.readthedocs.org/en/latest/>`_.
 
 To start a Ryu node declare it in your topology as:
 
@@ -48,6 +49,7 @@ To start a Ryu node declare it in your topology as:
 The app parameter is the path to a python Ryu application. The sample simple_switch application is run by default. Use an absolute path here, preferably with a base path set by an environment variable for portability. Your application will be run as:
 
 ::
+
    PYTHONPATH=. ryu-manager my-app.py --verbose
 
 ryu-manager will listen for connections in every available interface. The stdout log is accesible in the container at /tmp or in your host machine at /tmp/topology_<NODE_NAME>_<NODE_ID>.
@@ -55,21 +57,25 @@ ryu-manager will listen for connections in every available interface. The stdout
 You may include any specific ryu-manager options by killing the process with:
 
 ::
+
    switch('supervisorctl stop ryu-manager')
 
 and then manually running it, but be sure to send it to the background:
 
 ::
+
    switch('PYTHONPATH=. ryu-manager my-app.py --verbose &>/tmp/ryu.log &')
 
 You may also pass your own RYU_COMMAND environment variable to supervisor and re-run the daemon:
 
 ::
+
    switch('RYU_COMMAND="/path/to/ryu-manager /path/to/my-app.py --verbose" supervisord')
 
 You may have to remove the supervisor sock file with:
 
 ::
+
    switch('unlink /var/run/supervisor.sock')
 
 Once the controller instance is running, you should be able to establish a TCP connection from any reachable switch. Ryu will listen at all interfaces by default. For OVS:
@@ -98,15 +104,13 @@ Once the controller instance is running, you should be able to establish a TCP c
    vsctl_sw1_show = sw1('ovs-vsctl show')
    assert 'is_connected: true' in vsctl_sw1_show
 
-You should also be able to check the 
-
 
 Debugging OpenvSwitch and Ryu
 -----------------------------
 Ryu and Openvswitch are both started by supervisor.
 
 - If you have access to the running container, supervisorctl allows you to check the status and logs of the ryu, ovs-switchd and ovsdb-server processes.
-- If the Topology startup fails, stdout and stderr logs for every supervisor process are kept in the container at the /tmp folder, which is shared with your host machine at /tmp/topology_<NODE_NAME>_<NODE_ID>, so that you are able to check those logs afterwards.
+- If the Topology startup fails, stdout and stderr logs for every supervisor process are kept in the container at the /tmp folder, which is shared with your host machine at `/tmp/topology_<NODE_NAME>_<NODE_ID>`, so that you are able to check those logs afterwards.
 - Check the supervisord.conf file for details on how the services are being started.
 
 
@@ -135,4 +139,4 @@ Then simply build the Docker image with:
    cd version_folder
    docker build -t openvswitch:latest .
 
-This creates an OVS docker image with the required capabilities. The image auto starts supervisord with nodaemon=true. This is undesirable in topology since it blocks sdin, and should be disabled in the supervisord.conf file.
+This creates an OVS docker image with the required capabilities. The image auto starts supervisord with `nodaemon=true`. This is undesirable in topology since it blocks sdtin, and should be disabled in the `supervisord.conf` file.
