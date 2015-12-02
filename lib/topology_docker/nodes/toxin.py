@@ -59,12 +59,13 @@ class ToxinNode(DockerNode):
             binds = []
 
         super(ToxinNode, self).__init__(
-            identifier, image=image, command=command, binds=binds, **kwargs
+            identifier, image=image, command=command,
+            binds=binds, network_mode='bridge', **kwargs
         )
 
         # Add bash shell
         self._shells['bash'] = DockerShell(
-            self.container_id, 'bash', 'root@.*/#'
+            self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
         )
         self._shells['txn-shell'] = DockerShell(
             self.container_id, 'txn-shell', '>>>'
@@ -80,12 +81,35 @@ class ToxinNode(DockerNode):
         for portlbl in self.ports:
             self.port_state(portlbl, True)
 
-        from subprocess import Popen
+        from subprocess import Popen, check_call
         from shlex import split as shsplit
         Popen(shsplit(
             'docker exec {} txnd'.format(
                 self.container_id
             )
         ))
+
+        docker0 = self._client.inspect_container(
+            self.container_id
+        )['NetworkSettings']['Gateway']
+
+        docker0_list = docker0.split('.')
+        gw = '{}.{}.0.0'.format(docker0_list[0], docker0_list[1])
+
+        commands = """\
+            route del default
+            route add -net {gw} netmask 255.255.0.0 reject
+            route add -net {docker0} netmask 255.255.255.255 dev eth0\
+        """.format(**locals())
+
+        for command in commands.splitlines():
+            check_call(
+                shsplit
+                (
+                    'docker exec {self.container_id} {command}'
+                    .format(**locals())
+                )
+            )
+
 
 __all__ = ['ToxinNode']
