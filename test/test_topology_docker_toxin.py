@@ -19,21 +19,19 @@
 OpenSwitch Test for simple static routes between nodes.
 """
 
-
 TOPOLOGY = """
-# +-------+     +-------+
-# |       |     |       |
-# |  hs1  <----->  hs2  |
-# |       |     |       |
-# +-------+     +-------+
+# +------+     +-------+
+# |      |     |       |
+# | txn1 <----->  hs1  |
+# |      |     |       |
+# +------+     +-------+
 
 # Nodes
-[type=toxin name="Host 1"] hs1
-[type=host name="Host 2"] hs2
+[type=toxin name="Toxin"] txn1
+[type=host name="Host"] hs1
 
 # Links
-hs1:1 -- hs2:1
-
+txn1:1 -- hs1:1
 """
 
 
@@ -41,22 +39,22 @@ def test_toxin(topology):
     """
     Set static routes and test a ping.
     """
+    txn1 = topology.get('txn1')
     hs1 = topology.get('hs1')
-    hs2 = topology.get('hs2')
 
+    assert txn1 is not None
     assert hs1 is not None
-    assert hs2 is not None
 
     # Setup static routes
-    hs2('ifconfig 1 up')
+    hs1('ifconfig 1 up')
 
-    hs1('ports = [1]', shell='txn-shell')
-    hs1('g = GenerationParams()', shell='txn-shell')
-    hs1('g.iterations = 250', shell='txn-shell')
-    hs1('g.add_packet("DEADBEEFCAFECAFE", 10)', shell='txn-shell')
-    hs1('config(ports, g)', shell='txn-shell')
-    hs1('start(ports)', shell='txn-shell')
+    txn1('ports = [1]')
+    txn1('g = GenerationParams()')
+    txn1('g.iterations = 250')
+    txn1('g.add_packet("DEADBEEFCAFECAFE", 10)')
+    txn1('config(ports, g)')
+    txn1('start(ports)')
 
-    result = hs2('ifconfig 1')
+    result = hs1('ifconfig 1')
 
     assert 'dropped:2500' in result

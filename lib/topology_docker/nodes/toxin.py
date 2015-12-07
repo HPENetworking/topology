@@ -17,7 +17,6 @@
 
 """
 Custom Topology Docker Node for Toxin.
-
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -31,44 +30,27 @@ class ToxinNode(DockerNode):
     """
     Custom engine node for the Topology docker platform engine.
 
-    This custom node loads an OpenvSwitch image and has busybox as console.
+    This custom node loads an Toxin image.
 
     :param str identifier: The unique identifier of the node.
     :param str image: The image to run on this node.
-    :param str command: The command to run when the container is brought up.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
     """
 
     def __init__(
-            self, identifier,
-            image='toxin:latest',
-            command='sh', binds=None,
-            **kwargs):
-
-        # Add binded directories
-        if binds is None:
-            binds = []
+            self, identifier, image='toxin:latest', **kwargs):
 
         super(ToxinNode, self).__init__(
-            identifier, image=image, command=command,
-            binds=binds, network_mode='bridge', **kwargs
+            identifier, image=image, network_mode='bridge', **kwargs
+        )
+
+        # Add txn shell (default shell)
+        self._shells['txn-shell'] = DockerShell(
+            self.container_id, 'txn-shell', '>>>'
         )
 
         # Add bash shell
         self._shells['bash'] = DockerShell(
             self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
-        )
-        self._shells['txn-shell'] = DockerShell(
-            self.container_id, 'txn-shell', '>>>'
         )
 
     def notify_post_build(self):
@@ -78,31 +60,29 @@ class ToxinNode(DockerNode):
         """
         super(ToxinNode, self).notify_post_build()
 
+        # Bring up all interfaces
         for portlbl in self.ports:
             self.port_state(portlbl, True)
 
-        from subprocess import Popen, check_call
-        from shlex import split as shsplit
-        Popen(shsplit(
-            'docker exec {} txnd'.format(
-                self.container_id
-            )
-        ))
-
+        # Get bridge information
         docker0 = self._client.inspect_container(
             self.container_id
         )['NetworkSettings']['Gateway']
-
         docker0_list = docker0.split('.')
-        gw = '{}.{}.0.0'.format(docker0_list[0], docker0_list[1])
+        obm_subnet = '{}.{}.0.0'.format(docker0_list[0], docker0_list[1])
 
-        commands = """\
-            route del default
-            route add -net {gw} netmask 255.255.0.0 reject
-            route add -net {docker0} netmask 255.255.255.255 dev eth0\
-        """.format(**locals())
+        # Firewall bridge interface to host, to avoid routing through it
+        commands = [
+            'route del default',
+            'route add -net {} netmask 255.255.0.0 reject'.format(obm_subnet),
+            'route add -net {} netmask '
+            '255.255.255.255 dev eth0'.format(docker0)
+        ]
 
-        for command in commands.splitlines():
+        from subprocess import Popen, check_call
+        from shlex import split as shsplit
+
+        for command in commands:
             check_call(
                 shsplit
                 (
@@ -110,6 +90,13 @@ class ToxinNode(DockerNode):
                     .format(**locals())
                 )
             )
+
+        # Start Toxin daemon
+        Popen(shsplit(
+            'docker exec {} txnd'.format(
+                self.container_id
+            )
+        ))
 
 
 __all__ = ['ToxinNode']
