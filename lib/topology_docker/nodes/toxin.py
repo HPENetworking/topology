@@ -22,6 +22,9 @@ Custom Topology Docker Node for Toxin.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from shlex import split as shsplit
+from subprocess import Popen, check_call
+
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
 
@@ -53,6 +56,9 @@ class ToxinNode(DockerNode):
             self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
         )
 
+        # Toxin daemon process
+        self._txnd = None
+
     def notify_post_build(self):
         """
         Get notified that the post build stage of the topology build was
@@ -75,27 +81,20 @@ class ToxinNode(DockerNode):
         commands = [
             'route del default',
             'route add -net {} netmask 255.255.0.0 reject'.format(obm_subnet),
-            'route add -net {} netmask '
-            '255.255.255.255 dev eth0'.format(docker0)
+            'route add -net {} netmask 255.255.255.255 dev eth0'.format(
+                docker0
+            )
         ]
 
-        from subprocess import Popen, check_call
-        from shlex import split as shsplit
-
         for command in commands:
-            check_call(
-                shsplit
-                (
-                    'docker exec {self.container_id} {command}'
-                    .format(**locals())
-                )
-            )
+            check_call(shsplit(
+                'docker exec {self.container_id} {command}'.format(**locals())
+            ))
 
         # Start Toxin daemon
-        Popen(shsplit(
-            'docker exec {} txnd'.format(
-                self.container_id
-            )
+        # FIXME: Write configuration file or specify interfaces to hook
+        self._txnd = Popen(shsplit(
+            'docker exec {} txnd'.format(self.container_id)
         ))
 
 
