@@ -43,7 +43,8 @@ class DockerNode(CommonNode):
     @abstractmethod
     def __init__(
             self, identifier,
-            image='ubuntu', command='bash', binds=None, **kwargs):
+            image='ubuntu', command='bash',
+            binds=None, network_mode='none', **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
 
@@ -56,7 +57,7 @@ class DockerNode(CommonNode):
             # Container is given access to all devices
             privileged=True,
             # Avoid connecting to host bridge, usually docker0
-            network_mode='none',
+            network_mode=network_mode,
             binds=binds
         )
 

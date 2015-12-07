@@ -96,7 +96,8 @@ setup(
         ],
         'topology_docker_node_10': [
             'host = topology_docker.nodes.host:HostNode',
-            'openswitch = topology_docker.nodes.openswitch:OpenSwitchNode'
+            'openswitch = topology_docker.nodes.openswitch:OpenSwitchNode',
+            'toxin = topology_docker.nodes.toxin:ToxinNode'
         ]
     }
 )
