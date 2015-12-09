@@ -57,7 +57,7 @@ class TopologyManager(object):
     - Using a basic Python dictionary to load the description of the topology.
       To use this option call the :meth:`load`.
     - Build a full NML topology using NML objects and relations and register
-      all the objects in the namespace using the enbbedded
+      all the objects in the namespace using the embedded
       :class:`pynml.manager.ExtendedNMLManager`, for example:
 
       ::
@@ -88,7 +88,7 @@ class TopologyManager(object):
         self._platform = None
         self._built = False
 
-    def load(self, dictmeta):
+    def load(self, dictmeta, inject=None):
         """
         Load a topology description in a dictionary format.
 
@@ -120,6 +120,8 @@ class TopologyManager(object):
         See also the module :mod:`topology.parser`.
 
         :param dict dictmeta: The dictionary to load the topology from.
+        :param dict inject: An attributes injection sub-dictionary as defined
+         by :func:`parse_attribute_injection`.
         """
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
@@ -128,6 +130,12 @@ class TopologyManager(object):
                 # Explicitly create node
                 attrs = deepcopy(nodes_spec['attributes'])
                 attrs['identifier'] = node_id
+
+                # Inject the run-specific attributes
+                if inject is not None and node_id in inject:
+                    for key, value in inject[node_id].items():
+                        attrs[key] = value
+
                 self.nml.create_node(**attrs)
 
         # Load ports
@@ -174,16 +182,22 @@ class TopologyManager(object):
             attrs = deepcopy(link_spec['attributes'])
             self.nml.create_bilink(*endpoints, **attrs)
 
-    def parse(self, txtmeta, load=True):
+    def parse(self, txtmeta, load=True, inject=None):
         """
         Parse a textual topology meta-description.
 
         For a description of the textual format see the module
         :mod:`topology.parser`.
+
+        :param str txtmeta: The textual meta-description of the topology.
+        :param bool load: If ``True`` (the default) call :meth:`load`
+         immediately after parse.
+        :param dict inject: An attributes injection sub-dictionary as defined
+         by :func:`parse_attribute_injection`.
         """
         data = parse_txtmeta(txtmeta)
         if load:
-            self.load(data)
+            self.load(data, inject=inject)
         return data
 
     def is_built(self):
@@ -191,7 +205,7 @@ class TopologyManager(object):
         Check if the current topology was built.
 
         :rtype: bool
-        :return: True if the topology was succesfully built.
+        :return: True if the topology was successfully built.
         """
         return self._built
 
