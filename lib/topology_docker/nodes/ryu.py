@@ -27,6 +27,8 @@ from __future__ import print_function, division
 from shutil import copy
 from os import environ, path
 from time import sleep
+from shlex import split as shsplit
+from subprocess import check_output, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -35,19 +37,19 @@ from topology_docker.utils import ensure_dir
 
 class RyuControllerNode(DockerNode):
     """
-    Custom engine node for the Topology docker platform engine.
+    Custom Ryu SDN controller node capable of running custom apps.
 
-    This custom node loads a Ryu SDN controller node.
+    This custom node loads a Ryu docker image. It takes and runs a custom
+    app by using ryu-manager.
 
     The default image is osrg/ryu from:
-    * https://hub.docker.com/r/osrg/ryu/
-    * https://github.com/osrg/dockerfiles/blob/master/ryu/Dockerfile
+    - https://hub.docker.com/r/osrg/ryu/
+    - https://github.com/osrg/dockerfiles/blob/master/ryu/Dockerfile
 
     :param str identifier: The unique identifier of the node.
     :param str image: The image to run on this node. The image can also be
-     setup using the environment variable ``P4SWITCH_IMAGE``. If present, it
+     setup using the environment variable ``RYU_IMAGE``. If present, it
      will take precedence to this argument in runtime.
-    :param str command: The command to run when the container is brought up.
     :param list binds: A list of directories endpoints to bind in container in
      the form:
 
@@ -62,11 +64,11 @@ class RyuControllerNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='ryuctrl:latest', command='/bin/bash', binds=None,
-            **kwargs):
+            type='ryu',
+            image='topology_ryu:latest', binds=None):
 
         # Fetch image from environment but only if default image is being used
-        if image == 'ryuctrl:latest':
+        if image == 'topology_ryu:latest':
             image = environ.get('RYU_IMAGE', image)
 
         # Determine shared directory
@@ -81,8 +83,11 @@ class RyuControllerNode(DockerNode):
         ])
 
         super(RyuControllerNode, self).__init__(
-            identifier, image=image, command=command, binds=binds, **kwargs
+            identifier, image=image, command='/bin/bash', binds=binds
         )
+
+        # Supervisor daemon
+        self._supervisord = None
 
         # Save location of the shared dir in host
         self.shared_dir = shared_dir
@@ -126,14 +131,22 @@ class RyuControllerNode(DockerNode):
                 app_path = '/root/ryu-master/ryu/app/simple_switch.py'
 
             # run ryu app using ryu-manager
-            self('RYU_COMMAND="/root/ryu-master/bin/ryu-manager {}'
-                 ' --verbose" supervisord'.format(app_path))
+            self._supervisord = Popen(shsplit(
+                'docker exec {} '
+                'sh -c "RYU_COMMAND=\'/root/ryu-master/bin/ryu-manager {} '
+                '--verbose\' supervisord"'.format(
+                    self.container_id,
+                    app_path)
+            ))
 
             # Wait for ryu-manager to start
             config_timeout = 100
             i = 0
             while i < config_timeout:
-                config_status = self('supervisorctl status ryu-manager')
+                config_status = check_output(shsplit(
+                    'docker exec {} supervisorctl status ryu-manager'.format(
+                        self.container_id)
+                ), universal_newlines=True)
 
                 if 'RUNNING' not in config_status:
                     sleep(0.1)
