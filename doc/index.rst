@@ -2,6 +2,8 @@
    :hidden:
 
    developer
+   openvswitch
+   p4switch
    topology_docker/topology_docker
 
 ===================================
