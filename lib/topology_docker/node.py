@@ -22,6 +22,8 @@ topology_docker base node module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from shlex import split as shsplit
+from subprocess import check_output
 from abc import ABCMeta, abstractmethod
 
 from docker import Client
@@ -121,7 +123,7 @@ class DockerNode(CommonNode):
         Pause the current node.
         """
         for portlbl in self.ports:
-            self.port_state(portlbl, False)
+            self.set_port_state(portlbl, False)
         self._client.pause(self.container_id)
 
     def unpause(self):
@@ -130,24 +132,32 @@ class DockerNode(CommonNode):
         """
         self._client.unpause(self.container_id)
         for portlbl in self.ports:
-            self.port_state(portlbl, True)
+            self.set_port_state(portlbl, True)
 
-    def port_state(self, portlbl, state):
+    def set_port_state(self, portlbl, state):
         """
         Set the given port label to the given state.
 
         :param str portlbl: The label of the port.
         :param bool state: True for up, False for down.
         """
-        # Given the fact that bash is the default command in the constructor,
-        # it is a good assumption that the node has a bash shell. Is not
-        # guaranteed, but if it is not the case, the node has the capability
-        # to override this function to provide the correct logic.
         iface = self.ports[portlbl]
-        self(
-            'ip link set dev {} {}'.format(iface, 'up' if state else 'down'),
-            shell='bash'
-        )
+        state = 'up' if state else 'down'
+
+        command = 'ip link set dev {iface} {state}'.format(**locals())
+        self._docker_exec(command)
+
+    def _docker_exec(self, command):
+        """
+        Execute a command inside the docker.
+
+        :param str command: The command to execute.
+        """
+        return check_output(shsplit(
+            'docker exec {container_id} {command}'.format(
+                container_id=self.container_id, command=command.strip()
+            )
+        ))
 
 
 __all__ = ['DockerNode']
