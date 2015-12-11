@@ -32,6 +32,7 @@ from . import __version__
 from .manager import TopologyManager
 from .interact import interact
 from .parser import find_topology_in_python
+from .injection import parse_attribute_injection
 
 
 log = logging.getLogger(__name__)
@@ -47,6 +48,12 @@ def main(args):
     :rtype: int
     """
     print('Starting Network Topology Framework v{}'.format(__version__))
+
+    # Parse attributes injection file
+    injected_attr = None
+    if args.inject is not None:
+        injection_spec = parse_attribute_injection(args.inject)
+        injected_attr = injection_spec.get(args.topology, None)
 
     # Create manager
     mgr = TopologyManager(args.platform)
@@ -64,10 +71,10 @@ def main(args):
             )
             return 1
 
-        mgr.parse(topology)
+        mgr.parse(topology, inject=injected_attr)
     else:
         with open(args.topology, 'r') as fd:
-            mgr.parse(fd.read())
+            mgr.parse(fd.read(), inject=injected_attr)
 
     print('Building topology, please wait...')
 

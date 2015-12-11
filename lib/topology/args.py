@@ -76,6 +76,13 @@ def validate_args(args):
         if not exists(args.nml_dir):
             makedirs(args.nml_dir)
 
+    # Verify inject file exists
+    if args.inject:
+        if not isfile(args.inject):
+            log.error('No such file : {}'.format(args.inject))
+            exit(1)
+        args.inject = abspath(args.inject)
+
     return args
 
 
@@ -138,6 +145,11 @@ def parse_args(argv=None):
         '--nml-dir',
         default=None,
         help='Directory to export topologies as NML XML'
+    )
+    parser.add_argument(
+        '--inject',
+        default=None,
+        help='Path to an attributes injection file'
     )
 
     parser.add_argument(
