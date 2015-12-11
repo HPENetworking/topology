@@ -66,11 +66,13 @@ class TopologyPlugin(object):
      feature is disabled.
     """
 
-    def __init__(self, platform, plot_dir, plot_format, nml_dir):
+    def __init__(
+            self, platform, plot_dir, plot_format, nml_dir, injected_attr):
         self.platform = platform
         self.plot_dir = plot_dir
         self.plot_format = plot_format
         self.nml_dir = nml_dir
+        self.injected_attr = injected_attr
 
     def pytest_report_header(self, config):
         """
@@ -137,13 +139,21 @@ def topology(request):
     # Autobuild topology if available.
     if hasattr(module, 'TOPOLOGY'):
 
+        # Get topology description
         topo = module.TOPOLOGY
+
+        # Get attributes to inject
+        suite_injected_attr = None
+        if plugin.injected_attr is not None:
+            suite_injected_attr = plugin.injected_attr.get(
+                abspath(module.__file__), None
+            )
 
         try:
             if isinstance(topo, dict):
-                topomgr.load(topo)
+                topomgr.load(topo, inject=suite_injected_attr)
             else:
-                topomgr.parse(topo)
+                topomgr.parse(topo, inject=suite_injected_attr)
             topomgr.build()
         except:
             fail(
@@ -227,6 +237,11 @@ def pytest_addoption(parser):
         default=None,
         help='Directory to export topologies as NML XML'
     )
+    group.addoption(
+        '--topology-inject',
+        default=None,
+        help='Path to an attributes injection file'
+    )
 
 
 def pytest_configure(config):
@@ -238,6 +253,7 @@ def pytest_configure(config):
     plot_format = config.getoption('--topology-plot-format')
     plot_dir = config.getoption('--topology-plot-dir')
     nml_dir = config.getoption('--topology-nml-dir')
+    injection_file = config.getoption('--topology-inject')
 
     # Determine plot directory and create it if required
     if plot_dir:
@@ -253,9 +269,15 @@ def pytest_configure(config):
         if not exists(nml_dir):
             makedirs(nml_dir)
 
+    # Parse attributes injection file
+    from ..injection import parse_attribute_injection
+    injected_attr = None
+    if injection_file is not None:
+        injected_attr = parse_attribute_injection(injection_file)
+
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(
-        platform, plot_dir, plot_format.lstrip('.'), nml_dir
+        platform, plot_dir, plot_format.lstrip('.'), nml_dir, injected_attr
     )
     config.pluginmanager.register(config._topology_plugin)
 
