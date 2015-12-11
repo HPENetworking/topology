@@ -65,10 +65,12 @@ class RyuControllerNode(DockerNode):
     def __init__(
             self, identifier,
             type='ryu',
-            image='topology_ryu:latest', binds=None):
+            image='hpe-networking/topology_ryu:latest',
+            registry='docker.hos.hpecorp.net',
+            binds=None):
 
         # Fetch image from environment but only if default image is being used
-        if image == 'topology_ryu:latest':
+        if image == 'hpe-networking/topology_ryu:latest':
             image = environ.get('RYU_IMAGE', image)
 
         # Determine shared directory
@@ -83,7 +85,8 @@ class RyuControllerNode(DockerNode):
         ])
 
         super(RyuControllerNode, self).__init__(
-            identifier, image=image, command='/bin/bash', binds=binds
+            identifier, image=image, registry=registry,
+            command='/bin/bash', binds=binds
         )
 
         # Supervisor daemon

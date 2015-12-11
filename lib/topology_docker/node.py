@@ -22,6 +22,8 @@ topology_docker base node module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+import logging
+from json import loads
 from shlex import split as shsplit
 from subprocess import check_output
 from abc import ABCMeta, abstractmethod
@@ -32,6 +34,9 @@ from six import add_metaclass
 from topology.platforms.base import CommonNode
 
 
+log = logging.getLogger(__name__)
+
+
 @add_metaclass(ABCMeta)
 class DockerNode(CommonNode):
     """
@@ -40,20 +45,26 @@ class DockerNode(CommonNode):
     :param str identifier: The unique identifier of the node.
     :param str image: The image to run on this node.
     :param str command: The command to run when the container is brought up.
+    :param list binds: List of directories to bind for this container.
+    :param str network_mode: Network mode for this container.
     """
 
     @abstractmethod
     def __init__(
             self, identifier,
-            image='ubuntu', command='bash',
+            image='ubuntu:latest', registry=None, command='bash',
             binds=None, network_mode='none', **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
 
         self._pid = None
         self._image = image
+        self._registry = registry
         self._command = command
         self._client = Client()
+
+        # Autopull docker image if necessary
+        self._autopull()
 
         self._host_config = self._client.create_host_config(
             # Container is given access to all devices
@@ -71,6 +82,56 @@ class DockerNode(CommonNode):
             tty=True,
             host_config=self._host_config
         )['Id']
+
+    def _autopull(self):
+        """
+        Autopulls the docker image of the node, if necessary.
+        """
+        # Search for image in available images
+        for tags in [img['RepoTags'] for img in self._client.images()]:
+            if self._image in tags:
+                return
+
+        # Determine image parts
+        registry = self._registry
+        image = self._image
+        tag = 'latest'
+
+        if ':' in image:
+            image, tag = image.split(':')
+
+        # Pull image
+        pull_uri = image
+        if registry:
+            pull_uri = '{}/{}'.format(registry, image)
+        pull_name = '{}:{}'.format(pull_uri, tag)
+
+        log.info('Trying to pull image {} ...'.format(pull_name))
+
+        last = ''
+        for line in self._client.pull(pull_uri, tag=tag, stream=True):
+            last = line
+        status = loads(last.decode('utf8'))
+
+        log.debug('Pulling result :: {}'.format(status))
+
+        if 'error' in status:
+            raise Exception(status['error'])
+
+        # Retag if required
+        if pull_name != self._image:
+            if not self._client.tag(pull_name, image, tag):
+                raise Exception(
+                    'Error when tagging image {} with tag {}:{}'.format(
+                        pull_name, image, tag
+                    )
+                )
+
+            log.info(
+                'Tagged image {} with tag {}:{}'.format(
+                    pull_name, image, tag
+                )
+            )
 
     def notify_add_biport(self, node, biport):
         """

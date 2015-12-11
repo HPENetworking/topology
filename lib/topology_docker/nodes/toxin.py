@@ -40,10 +40,15 @@ class ToxinNode(DockerNode):
     """
 
     def __init__(
-            self, identifier, image='toxin:latest', **kwargs):
+            self, identifier,
+            image='hpe-networking/toxin:latest',
+            registry='docker.hos.hpecorp.net',
+            **kwargs):
 
         super(ToxinNode, self).__init__(
-            identifier, image=image, network_mode='bridge', **kwargs
+            identifier,
+            image=image, registry=registry, network_mode='bridge',
+            **kwargs
         )
 
         # Add txn shell (default shell)
