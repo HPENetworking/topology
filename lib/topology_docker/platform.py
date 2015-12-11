@@ -239,7 +239,7 @@ class DockerPlatform(BasePlatform):
 
             # Get node for the owner of this port
             enode = self.nmlnode_node_map[port_spec['owner']]
-            enode.port_state(port_spec['label'], action)
+            enode.set_port_state(port_spec['label'], action)
 
     def relink(self, link_id):
         """

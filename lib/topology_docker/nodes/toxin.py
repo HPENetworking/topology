@@ -22,8 +22,8 @@ Custom Topology Docker Node for Toxin.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import Popen, check_call
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -68,7 +68,7 @@ class ToxinNode(DockerNode):
 
         # Bring up all interfaces
         for portlbl in self.ports:
-            self.port_state(portlbl, True)
+            self.set_port_state(portlbl, True)
 
         # Get bridge information
         docker0 = self._client.inspect_container(
@@ -87,9 +87,7 @@ class ToxinNode(DockerNode):
         ]
 
         for command in commands:
-            check_call(shsplit(
-                'docker exec {self.container_id} {command}'.format(**locals())
-            ))
+            self._docker_exec(command)
 
         # Start Toxin daemon
         # FIXME: Write configuration file or specify interfaces to hook

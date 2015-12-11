@@ -26,8 +26,6 @@ from __future__ import print_function, division
 
 from os import environ
 from os.path import isfile
-from subprocess import check_call
-from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -268,27 +266,22 @@ class OpenSwitchNode(DockerNode):
             with open(setup_script, 'w') as fd:
                 fd.write(SETUP_SCRIPT)
 
-        check_call(shsplit(
-            'docker exec {} python /tmp/openswitch_setup.py'.format(
-                self.container_id
-            )
-        ))
+        self._docker_exec('python /tmp/openswitch_setup.py')
 
-    def port_state(self, portlbl, state):
+    def set_port_state(self, portlbl, state):
         """
         Set the given port label to the given state.
 
-        See :meth:`DockerNode.port_state` for more information.
+        See :meth:`DockerNode.set_port_state` for more information.
         """
         iface = self.ports[portlbl]
+        state = 'up' if state else 'down'
 
-        not_in_netns = self('ls /sys/class/net/', shell='bash').split()
-        shell = 'bash' if iface in not_in_netns else 'bash_swns'
+        not_in_netns = self._docker_exec('ls /sys/class/net/').split()
+        prefix = '' if iface in not_in_netns else 'ip netns exec swns'
 
-        self(
-            'ip link set dev {} {}'.format(iface, 'up' if state else 'down'),
-            shell=shell
-        )
+        command = '{prefix} ip link set dev {iface} {state}'.format(**locals())
+        self._docker_exec(command)
 
 
 __all__ = ['OpenSwitchNode']
