@@ -26,7 +26,7 @@ from __future__ import print_function, division
 
 from os import environ
 from os.path import isfile
-
+from json import loads
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
@@ -81,21 +81,34 @@ def create_interfaces():
 
     create_cmd_tpl = 'ip tuntap add dev {hwport} mode tap'
     netns_cmd_tpl = 'ip link set {hwport} netns swns'
+    rename_int = 'ip link set {portlbl} name {hwport}'
+
+    # Save port mapping information
+    mapping_ports = {}
+
+    # Map the port with the labels
+    for portlbl in not_in_swns:
+        if portlbl != "lo":
+            port = hwports.pop(0)
+            mapping_ports[portlbl] = port
+            logging.info('  - Port {} moved to swns netns.'.format(port))
+            check_call(shsplit(rename_int.format(portlbl=portlbl,
+                hwport=port)))
+            check_call(shsplit(netns_cmd_tpl.format(hwport=port)))
+
+    # Writting mapping to file
+    mapping_ports_json = dumps(mapping_ports)
+    with open('/tmp/port_mapping.txt', 'w') as json_file:
+        json_file.write(mapping_ports_json)
 
     for hwport in hwports:
         if hwport in in_swns:
             logging.info('  - Port {} already present.'.format(hwport))
             continue
 
-        if hwport in not_in_swns:
-            logging.info('  - Port {} moved to swns netns.'.format(hwport))
-            check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
-            continue
-
         logging.info('  - Port {} created.'.format(hwport))
         check_call(shsplit(create_cmd_tpl.format(hwport=hwport)))
         check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
-
 
 def cur_cfg_is_set():
     global sock
@@ -253,6 +266,13 @@ class OpenSwitchNode(DockerNode):
         """
         super(OpenSwitchNode, self).notify_post_build()
         self._setup_system()
+        with open('{}/port_mapping.txt'.format(self.shared_dir), 'r') as f:
+            mappings = loads(f.read())
+
+        if hasattr(self, 'ports'):
+            self.ports.update(mappings)
+            return
+        self.ports = mappings
 
     def _setup_system(self):
         """
