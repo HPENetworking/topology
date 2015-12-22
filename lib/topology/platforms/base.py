@@ -175,7 +175,7 @@ class BasePlatform(object):
         """
         Unlink (break) a link specified in the topology.
 
-        :param str link_id: Link identifier to be recreated.
+        :param str link_id: Link identifier to be undone.
         """
 
 
@@ -226,6 +226,31 @@ class BaseNode(object):
          default (if any).
         """
 
+    @abstractmethod
+    def is_enabled(self):
+        """
+        Query if the device is enabled.
+
+        :rtype: bool
+        :return: True if the device is enabled, False otherwise.
+        """
+
+    @abstractmethod
+    def enable(self):
+        """
+        Enable this device.
+
+        An enabled device allows communication with.
+        """
+
+    @abstractmethod
+    def disable(self):
+        """
+        Disable this device.
+
+        A disabled device doesn't allow communication with.
+        """
+
 
 @add_metaclass(ABCMeta)
 class CommonNode(BaseNode):
@@ -250,6 +275,7 @@ class CommonNode(BaseNode):
     def __init__(self, identifier, **kwargs):
         super(CommonNode, self).__init__(identifier, **kwargs)
         self._shells = OrderedDict()
+        self._enabled = True
 
         # Add support for communication libraries
         self.libs = LibsProxy(self)
@@ -291,6 +317,37 @@ class CommonNode(BaseNode):
         See :meth:`BaseNode.available_shells` for more information.
         """
         return list(iterkeys(self._shells))
+
+    def is_enabled(self):
+        """
+        Implementation of the ``is_enabled`` interface.
+
+        This method will just return the internal value of the ``_enabled``
+        flag.
+
+        See :meth:`BaseNode.is_enabled` for more information.
+        """
+        return self._enabled
+
+    def enable(self):
+        """
+        Implementation of the ``enable`` interface.
+
+        This method will just set the value of the ``_enabled`` flag to True.
+
+        See :meth:`BaseNode.enable` for more information.
+        """
+        self._enabled = True
+
+    def disable(self):
+        """
+        Implementation of the ``disable`` interface.
+
+        This method will just set the value of the ``_enabled`` flag to False.
+
+        See :meth:`BaseNode.disable` for more information.
+        """
+        self._enabled = False
 
 
 __all__ = ['BasePlatform', 'BaseNode', 'CommonNode']
