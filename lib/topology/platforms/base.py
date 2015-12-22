@@ -25,8 +25,9 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from abc import ABCMeta, abstractmethod
+from datetime import datetime
 from collections import OrderedDict
+from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass, iterkeys
 
@@ -272,7 +273,9 @@ class CommonNode(BaseNode):
             )
 
         if not silent:
-            print('[{}].send_command({}) ::'.format(self.identifier, cmd))
+            print('{} [{}].send_command({}) ::'.format(
+                datetime.now().isoformat(), self.identifier, cmd
+            ))
 
         response = self._shells[shell](cmd)
 
