@@ -18,15 +18,14 @@
 """
 Custom P4 Switch Topology Docker Node.
 
-    http://openswitch.net/
+    http://p4.org/p4/an-open-source-p4-switch-with-sai-support/
 """
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import check_call, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -35,53 +34,30 @@ from topology_docker.utils import ensure_dir
 
 class P4SwitchNode(DockerNode):
     """
-    Barefoot's P4 switch node. Runs a configurable beavioral simulator.
+    Custom Barefoot P4 node for the Topology Docker platform engine.
 
     This custom node loads a P4 switch docker image built from the
     p4factory repository. The switch is configurable through switch-specific
     interfaces and the standard SAI interface (incomplete).
 
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node. The image can also be
-     setup using the environment variable ``P4SWITCH_IMAGE``. If present, it
-     will take precedence to this argument in runtime.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
             self, identifier,
-            type='p4switch',
             image='hpe-networking/p4dockerswitch:latest',
             registry='docker.hos.hpecorp.net',
-            binds=None):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'hpe-networking/p4dockerswitch:latest':
-            image = environ.get('P4SWITCH_IMAGE', image)
+            **kwargs):
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))
         ensure_dir(shared_dir)
 
         # Add binded directories
-        if binds is None:
-            binds = []
-        binds.extend([
-            '{}:/tmp'.format(shared_dir)
-        ])
+        binds = ['{}:/tmp'.format(shared_dir)]
 
         super(P4SwitchNode, self).__init__(
-            identifier, image=image, registry=registry,
-            command='/bin/bash', binds=binds
+            identifier, image=image, registry=registry, binds=binds, **kwargs
         )
 
         # Behavioral model daemon process
@@ -158,20 +134,11 @@ class P4SwitchNode(DockerNode):
 
         if self.metadata.get('autostart', True):
 
-            check_call(shsplit(
-                'docker exec {} '
+            self._docker_exec(
                 'ip link add name veth250 type veth peer name veth251'
-                .format(
-                    self.container_id)
-            ))
-            check_call(shsplit(
-                'docker exec {} ip link set dev veth250 up'.format(
-                    self.container_id)
-            ))
-            check_call(shsplit(
-                'docker exec {} ip link set dev veth251 up'.format(
-                    self.container_id)
-            ))
+            )
+            self._docker_exec('ip link set dev veth250 up')
+            self._docker_exec('ip link set dev veth251 up')
 
             # Bring up all interfaces
             # FIXME: attach only interfaces brought up by the user

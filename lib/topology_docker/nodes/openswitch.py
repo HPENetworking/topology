@@ -24,8 +24,6 @@ Custom Topology Docker Node for OpenSwitch.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
-from os.path import isfile
 from json import loads
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -88,18 +86,21 @@ def create_interfaces():
 
     # Map the port with the labels
     for portlbl in not_in_swns:
-        if portlbl != "lo":
-            port = hwports.pop(0)
-            mapping_ports[portlbl] = port
-            logging.info('  - Port {} moved to swns netns.'.format(port))
-            check_call(shsplit(rename_int.format(portlbl=portlbl,
-                hwport=port)))
-            check_call(shsplit(netns_cmd_tpl.format(hwport=port)))
+        if portlbl == 'lo':
+            continue
+        hwport = hwports.pop(0)
+        mapping_ports[portlbl] = hwport
+        logging.info(
+            '  - Port {portlbl} moved to swns netns as {hwport}.'.format(
+                **locals()
+            )
+        )
+        check_call(shsplit(rename_int.format(**locals())))
+        check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
 
     # Writting mapping to file
-    mapping_ports_json = dumps(mapping_ports)
-    with open('/tmp/port_mapping.txt', 'w') as json_file:
-        json_file.write(mapping_ports_json)
+    with open('/tmp/port_mapping.json', 'w') as json_file:
+        json_file.write(dumps(mapping_ports))
 
     for hwport in hwports:
         if hwport in in_swns:
@@ -189,52 +190,33 @@ if __name__ == '__main__':
 
 class OpenSwitchNode(DockerNode):
     """
-    Custom engine node for the Topology docker platform engine.
+    Custom OpenSwitch node for the Topology Docker platform engine.
 
     This custom node loads an OpenSwitch image and has vtysh as default
-    console (in addition to bash).
+    shell (in addition to bash).
 
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node. The image can also be
-     setup using the environment variable ``OPS_IMAGE``. If present, it will
-     take precedence to this argument in runtime.
-    :param str command: The command to run when the container is brought up.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
             self, identifier,
-            image='ops:latest', command='/sbin/init', binds=None,
+            image='ops:latest',
             **kwargs):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'ops:latest':
-            image = environ.get('OPS_IMAGE', image)
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))
         ensure_dir(shared_dir)
 
         # Add binded directories
-        if binds is None:
-            binds = []
-        binds.extend([
+        binds = [
             '{}:/tmp'.format(shared_dir),
             '/dev/log:/dev/log',
             '/sys/fs/cgroup:/sys/fs/cgroup:ro'
-        ])
+        ]
 
         super(OpenSwitchNode, self).__init__(
-            identifier, image=image, command=command, binds=binds, **kwargs
+            identifier, image=image, command='/sbin/init', binds=binds,
+            **kwargs
         )
 
         # Save location of the shared dir in host
@@ -266,27 +248,31 @@ class OpenSwitchNode(DockerNode):
         """
         super(OpenSwitchNode, self).notify_post_build()
         self._setup_system()
-        with open('{}/port_mapping.txt'.format(self.shared_dir), 'r') as f:
-            mappings = loads(f.read())
-
-        if hasattr(self, 'ports'):
-            self.ports.update(mappings)
-            return
-        self.ports = mappings
 
     def _setup_system(self):
         """
         Setup the OpenSwitch image for testing.
 
-        #. Create remaining interfaces.
         #. Wait for daemons to converge.
+        #. Assign an interface to each port label.
+        #. Create remaining interfaces.
         """
+        # Write and execute setup script
         setup_script = '{}/openswitch_setup.py'.format(self.shared_dir)
-        if not isfile(setup_script):
-            with open(setup_script, 'w') as fd:
-                fd.write(SETUP_SCRIPT)
+        with open(setup_script, 'w') as fd:
+            fd.write(SETUP_SCRIPT)
 
         self._docker_exec('python /tmp/openswitch_setup.py')
+
+        # Read back port mapping
+        port_mapping = '{}/port_mapping.json'.format(self.shared_dir)
+        with open(port_mapping, 'r') as fd:
+            mappings = loads(fd.read())
+
+        if hasattr(self, 'ports'):
+            self.ports.update(mappings)
+            return
+        self.ports = mappings
 
     def set_port_state(self, portlbl, state):
         """

@@ -26,10 +26,9 @@ Check https://hub.docker.com/r/socketplane/openvswitch/ for docker container.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
 from time import sleep
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import check_call, check_output, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -37,46 +36,26 @@ from topology_docker.shell import DockerShell
 
 class OpenvSwitchNode(DockerNode):
     """
-    Custom Open vSwitch node, configurable through the shell.
+    Custom Open vSwitch node for the Topology Docker platform engine.
 
     This custom node loads and starts an Open vSwitch image. It uses the OVS
-    docker image, based on busybox OVS can be
-    configured using ovs-vsctl, ovs-ofctl and ovs-appclt through the
-    default shell (sh). Interfaces are not auto-started by the node.
+    docker image. based on busybox OVS. It can be configured using
+    ``ovs-vsctl``, ``ovs-ofctl`` and ``ovs-appclt`` through the default
+    shell (sh). Interfaces are not auto-started by the node.
 
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
             self, identifier,
-            type='openvswitch',
             image='socketplane/openvswitch:latest',
-            binds=None):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'socketplane/openvswitch:latest':
-            image = environ.get('OPENVSWITCH_IMAGE', image)
+            **kwargs):
 
         # Supervisor daemon
         self._supervisord = None
 
-        # Add binded directories
-        if binds is None:
-            binds = []
-
         super(OpenvSwitchNode, self).__init__(
-            identifier, type=type, image=image, command='sh', binds=binds
+            identifier, image=image, command='sh', **kwargs
         )
 
         # Add bash shell
@@ -92,27 +71,23 @@ class OpenvSwitchNode(DockerNode):
         super(OpenvSwitchNode, self).notify_post_build()
 
         # FIXME: this is a workaround
-        check_call(shsplit(
-            "docker exec {} sed -i -e 's/port = 9001/port = 127.0.0.1:9001/g' "
+        self._docker_exec(
+            "sed -i -e 's/port = 9001/port = 127.0.0.1:9001/g' "
             "-e 's/nodaemon=true/nodaemon=false/g' "
-            "/etc/supervisord.conf".format(
-                self.container_id)
-        ))
+            "/etc/supervisord.conf"
+        )
 
         self._supervisord = Popen(shsplit(
-            'docker exec {} supervisord'.format(
-                self.container_id)
+            'docker exec {} supervisord'.format(self.container_id)
         ))
 
         # Wait for the configure-ovs script to exit by polling supervisorctl
         config_timeout = 100
-
         i = 0
         while i < config_timeout:
-            config_status = check_output(shsplit(
-                'docker exec {} supervisorctl status configure-ovs'.format(
-                    self.container_id)
-            ), universal_newlines=True)
+            config_status = self._docker_exec(
+                'supervisorctl status configure-ovs'
+            )
 
             if 'EXITED' not in config_status:
                 sleep(0.1)
@@ -121,6 +96,7 @@ class OpenvSwitchNode(DockerNode):
             i += 1
 
         if i == config_timeout:
-            raise RuntimeError("configure-ovs did not exit!")
+            raise RuntimeError('configure-ovs did not exit!')
+
 
 __all__ = ['OpenvSwitchNode']

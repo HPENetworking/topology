@@ -16,19 +16,19 @@
 # under the License.
 
 """
-Custom Topology Docker Node for OpenSwitch.
+Custom Topology Docker Node for Ryu SND controller.
 
-    http://openswitch.net/
+    http://osrg.github.io/ryu/
 """
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from shutil import copy
-from os import environ, path
+from os import path
 from time import sleep
+from shutil import copy
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import check_output, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -43,50 +43,28 @@ class RyuControllerNode(DockerNode):
     app by using ryu-manager.
 
     The default image is osrg/ryu from:
+
     - https://hub.docker.com/r/osrg/ryu/
     - https://github.com/osrg/dockerfiles/blob/master/ryu/Dockerfile
 
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node. The image can also be
-     setup using the environment variable ``RYU_IMAGE``. If present, it
-     will take precedence to this argument in runtime.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
             self, identifier,
-            type='ryu',
             image='hpe-networking/topology_ryu:latest',
             registry='docker.hos.hpecorp.net',
-            binds=None):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'hpe-networking/topology_ryu:latest':
-            image = environ.get('RYU_IMAGE', image)
+            **kwargs):
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))
         ensure_dir(shared_dir)
 
         # Add binded directories
-        if binds is None:
-            binds = []
-        binds.extend([
-            '{}:/tmp'.format(shared_dir)
-        ])
+        binds = ['{}:/tmp'.format(shared_dir)]
 
         super(RyuControllerNode, self).__init__(
-            identifier, image=image, registry=registry,
-            command='/bin/bash', binds=binds
+            identifier, image=image, registry=registry, binds=binds, **kwargs
         )
 
         # Supervisor daemon
@@ -139,17 +117,17 @@ class RyuControllerNode(DockerNode):
                 'sh -c "RYU_COMMAND=\'/root/ryu-master/bin/ryu-manager {} '
                 '--verbose\' supervisord"'.format(
                     self.container_id,
-                    app_path)
+                    app_path
+                )
             ))
 
             # Wait for ryu-manager to start
             config_timeout = 100
             i = 0
             while i < config_timeout:
-                config_status = check_output(shsplit(
-                    'docker exec {} supervisorctl status ryu-manager'.format(
-                        self.container_id)
-                ), universal_newlines=True)
+                config_status = self._docker_exec(
+                    'supervisorctl status ryu-manager'
+                )
 
                 if 'RUNNING' not in config_status:
                     sleep(0.1)
