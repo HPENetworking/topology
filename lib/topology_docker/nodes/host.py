@@ -30,7 +30,8 @@ class HostNode(DockerNode):
     """
     Simple host node for the Topology Docker platform engine.
 
-    This base host loads an ubuntu image and has bash as the default shell.
+    This base host loads an ubuntu image (by default) and has bash as the
+    default shell.
 
     See :class:`topology_docker.node.DockerNode`.
     """

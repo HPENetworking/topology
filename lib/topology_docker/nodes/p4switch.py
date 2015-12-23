@@ -34,7 +34,7 @@ from topology_docker.utils import ensure_dir
 
 class P4SwitchNode(DockerNode):
     """
-    Barefoot's P4 switch node. Runs a configurable behavioral simulator.
+    Custom Barefoot P4 node for the Topology Docker platform engine.
 
     This custom node loads a P4 switch docker image built from the
     p4factory repository. The switch is configurable through switch-specific
