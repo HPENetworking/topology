@@ -121,7 +121,7 @@ The following section explains the process used to build the docker OVS image. I
 
 The OVS docker switch was built making use of `socketplane's docker-ovs images <https://github.com/socketplane/docker-ovs>`_.
 
-Each folder corresponds to an OpenVswitch version and includes the Dockerfile and two required files. 
+Each folder corresponds to an OpenVswitch version and includes the Dockerfile and two required files.
 - OVS is brought up by supervisor. The supervisord.conf file is copied to the container to be run by supervisor.
 - configure-ovs.sh executes some OVS startup commands.
 

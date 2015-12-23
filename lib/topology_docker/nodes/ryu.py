@@ -24,9 +24,9 @@ Custom Topology Docker Node for Ryu SND controller.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from shutil import copy
-from os import environ, path
+from os import path
 from time import sleep
+from shutil import copy
 from shlex import split as shsplit
 from subprocess import check_output, Popen
 
@@ -55,10 +55,6 @@ class RyuControllerNode(DockerNode):
             image='hpe-networking/topology_ryu:latest',
             registry='docker.hos.hpecorp.net',
             **kwargs):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'hpe-networking/topology_ryu:latest':
-            image = environ.get('RYU_IMAGE', image)
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))

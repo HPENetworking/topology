@@ -26,7 +26,6 @@ Check https://hub.docker.com/r/socketplane/openvswitch/ for docker container.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
 from time import sleep
 from shlex import split as shsplit
 from subprocess import check_call, check_output, Popen
@@ -51,10 +50,6 @@ class OpenvSwitchNode(DockerNode):
             self, identifier,
             image='socketplane/openvswitch:latest',
             **kwargs):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'socketplane/openvswitch:latest':
-            image = environ.get('OPENVSWITCH_IMAGE', image)
 
         # Supervisor daemon
         self._supervisord = None

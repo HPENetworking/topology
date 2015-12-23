@@ -24,7 +24,6 @@ Custom Topology Docker Node for OpenSwitch.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
 from json import loads
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -203,10 +202,6 @@ class OpenSwitchNode(DockerNode):
             self, identifier,
             image='ops:latest',
             **kwargs):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'ops:latest':
-            image = environ.get('OPS_IMAGE', image)
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))

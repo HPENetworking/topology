@@ -24,7 +24,6 @@ Custom P4 Switch Topology Docker Node.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from os import environ
 from shlex import split as shsplit
 from subprocess import check_call, Popen
 
@@ -49,10 +48,6 @@ class P4SwitchNode(DockerNode):
             image='hpe-networking/p4dockerswitch:latest',
             registry='docker.hos.hpecorp.net',
             **kwargs):
-
-        # Fetch image from environment but only if default image is being used
-        if image == 'hpe-networking/p4dockerswitch:latest':
-            image = environ.get('P4SWITCH_IMAGE', image)
 
         # Determine shared directory
         shared_dir = '/tmp/topology_{}_{}'.format(identifier, str(id(self)))
