@@ -83,34 +83,40 @@ def test_ping_openvswitch():
     ###########
 
     # Configure IP and bring UP host 1 interfaces
-    hs1.send_command('ip link set hs1-1 up')
-    hs1.send_command('ip addr add 10.0.10.1/24 dev hs1-1')
+    commands = """
+    ip link set hs1-1 up
+    ip addr add 10.0.10.1/24 dev hs1-1
+    ip route add default via 10.0.10.2
+    """
+    hs1.libs.common.assert_batch(commands)
 
     # Configure IP and bring UP host 2 interfaces
-    hs2.send_command('ip link set hs2-1 up')
-    hs2.send_command('ip addr add 10.0.30.1/24 dev hs2-1')
+    commands = """
+    ip link set hs2-1 up
+    ip addr add 10.0.30.1/24 dev hs2-1
+    ip route add default via 10.0.30.2
+    """
+    hs2.libs.common.assert_batch(commands)
 
     # Configure IP and bring UP switch 1 interfaces
-    sw1.send_command('ip link set sw1-3 up')
-    sw1.send_command('ip link set sw1-4 up')
-
-    sw1.send_command('ip addr add 10.0.10.2/24 dev sw1-3')
-    sw1.send_command('ip addr add 10.0.20.1/24 dev sw1-4')
+    commands = """
+    ip link set sw1-3 up
+    ip link set sw1-4 up
+    ip addr add 10.0.10.2/24 dev sw1-3
+    ip addr add 10.0.20.1/24 dev sw1-4
+    ip route add 10.0.30.0/24 via 10.0.20.2
+    """
+    sw1.libs.common.assert_batch(commands)
 
     # Configure IP and bring UP switch 2 interfaces
-    sw2.send_command('ip link set sw2-3 up')
-    sw2.send_command('ip addr add 10.0.20.2/24 dev sw2-3')
-
-    sw2.send_command('ip link set sw2-4 up')
-    sw2.send_command('ip addr add 10.0.30.2/24 dev sw2-4')
-
-    # Set static routes in switches
-    sw1.send_command('ip route add 10.0.30.0/24 via 10.0.20.2')
-    sw2.send_command('ip route add 10.0.10.0/24 via 10.0.20.1')
-
-    # Set gateway in hosts
-    hs1.send_command('ip route add default via 10.0.10.2')
-    hs2.send_command('ip route add default via 10.0.30.2')
+    commands = """
+    ip link set sw2-3 up
+    ip link set sw2-4 up
+    ip addr add 10.0.20.2/24 dev sw2-3
+    ip addr add 10.0.30.2/24 dev sw2-4
+    ip route add 10.0.10.0/24 via 10.0.20.1
+    """
+    sw2.libs.common.assert_batch(commands)
 
     ping_result = hs1.send_command('ping -c 1 10.0.30.1')
     platform.destroy()

@@ -81,22 +81,17 @@ def test_ping(topology):
     assert sw2 is not None
 
     # ---- OVS Setup ----
-    # Create a bridge
-    sw1('ovs-vsctl add-br br0')
-    sw2('ovs-vsctl add-br br0')
 
-    # Bring up ovs interface
-    sw1('ip link set br0 up')
-    sw2('ip link set br0 up')
-
-    # Add the front ports
-    sw1('ovs-vsctl add-port br0 1 tag=100')
-    sw1('ovs-vsctl add-port br0 2 tag=200')
-    sw1('ovs-vsctl add-port br0 3')
-
-    sw2('ovs-vsctl add-port br0 1 tag=100')
-    sw2('ovs-vsctl add-port br0 2 tag=200')
-    sw2('ovs-vsctl add-port br0 3')
+    # Create a bridge, up ovs interface, add the front ports
+    commands = """
+    ovs-vsctl add-br br0
+    ip link set br0 up
+    ovs-vsctl add-port br0 1 tag=100
+    ovs-vsctl add-port br0 2 tag=200
+    ovs-vsctl add-port br0 3
+    """
+    sw1.libs.common.assert_batch(commands)
+    sw2.libs.common.assert_batch(commands)
 
     # Wait for OVS
     time.sleep(1)

@@ -61,8 +61,7 @@ def test_ping(topology):
 
     # Test ping
     ping_result = hs1('ping -c 1 192.168.0.2')
-    print(ping_result)
     assert '1 packets transmitted, 1 received' in ping_result
+
     ping_result = hs2('ping -c 1 192.168.0.1')
-    print(ping_result)
     assert '1 packets transmitted, 1 received' in ping_result

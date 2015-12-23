@@ -25,11 +25,11 @@ the controller.
 import time
 
 TOPOLOGY = """
-# 			  +-------+
-# 			  |       |
-# 			  |  ryu  |
-# 			  |       |
-# 			  +-------+
+#             +-------+
+#             |       |
+#             |  ryu  |
+#             |       |
+#             +-------+
 #                 |
 #             +-------+
 #             |  sw1  |
@@ -77,32 +77,29 @@ def test_controller_link(topology):
 
     # ---- OVS Setup ----
 
-    # Create a bridge
-    sw1('ovs-vsctl add-br br0')
-
-    # Bring up ovs interface
-    sw1('ip link set br0 up')
-
-    # Add the front port connecting to the controller
-    sw1('ovs-vsctl add-port br0 1')
-
-    # Drop packets if the connection to controller fails
-    sw1('ovs-vsctl set-fail-mode br0 secure')
-
-    # Remove the front port's IP address
-    sw1('ifconfig 1 0 up')
-
-    # Add the fronts port connecting to the hosts
-    sw1('ovs-vsctl add-port br0 2')
-    sw1('ovs-vsctl add-port br0 3')
-    sw1('ifconfig 2 0 up')
-    sw1('ifconfig 3 0 up')
-
-    # Give the virtual switch an IP address
-    sw1('ifconfig br0 10.0.10.2 netmask 255.255.255.0 up')
-
-    # Connect to the OpenFlow controller
-    sw1('ovs-vsctl set-controller br0 tcp:10.0.10.1:6633')
+    # Configuration:
+    # - Create a bridge
+    # - Bring up ovs interface
+    # - Add the front port connecting to the controller
+    # - Drop packets if the connection to controller fails
+    # - Remove the front port's IP address
+    # - Add the fronts port connecting to the hosts
+    # - Give the virtual switch an IP address
+    # - Connect to the OpenFlow controller
+    commands = """
+    ovs-vsctl add-br br0
+    ip link set br0 up
+    ovs-vsctl add-port br0 1
+    ovs-vsctl set-fail-mode br0 secure
+    ifconfig 1 0 up
+    ovs-vsctl add-port br0 2
+    ovs-vsctl add-port br0 3
+    ifconfig 2 0 up
+    ifconfig 3 0 up
+    ifconfig br0 10.0.10.2 netmask 255.255.255.0 up
+    ovs-vsctl set-controller br0 tcp:10.0.10.1:6633
+    """
+    sw1.libs.common.assert_batch(commands)
 
     # Wait for OVS to connect to controller
     time.sleep(5)

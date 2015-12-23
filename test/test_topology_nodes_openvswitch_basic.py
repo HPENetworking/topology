@@ -62,15 +62,14 @@ def test_controller_link(topology):
 
     # ---- OVS Setup ----
 
-    # Create a bridge
-    sw1('ovs-vsctl add-br br0')
-
-    # Bring up ovs interface
-    sw1('ip link set br0 up')
-
-    # Add the front ports
-    sw1('ovs-vsctl add-port br0 1')
-    sw1('ovs-vsctl add-port br0 2')
+    # Create bridge, bring up ovs interface and add the front ports
+    commands = """
+    ovs-vsctl add-br br0
+    ip link set br0 up
+    ovs-vsctl add-port br0 1
+    ovs-vsctl add-port br0 2
+    """
+    sw1.libs.common.assert_batch(commands)
 
     # Wait for OVS
     time.sleep(1)

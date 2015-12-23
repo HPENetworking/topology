@@ -19,8 +19,8 @@ TOPOLOGY = """
 [type=host name="Host 2"] hs2
 
 # Links
-hs1:IF01 -- ops1:IF01
-ops1:IF02 -- hs2:IF01
+hs1:if01 -- ops1:if01
+ops1:IF02 -- hs2:if01
 """
 
 
@@ -33,10 +33,10 @@ def test_topology_nodes_openvswitch_port_labels(topology):
     assert hs1 is not None
     assert hs2 is not None
 
-    ops1("configure terminal")
-    ops1("interface " + str(ops1.ports['IF01']))
-    ops1("no shutdown")
-    ops1("end")
+    ops1('configure terminal')
+    ops1('interface ' + str(ops1.ports['if01']))
+    ops1('no shutdown')
+    ops1('end')
     sleep(5)
-    result = ops1("show interface " + str(ops1.ports['IF01']))
-    assert result != "% Unknown command."
+    result = ops1('show interface ' + str(ops1.ports['if01']))
+    assert result != '% Unknown command.'
