@@ -60,10 +60,12 @@ class P4SwitchNode(DockerNode):
     def __init__(
             self, identifier,
             type='p4switch',
-            image='topology_p4switch:latest', binds=None):
+            image='hpe-networking/p4dockerswitch:latest',
+            registry='docker.hos.hpecorp.net',
+            binds=None):
 
         # Fetch image from environment but only if default image is being used
-        if image == 'topology_p4switch:latest':
+        if image == 'hpe-networking/p4dockerswitch:latest':
             image = environ.get('P4SWITCH_IMAGE', image)
 
         # Determine shared directory
@@ -78,7 +80,8 @@ class P4SwitchNode(DockerNode):
         ])
 
         super(P4SwitchNode, self).__init__(
-            identifier, image=image, command='/bin/bash', binds=binds
+            identifier, image=image, registry=registry,
+            command='/bin/bash', binds=binds
         )
 
         # Behavioral model daemon process
@@ -173,7 +176,7 @@ class P4SwitchNode(DockerNode):
             # Bring up all interfaces
             # FIXME: attach only interfaces brought up by the user
             for portlbl in self.ports:
-                self.port_state(portlbl, True)
+                self.set_port_state(portlbl, True)
 
             args = [
                 '/p4factory/targets/switch/behavioral-model',

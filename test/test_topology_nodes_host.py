@@ -26,19 +26,7 @@ TOPOLOGY = """
 hs1:1 -- hs2:1
 """
 
-from docker import Client
-from pytest import mark
 
-clnt = Client()
-
-u_1204 = [img for img in clnt.images() if 'ubuntu:12.04' in img['RepoTags']]
-u_1404 = [img for img in clnt.images() if 'ubuntu:latest' in img['RepoTags']]
-
-
-@mark.skipif(
-    not u_1204 or not u_1404,
-    reason='Ubuntu images for 12.04 and 14.04 are required for this test.'
-)
 def test_image(topology, step):
     """
     Test that a vlan configuration is functional with a OpenSwitch switch.
