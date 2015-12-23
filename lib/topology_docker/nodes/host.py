@@ -28,7 +28,9 @@ from topology_docker.shell import DockerShell
 
 class HostNode(DockerNode):
     """
-    Simple network host using a Ubuntu container and a bash shell.
+    Simple host node for the Topology Docker platform engine.
+
+    This base host loads an ubuntu image and has bash as the default shell.
 
     See :class:`topology_docker.node.DockerNode`.
     """

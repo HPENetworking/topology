@@ -37,32 +37,20 @@ from topology_docker.shell import DockerShell
 
 class OpenvSwitchNode(DockerNode):
     """
-    Custom Open vSwitch node, configurable through the shell.
+    Custom Open vSwitch node for the Topology Docker platform engine.
 
     This custom node loads and starts an Open vSwitch image. It uses the OVS
-    docker image, based on busybox OVS can be
-    configured using ovs-vsctl, ovs-ofctl and ovs-appclt through the
-    default shell (sh). Interfaces are not auto-started by the node.
+    docker image. based on busybox OVS. It can be configured using
+    ``ovs-vsctl``, ``ovs-ofctl`` and ``ovs-appclt`` through the default
+    shell (sh). Interfaces are not auto-started by the node.
 
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
             self, identifier,
-            type='openvswitch',
             image='socketplane/openvswitch:latest',
-            binds=None):
+            **kwargs):
 
         # Fetch image from environment but only if default image is being used
         if image == 'socketplane/openvswitch:latest':
@@ -71,12 +59,8 @@ class OpenvSwitchNode(DockerNode):
         # Supervisor daemon
         self._supervisord = None
 
-        # Add binded directories
-        if binds is None:
-            binds = []
-
         super(OpenvSwitchNode, self).__init__(
-            identifier, type=type, image=image, command='sh', binds=binds
+            identifier, image=image, command='sh', **kwargs
         )
 
         # Add bash shell
@@ -121,6 +105,7 @@ class OpenvSwitchNode(DockerNode):
             i += 1
 
         if i == config_timeout:
-            raise RuntimeError("configure-ovs did not exit!")
+            raise RuntimeError('configure-ovs did not exit!')
+
 
 __all__ = ['OpenvSwitchNode']

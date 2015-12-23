@@ -44,8 +44,18 @@ class DockerNode(CommonNode):
 
     :param str identifier: The unique identifier of the node.
     :param str image: The image to run on this node.
+    :param str registry: Docker registry to pull image from.
     :param str command: The command to run when the container is brought up.
-    :param list binds: List of directories to bind for this container.
+    :param list binds: List of directories to bind for this container in the
+     form:
+
+     ::
+
+        [
+            '/tmp:/tmp',
+            '/dev/log:/dev/log',
+            '/sys/fs/cgroup:/sys/fs/cgroup'
+        ]
     :param str network_mode: Network mode for this container.
     """
 

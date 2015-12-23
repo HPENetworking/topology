@@ -31,12 +31,9 @@ from topology_docker.shell import DockerShell
 
 class ToxinNode(DockerNode):
     """
-    Custom engine node for the Topology docker platform engine.
+    Custom Toxin packet generator node for the Topology Docker platform engine.
 
-    This custom node loads an Toxin image.
-
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node.
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
@@ -46,12 +43,12 @@ class ToxinNode(DockerNode):
             **kwargs):
 
         super(ToxinNode, self).__init__(
-            identifier,
-            image=image, registry=registry, network_mode='bridge',
+            identifier, image=image, registry=registry, network_mode='bridge',
             **kwargs
         )
 
         # Add txn shell (default shell)
+        # FIXME: Change to txn when migrated to Toxin 2.0
         self._shells['txn-shell'] = DockerShell(
             self.container_id, 'txn-shell', '>>>'
         )

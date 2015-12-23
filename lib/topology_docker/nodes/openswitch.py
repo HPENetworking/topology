@@ -189,31 +189,17 @@ if __name__ == '__main__':
 
 class OpenSwitchNode(DockerNode):
     """
-    Custom engine node for the Topology docker platform engine.
+    Custom OpenSwitch node for the Topology Docker platform engine.
 
     This custom node loads an OpenSwitch image and has vtysh as default
-    console (in addition to bash).
+    shell (in addition to bash).
 
-    :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node. The image can also be
-     setup using the environment variable ``OPS_IMAGE``. If present, it will
-     take precedence to this argument in runtime.
-    :param str command: The command to run when the container is brought up.
-    :param list binds: A list of directories endpoints to bind in container in
-     the form:
-
-     ::
-
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+    See :class:`topology_docker.node.DockerNode`.
     """
 
     def __init__(
             self, identifier,
-            image='ops:latest', command='/sbin/init', binds=None,
+            image='ops:latest',
             **kwargs):
 
         # Fetch image from environment but only if default image is being used
@@ -225,16 +211,15 @@ class OpenSwitchNode(DockerNode):
         ensure_dir(shared_dir)
 
         # Add binded directories
-        if binds is None:
-            binds = []
-        binds.extend([
+        binds = [
             '{}:/tmp'.format(shared_dir),
             '/dev/log:/dev/log',
             '/sys/fs/cgroup:/sys/fs/cgroup:ro'
-        ])
+        ]
 
         super(OpenSwitchNode, self).__init__(
-            identifier, image=image, command=command, binds=binds, **kwargs
+            identifier, image=image, command='/sbin/init', binds=binds,
+            **kwargs
         )
 
         # Save location of the shared dir in host
