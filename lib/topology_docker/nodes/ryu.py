@@ -27,8 +27,8 @@ from __future__ import print_function, division
 from os import path
 from time import sleep
 from shutil import copy
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import check_output, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -117,17 +117,17 @@ class RyuControllerNode(DockerNode):
                 'sh -c "RYU_COMMAND=\'/root/ryu-master/bin/ryu-manager {} '
                 '--verbose\' supervisord"'.format(
                     self.container_id,
-                    app_path)
+                    app_path
+                )
             ))
 
             # Wait for ryu-manager to start
             config_timeout = 100
             i = 0
             while i < config_timeout:
-                config_status = check_output(shsplit(
-                    'docker exec {} supervisorctl status ryu-manager'.format(
-                        self.container_id)
-                ), universal_newlines=True)
+                config_status = self._docker_exec(
+                    'supervisorctl status ryu-manager'
+                )
 
                 if 'RUNNING' not in config_status:
                     sleep(0.1)

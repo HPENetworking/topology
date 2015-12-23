@@ -24,8 +24,8 @@ Custom P4 Switch Topology Docker Node.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import check_call, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -134,20 +134,11 @@ class P4SwitchNode(DockerNode):
 
         if self.metadata.get('autostart', True):
 
-            check_call(shsplit(
-                'docker exec {} '
+            self._docker_exec(
                 'ip link add name veth250 type veth peer name veth251'
-                .format(
-                    self.container_id)
-            ))
-            check_call(shsplit(
-                'docker exec {} ip link set dev veth250 up'.format(
-                    self.container_id)
-            ))
-            check_call(shsplit(
-                'docker exec {} ip link set dev veth251 up'.format(
-                    self.container_id)
-            ))
+            )
+            self._docker_exec('ip link set dev veth250 up')
+            self._docker_exec('ip link set dev veth251 up')
 
             # Bring up all interfaces
             # FIXME: attach only interfaces brought up by the user

@@ -228,7 +228,7 @@ class DockerNode(CommonNode):
             'docker exec {container_id} {command}'.format(
                 container_id=self.container_id, command=command.strip()
             )
-        ))
+        )).decode('utf8')
 
 
 __all__ = ['DockerNode']

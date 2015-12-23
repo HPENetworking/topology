@@ -27,8 +27,8 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from time import sleep
+from subprocess import Popen
 from shlex import split as shsplit
-from subprocess import check_call, check_output, Popen
 
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
@@ -71,27 +71,23 @@ class OpenvSwitchNode(DockerNode):
         super(OpenvSwitchNode, self).notify_post_build()
 
         # FIXME: this is a workaround
-        check_call(shsplit(
-            "docker exec {} sed -i -e 's/port = 9001/port = 127.0.0.1:9001/g' "
+        self._docker_exec(
+            "sed -i -e 's/port = 9001/port = 127.0.0.1:9001/g' "
             "-e 's/nodaemon=true/nodaemon=false/g' "
-            "/etc/supervisord.conf".format(
-                self.container_id)
-        ))
+            "/etc/supervisord.conf"
+        )
 
         self._supervisord = Popen(shsplit(
-            'docker exec {} supervisord'.format(
-                self.container_id)
+            'docker exec {} supervisord'.format(self.container_id)
         ))
 
         # Wait for the configure-ovs script to exit by polling supervisorctl
         config_timeout = 100
-
         i = 0
         while i < config_timeout:
-            config_status = check_output(shsplit(
-                'docker exec {} supervisorctl status configure-ovs'.format(
-                    self.container_id)
-            ), universal_newlines=True)
+            config_status = self._docker_exec(
+                'supervisorctl status configure-ovs'
+            )
 
             if 'EXITED' not in config_status:
                 sleep(0.1)
