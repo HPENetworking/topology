@@ -1,2 +1,3 @@
 six
 pyparsing
+pynml>=1.0.0

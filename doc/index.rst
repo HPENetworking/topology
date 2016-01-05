@@ -31,7 +31,7 @@ Development
 - :doc:`Developer Guide. <developer>`
 - :doc:`Architecture Overview. <architecture>`
 - :doc:`Internal Documentation Reference. <topology/topology>`
-- `Project repository. <https://github-sc-p.corp.hp.com/hpe-networking/topology>`_
+- `Project repository. <https://github.com/HPNetworking/topology>`_
 
 
 License
@@ -39,7 +39,7 @@ License
 
 ::
 
-   Copyright (C) 2015 Hewlett Packard Enterprise Development LP <asicapi@hp.com>
+   Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

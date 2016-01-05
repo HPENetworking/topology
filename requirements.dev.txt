@@ -1,12 +1,9 @@
 flake8
 pep8-naming
-pytest
+pytest===2.8.4
 pytest-cov
 deepdiff
 sphinx
 sphinx_rtd_theme
 sphinxcontrib-plantuml
 autoapi
-
-# Move to requirements.txt when available in PyPI
--e git+git@github-sc-p.corp.hp.com:hpe-networking/pynml.git@master#egg=pynml
