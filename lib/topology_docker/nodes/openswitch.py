@@ -224,7 +224,7 @@ class OpenSwitchNode(DockerNode):
 
         # Add vtysh (default) and bash shell
         self._shells['vtysh'] = DockerShell(
-            self.container_id, 'vtysh', 'switch.*#'
+            self.container_id, 'vtysh', 'switch[a-zA-Z0-9\s\_\-\(\)]*#'
         )
         self._shells['bash'] = DockerShell(
             self.container_id, 'sh -c "TERM=dumb bash"', 'bash-.*#'
