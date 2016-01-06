@@ -33,3 +33,9 @@ dl.exception dt code.descclassname,
 dl.data dt code.descclassname {
     display: none !important;
 }
+
+/* Make PlantUML SVGs responsive */
+object[type="image/svg+xml"] {
+    max-width: 100%;
+    height: auto !important;
+}

@@ -84,7 +84,7 @@ Development
 
 - :doc:`Developer Guide. <developer>`
 - :doc:`Internal Documentation Reference. <topology_docker/topology_docker>`
-- `Project repository. <https://github-sc-p.corp.hp.com/hpe-networking/topology_docker>`_
+- `Project repository. <https://github.com/HPNetworking/topology_docker>`_
 
 
 License
@@ -92,7 +92,7 @@ License
 
 ::
 
-   Copyright (C) 2015 Hewlett Packard Enterprise Development LP <asicapi@hp.com>
+   Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.

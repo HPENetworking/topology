@@ -1,10 +1,10 @@
 FROM ubuntu:14.04
-MAINTAINER HPN ASIC API Team "asicapi@hp.com"
+MAINTAINER HPN ASIC API Team "hpe-networking@lists.hp.com"
 
 # Make sure you have an updated version of txn and txnd available for docker.
 # You can get them from:
-#     github-sc-p.corp.hp.com/hpe-networking/txn
-#     github-sc-p.corp.hp.com/hpe-networking/txnd
+#     https://github.com/HPNetworking/hpe-networking/txn
+#     https://github.com/HPNetworking/hpe-networking/txnd
 # Change this when txn and txnd are on PyPI
 ADD txnd /tmp/txnd
 ADD txn /tmp/txn

@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Docker Platform Engine for Topology'
-copyright = '2015, Hewlett Packard Enterprise Development LP'
+copyright = '2015-2016, Hewlett Packard Enterprise Development LP'
 author = 'Hewlett Packard Enterprise Development LP'
 
 # The version info for the project you're documenting, acts as replacement for

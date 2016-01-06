@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015 Hewlett Packard Enterprise Development LP <asicapi@hp.com>
+# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -68,13 +68,13 @@ setup(
 
     # Metadata
     author='Hewlett Packard Enterprise Development LP',
-    author_email='asicapi@hp.com',
+    author_email='hpe-networking@lists.hp.com',
     description=(
         'Docker based Platform Engine plugin for the Network Topology '
         'Framework.'
     ),
     long_description=read('README.rst'),
-    url='https://github-sc-p.corp.hp.com/hpe-networking/topology_docker',
+    url='http://topology-docker.rtfd.org/',
     keywords='topology_docker',
 
     classifiers=[

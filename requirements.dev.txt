@@ -1,14 +1,8 @@
 flake8
 pep8-naming
-pytest
+pytest===2.8.4
 pytest-cov
 sphinx
 sphinx_rtd_theme
 sphinxcontrib-plantuml
 autoapi
-
-# Remove when topology is in PyPI
--e git+git@github-sc-p.corp.hp.com:hpe-networking/pynml.git@master#egg=pynml
-
-# Move to requirements.txt when available in PyPI
--e git+git@github-sc-p.corp.hp.com:hpe-networking/topology.git@master#egg=topology
