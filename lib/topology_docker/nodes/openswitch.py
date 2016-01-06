@@ -200,7 +200,7 @@ class OpenSwitchNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='ops:latest',
+            image='topology/ops:latest',
             **kwargs):
 
         # Determine shared directory

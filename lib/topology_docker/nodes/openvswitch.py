@@ -48,7 +48,7 @@ class OpenvSwitchNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='socketplane/openvswitch:latest',
+            image='topology/openvswitch:latest',
             **kwargs):
 
         # Supervisor daemon

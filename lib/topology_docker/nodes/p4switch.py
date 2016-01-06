@@ -45,8 +45,7 @@ class P4SwitchNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='hpe-networking/p4dockerswitch:latest',
-            registry='docker.hos.hpecorp.net',
+            image='topology/p4switch:latest',
             **kwargs):
 
         # Determine shared directory
@@ -57,7 +56,7 @@ class P4SwitchNode(DockerNode):
         binds = ['{}:/tmp'.format(shared_dir)]
 
         super(P4SwitchNode, self).__init__(
-            identifier, image=image, registry=registry, binds=binds, **kwargs
+            identifier, image=image, binds=binds, **kwargs
         )
 
         # Behavioral model daemon process

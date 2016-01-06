@@ -52,8 +52,7 @@ class RyuControllerNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='hpe-networking/topology_ryu:latest',
-            registry='docker.hos.hpecorp.net',
+            image='topology/ryu:latest',
             **kwargs):
 
         # Determine shared directory
@@ -64,7 +63,7 @@ class RyuControllerNode(DockerNode):
         binds = ['{}:/tmp'.format(shared_dir)]
 
         super(RyuControllerNode, self).__init__(
-            identifier, image=image, registry=registry, binds=binds, **kwargs
+            identifier, image=image, binds=binds, **kwargs
         )
 
         # Supervisor daemon
