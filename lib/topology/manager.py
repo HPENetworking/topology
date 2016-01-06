@@ -249,6 +249,8 @@ class TopologyManager(object):
                 # Register engine node
                 node_enode_map[node.identifier] = enode.identifier
                 self.nodes[enode.identifier] = enode
+                # Register empty port map
+                self.ports[enode.identifier] = OrderedDict()
 
             stage = 'add_biport'
             for node, biport in self.nml.biports():
@@ -262,9 +264,6 @@ class TopologyManager(object):
                     ).format(self.engine, enode)
                     log.critical(msg)
                     raise Exception(msg)
-
-                if node.identifier not in self.ports:
-                    self.ports[node.identifier] = OrderedDict()
 
                 # Register engine port
                 label = biport.metadata.get('label', biport.identifier)
