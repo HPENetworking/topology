@@ -84,7 +84,7 @@ Development
 
 - :doc:`Developer Guide. <developer>`
 - :doc:`Internal Documentation Reference. <topology_docker/topology_docker>`
-- `Project repository. <https://github.com/HPNetworking/topology_docker>`_
+- `Project repository. <https://github.com/HPENetworking/topology_docker>`_
 
 
 License
