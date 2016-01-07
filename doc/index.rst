@@ -31,7 +31,7 @@ Development
 - :doc:`Developer Guide. <developer>`
 - :doc:`Architecture Overview. <architecture>`
 - :doc:`Internal Documentation Reference. <topology/topology>`
-- `Project repository. <https://github.com/HPNetworking/topology>`_
+- `Project repository. <https://github.com/HPENetworking/topology>`_
 
 
 License
