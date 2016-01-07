@@ -21,8 +21,7 @@ description. The Topology framework only provides a built-in Platform Engine
 for debugging. You can provide your own or install any of the known Engine
 Platforms available as plugins like:
 
-- `Docker <https://www.docker.com/>`_.
-- `Mininet <http://mininet.org/>`_.
+- `Docker <http://topology-docker.readthedocs.org/>`_.
 
 
 Entry Point
