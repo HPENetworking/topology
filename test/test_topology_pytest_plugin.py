@@ -28,11 +28,11 @@ from pytest import config, mark
 
 # Reload module to properly measure coverage
 from six.moves import reload_module
-import topology.pytest.plugin
-reload_module(topology.pytest.plugin)
 
+import topology.pytest.plugin
 from topology.manager import TopologyManager
 
+reload_module(topology.pytest.plugin)
 
 TOPOLOGY = """
 # Nodes
