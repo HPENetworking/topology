@@ -2,6 +2,25 @@
 OVS Topology Node
 =================
 
+Open vSwitch Kernel Module 
+--------------------------
+Open vSwitch requires the openvswitch kernel module to be loaded in the host 
+machine. The OVS images should work in user space mode without the module 
+but this experimental mode was not working in Docker at the time of 
+writing. The recommended way to run OVS is to first install the module included 
+with the corresponding OVS release. Check the docker image's OVS version by 
+looking at its tag or spawning a container. `Download <http://openvswitch.org/download/>`_ 
+the corresponding OVS version, build OVS and load the kernel module:
+
+::
+
+   ./configure --with-linux=/lib/modules/`uname -r`/build`
+   make
+   make modules_install
+   /sbin/modprobe openvswitch
+
+Check the `OVS FAQ <https://github.com/openvswitch/ovs/blob/master/FAQ.md#q-what-linux-kernel-versions-does-each-open-vswitch-release-work-with>`_ for information on kernel version support.
+
 Using Open vSwitch Nodes
 ------------------------
 

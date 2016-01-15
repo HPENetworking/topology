@@ -23,10 +23,15 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from pynml import Node, BidirectionalPort, BidirectionalLink
+import pytest
+from subprocess import check_output
 
 from topology_docker.platform import DockerPlatform
 
 
+@pytest.mark.skipif(
+    'openvswitch' not in check_output('lsmod').decode('utf-8'),
+    reason='Requires Open vSwitch kernel module.')
 def test_ping_openvswitch():
     """
     Builds the topology described on the following schema and ping h2 from h1.
