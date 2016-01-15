@@ -27,7 +27,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from time import sleep
-from subprocess import Popen
+from subprocess import Popen, check_output
 from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
@@ -53,6 +53,13 @@ class OpenvSwitchNode(DockerNode):
 
         # Supervisor daemon
         self._supervisord = None
+
+        # Check if openvswitch Kernel module is loaded
+        res = check_output('lsmod').decode('utf-8')
+        if 'openvswitch' not in res:
+            raise RuntimeError(
+                'Open vSwitch kernel module not loaded.'
+            )
 
         super(OpenvSwitchNode, self).__init__(
             identifier, image=image, command='sh', **kwargs

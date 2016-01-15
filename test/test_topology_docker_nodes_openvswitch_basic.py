@@ -20,6 +20,8 @@ Test for basic openvswitch behavior
 """
 
 import time
+import pytest
+from subprocess import check_output
 
 TOPOLOGY = """
 #             +-------+
@@ -50,6 +52,9 @@ sw1:2 -- hs2:1
 """
 
 
+@pytest.mark.skipif(
+    'openvswitch' not in check_output('lsmod').decode('utf-8'),
+    reason='Requires Open vSwitch kernel module.')
 def test_controller_link(topology):
 
     hs1 = topology.get('hs1')

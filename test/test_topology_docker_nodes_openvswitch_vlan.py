@@ -24,6 +24,8 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import time
+import pytest
+from subprocess import check_output
 
 TOPOLOGY = """
 
@@ -64,6 +66,9 @@ sw1:3 -- sw2:3
 """
 
 
+@pytest.mark.skipif(
+    'openvswitch' not in check_output('lsmod').decode('utf-8'),
+    reason='Requires Open vSwitch kernel module.')
 def test_ping(topology):
 
     hs1 = topology.get('hs1')
