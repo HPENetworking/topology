@@ -199,6 +199,14 @@ class BaseNode(object):
         self.identifier = identifier
         self.metadata = kwargs
 
+    @property
+    def default_shell(self):
+        raise NotImplementedError('default_shell')
+
+    @default_shell.setter
+    def default_shell(self, value):
+        raise NotImplementedError('default_shell.setter')
+
     def __call__(self, cmd, shell=None, silent=False):
         return self.send_command(cmd, shell=shell, silent=silent)
 
@@ -277,9 +285,22 @@ class CommonNode(BaseNode):
         super(CommonNode, self).__init__(identifier, **kwargs)
         self._shells = OrderedDict()
         self._enabled = True
+        self._default_shell = None
 
         # Add support for communication libraries
         self.libs = LibsProxy(self)
+
+    @property
+    def default_shell(self):
+        return self._default_shell
+
+    @default_shell.setter
+    def default_shell(self, value):
+        if value not in self._shells:
+            raise Exception(
+                'Cannot set default shell. Unknown shell "{}"'.format(value)
+            )
+        self._default_shell = value
 
     def send_command(self, cmd, shell=None, silent=False):
         """
@@ -291,8 +312,20 @@ class CommonNode(BaseNode):
 
         See :meth:`BaseNode.send_command` for more information.
         """
-        if shell is None and self._shells:
-            shell = list(iterkeys(self._shells))[0]
+
+        # Check at least one shell is available
+        if not self._shells:
+            raise Exception(
+                'Node {} doens\'t have any shell.'.format(self.identifier)
+            )
+
+        # Check if default shell is already set
+        if self._default_shell is None:
+            self._default_shell = list(iterkeys(self._shells))[0]
+
+        # Check requested shell is supported
+        if shell is None:
+            shell = self._default_shell
         elif shell not in self._shells.keys():
             raise Exception(
                 'Shell {} is not supported.'.format(shell)
