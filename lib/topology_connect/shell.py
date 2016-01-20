@@ -25,7 +25,7 @@ from __future__ import print_function, division
 from os import getuid
 from pwd import getpwuid
 from logging import getLogger
-from re import compile as regex
+from re import sub as regex_sub
 
 from abc import ABCMeta, abstractmethod
 from six import add_metaclass
@@ -35,9 +35,7 @@ from pexpect import spawn
 log = getLogger(__name__)
 
 
-TERM_CODES_REGEX = regex(
-    r'\x1b[E|\[](\?)?([0-9]{1,2}(;[0-9]{1,2})?)?[m|K|h|H|r]?'
-)
+TERM_CODES_REGEX = r'\x1b[E|\[](\?)?([0-9]{1,2}(;[0-9]{1,2})?)?[m|K|h|H|r]?'
 """
 Regular expression to match terminal control codes.
 
@@ -51,14 +49,14 @@ This regular expression allows to remove them as they are unneeded for the
 purpose of executing commands and parsing their outputs
 (unless proven otherwise).
 
-``\x1b``
+``\\x1b``
   Match prefix that indicates the next characters are part of a terminal code
   string.
 
-``[E|\[]``
+``[E|\\[]``
   Match either ``E`` or ``[``.
 
-``(\?)?``
+``(\\?)?``
   Match zero or one ``?``.
 
 ``([0-9]{1,2}``
@@ -128,7 +126,7 @@ class ConnectShell(object):
         text = text.strip().replace('\r', '')
 
         # Remove control codes
-        text = TERM_CODES_REGEX.sub('', text)
+        text = regex_sub(TERM_CODES_REGEX, '', text)
 
         # Split text into lines
         lines = text.splitlines()
@@ -178,6 +176,14 @@ class ConnectShell(object):
 
 
 class SshShell(ConnectShell):
+    """
+    SSH connection shell.
+
+    :param str user: User to connect with. If ``None``, the user running the
+     process will be used.
+    :param str hostname: Hostname or IP to connect to.
+    :param int port: SSH port to connect to.
+    """
 
     def __init__(
             self, prompt,
@@ -213,6 +219,12 @@ class SshShell(ConnectShell):
 
 
 class TelnetShell(ConnectShell):
+    """
+    Telnet connection shell.
+
+    :param str hostname: Hostname or IP to connect to.
+    :param int port: Telnet port to connect to.
+    """
 
     def __init__(
             self, prompt,
