@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# SSH/Telnet/etc connection Platform Engine for Topology documentation build configuration file.
+# SSH/Telnet/etc connection Platform Engine for Topology documentation build
+# configuration file.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.

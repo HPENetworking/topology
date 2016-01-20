@@ -1,1 +1,3 @@
 six
+pexpect
+topology>=1.0.0
