@@ -75,7 +75,7 @@ class DockerShell(object):
         del raw
 
         # Remove echo command if it exists
-        if len(lines) > 0 and lines[0] == command:
+        if lines and lines[0].strip() == command.strip():
             lines.pop(0)
 
         return '\n'.join(lines)
