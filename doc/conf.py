@@ -13,6 +13,7 @@
 
 import os
 from os.path import join, dirname, abspath
+
 from topology_docker import __version__
 
 # If extensions (or modules to document with autodoc) are in another directory,
