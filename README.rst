@@ -11,6 +11,23 @@ Documentation
     http://topology.rtfd.org/
 
 
+Changelog
+=========
+
+1.0.1
+-----
+
+**Fixes**
+
+- Fixed fatal bug when running a single node topology without ports.
+- Fixed new PEP8 checks on the codebase.
+
+1.0.0
+-----
+
+- Initial public release.
+
+
 License
 =======
 
