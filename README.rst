@@ -11,6 +11,36 @@ Documentation
     http://topology-docker.rtfd.org/
 
 
+Changelog
+=========
+
+1.0.1
+-----
+
+**New**
+
+- Added Dockerfiles for Ryu and P4.
+
+**Changes**
+
+- The Open vSwitch node will now check that the ``openvswitch`` kernel module
+  is loaded. It is supposed to work in user space, but we discovered many race
+  conditions without the kernel module.
+  Check the documentation of the ``openvswitch`` node for more information.
+
+**Fixes**
+
+- Improved openswitch's vtysh prompt regular expression to avoid false
+  positives matches.
+- Fixed a bug on shell management that caused the echo of the command to be
+  included in the output, and thus interpreted as failed.
+
+1.0.0
+-----
+
+- Initial public release.
+
+
 License
 =======
 
