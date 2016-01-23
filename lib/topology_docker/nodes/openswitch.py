@@ -25,6 +25,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from json import loads
+
 from topology_docker.node import DockerNode
 from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
@@ -262,7 +263,7 @@ class OpenSwitchNode(DockerNode):
         with open(setup_script, 'w') as fd:
             fd.write(SETUP_SCRIPT)
 
-        self._docker_exec('python /tmp/openswitch_setup.py')
+        self._docker_exec('python /tmp/openswitch_setup.py -d')
 
         # Read back port mapping
         port_mapping = '{}/port_mapping.json'.format(self.shared_dir)

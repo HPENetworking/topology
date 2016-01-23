@@ -22,8 +22,8 @@ topology_docker base node module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-import logging
 from json import loads
+from logging import getLogger
 from shlex import split as shsplit
 from subprocess import check_output
 from abc import ABCMeta, abstractmethod
@@ -34,7 +34,7 @@ from six import add_metaclass
 from topology.platforms.base import CommonNode
 
 
-log = logging.getLogger(__name__)
+log = getLogger(__name__)
 
 
 @add_metaclass(ABCMeta)
@@ -224,11 +224,18 @@ class DockerNode(CommonNode):
 
         :param str command: The command to execute.
         """
-        return check_output(shsplit(
+        log.debug(
+            '[{}]._docker_exec({}) ::'.format(self.container_id, command)
+        )
+
+        response = check_output(shsplit(
             'docker exec {container_id} {command}'.format(
                 container_id=self.container_id, command=command.strip()
             )
         )).decode('utf8')
+
+        log.debug(response)
+        return response
 
 
 __all__ = ['DockerNode']
