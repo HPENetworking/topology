@@ -213,6 +213,11 @@ Also, please note that all communication functions and classes receive the
 The ``enode`` argument can be used to store state or data for the library or to
 trigger calls to other libraries or commands as part of the communication flow.
 
+A common pattern is to use a class to store the state of the communication
+library and store an instances of that class inside the enode. The decorator
+:func:`topology.libraries.utils.stateprovider` allows to easily implement this
+pattern.
+
 It is recommended to check first the availability of any dependency shell
 using the method :meth:`topology.platforms.base.BaseNode.available_shells`.
 See :class:`topology.platforms.base.BaseNode` for more information about the
