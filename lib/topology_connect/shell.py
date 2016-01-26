@@ -77,11 +77,14 @@ purpose of executing commands and parsing their outputs
 
 @add_metaclass(ABCMeta)
 class ConnectShell(object):
+    """
+    FIXME: Document.
+    """
 
     def __init__(
             self, prompt,
             initial_command=None, initial_prompt=None,
-            password=None, password_match='.*assword:',
+            password=None, password_match='[pP]assword:',
             prefix=None, timeout=None, encoding='utf-8'):
 
         self._initial_command = initial_command
@@ -95,18 +98,28 @@ class ConnectShell(object):
 
         self._spawn = None
         self._last_command = None
-        self._connect_command = self._get_connect_command()
 
     @abstractmethod
     def _get_connect_command(self):
+        """
+        FIXME: Document.
+        """
         pass
 
     def __call__(self, command):
         return self.execute(command)
 
-    def send_command(self, command):
+    def send_command(self, command, matches=None):
+        """
+        FIXME: Document.
+        """
+        # Connect if not connected
         if not self.is_connected():
             self.connect()
+
+        # Create possible expect matches
+        if matches is None:
+            matches = [self._prompt]
 
         # Append prefix if required
         if self._prefix is None:
@@ -117,8 +130,14 @@ class ConnectShell(object):
 
         # Send line and expect matches
         self._spawn.sendline(command)
+        match_index = self._child.expect(matches, timeout=self._timeout)
+
+        return match_index
 
     def get_response(self):
+        """
+        FIXME: Document.
+        """
         # Convert binary representation to unicode using encoding
         text = self._spawn.before.decode(self._encoding)
 
@@ -136,24 +155,33 @@ class ConnectShell(object):
 
         # Remove echo command if it exists
         if lines and self._last_command is not None \
-                and lines[0] == self._last_command:
+                and lines[0].strip() == self._last_command.strip():
             lines.pop(0)
 
         return '\n'.join(lines)
 
     def execute(self, command):
+        """
+        FIXME: Document.
+        """
         self.send_command(command)
         return self.get_response()
 
     def is_connected(self):
+        """
+        FIXME: Document.
+        """
         return self._spawn is not None and self._spawn.isalive()
 
     def connect(self):
+        """
+        FIXME: Document.
+        """
         if self.is_connected():
             raise Exception('Shell already connected.')
 
         # Create a child process
-        self._spawn = spawn(self._connect_command, echo=False)
+        self._spawn = spawn(self._get_connect_command().strip(), echo=False)
 
         # If connection is via password
         if self._password is not None:
@@ -170,6 +198,9 @@ class ConnectShell(object):
         self._spawn.expect(self._prompt, timeout=self._timeout)
 
     def disconnect(self):
+        """
+        FIXME: Document.
+        """
         if not self.is_connected():
             raise Exception('Shell already disconnected.')
         self._spawn.close()
@@ -187,7 +218,7 @@ class SshShell(ConnectShell):
 
     def __init__(
             self, prompt,
-            user=None, hostname='127.0.0.1', port=23,
+            user=None, hostname='127.0.0.1', port=22, options=None,
             **kwargs):
 
         if user is None:
@@ -196,18 +227,27 @@ class SshShell(ConnectShell):
         self._user = user
         self._hostname = hostname
         self._port = port
+        self._options = options or []
 
         super(SshShell, self).__init__(prompt, **kwargs)
 
     @staticmethod
     def get_username():
+        """
+        FIXME: Document.
+        """
         return getpwuid(getuid()).pw_name
 
     def _get_connect_command(self):
-        # '-o BatchMode=yes '
-        # '-o BatchMode=no '
-        # '-o StrictHostKeyChecking=no '
-        options = ''  # FIXME: StrictHostKeyChecking, BatchMode
+        """
+        FIXME: Document.
+        """
+        if self._password is None:
+            self._options.append('BatchMode=yes')
+
+        options = ''
+        if self._options:
+            options = '-o {}'.format(' -o '.join(self._options))
 
         connect_command = (
             'TERM=dumb ssh {self._user}@{self._hostname} '
@@ -228,7 +268,7 @@ class TelnetShell(ConnectShell):
 
     def __init__(
             self, prompt,
-            hostname='127.0.0.1', port=22,
+            hostname='127.0.0.1', port=23,
             **kwargs):
 
         self._hostname = hostname
@@ -237,6 +277,9 @@ class TelnetShell(ConnectShell):
         super(TelnetShell, self).__init__(prompt, **kwargs)
 
     def _get_connect_command(self):
+        """
+        FIXME: Document.
+        """
         connect_command = (
             'TERM=dumb telnet {self._hostname} {self._port}'.format(
                 **locals()

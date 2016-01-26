@@ -16,34 +16,8 @@
 # under the License.
 
 """
-topology_connect base node module.
+topology_connect.nodes module entry point.
 """
 
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
-
-from logging import getLogger
-from abc import ABCMeta, abstractmethod
-
-from six import add_metaclass
-
-from topology.platforms.base import CommonNode
-
-
-log = getLogger(__name__)
-
-
-@add_metaclass(ABCMeta)
-class ConnectNode(CommonNode):
-    """
-    Base node class for Topology Connect.
-
-    See :class:`topology.platform.CommonNode` for more information.
-    """
-
-    @abstractmethod
-    def __init__(self, identifier, **kwargs):
-        super(ConnectNode, self).__init__(identifier, **kwargs)
-
-
-__all__ = ['ConnectNode']

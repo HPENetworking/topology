@@ -93,6 +93,10 @@ setup(
     entry_points={
         'topology_platform_10': [
             'connect = topology_connect.platform:ConnectPlatform'
+        ],
+        'topology_connect_node_10': [
+            'host = topology_connect.nodes.host:HostNode',
+            'uncheckedhost = topology_connect.nodes.host:UncheckedHostNode',
         ]
     }
 )

@@ -23,27 +23,33 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from logging import getLogger
-from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
-
-from topology.platforms.base import CommonNode
+from ..node import ConnectNode
+from ..shell import SshShell
 
 
 log = getLogger(__name__)
 
 
-@add_metaclass(ABCMeta)
-class ConnectNode(CommonNode):
+class HostNode(ConnectNode):
     """
-    Base node class for Topology Connect.
-
-    See :class:`topology.platform.CommonNode` for more information.
+    FIXME: Document.
     """
-
-    @abstractmethod
     def __init__(self, identifier, **kwargs):
-        super(ConnectNode, self).__init__(identifier, **kwargs)
+        super(HostNode, self).__init__(identifier, **kwargs)
+        self._shells['bash'] = SshShell('root@.*:.*# ')
 
 
-__all__ = ['ConnectNode']
+class UncheckedHostNode(ConnectNode):
+    """
+    FIXME: Document.
+    """
+    def __init__(self, identifier, **kwargs):
+        super(UncheckedHostNode, self).__init__(identifier, **kwargs)
+        self._shells['bash'] = SshShell(
+            'root@.*:.*# ',
+            options=['StrictHostKeyChecking=no']
+        )
+
+
+__all__ = ['HostNode', 'UncheckedHostNode']
