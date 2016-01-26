@@ -14,6 +14,14 @@ Documentation
 Changelog
 =========
 
+1.2.0
+-----
+
+**Changes**
+
+- Refactored node loading logic to use ``topology.platforms.utils.NodeLoader``
+  instead.
+
 1.1.0
 -----
 
