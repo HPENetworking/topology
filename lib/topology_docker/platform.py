@@ -26,9 +26,10 @@ import logging
 from collections import OrderedDict
 
 from topology.platforms.base import BasePlatform
+from topology.platforms.utils import NodeLoader
 
+from .node import DockerNode
 from .utils import tmp_iface, privileged_cmd
-from .nodes.manager import nodes
 
 
 log = logging.getLogger(__name__)
@@ -43,10 +44,14 @@ class DockerPlatform(BasePlatform):
 
     def __init__(self, timestamp, nmlmanager):
 
+        self.node_loader = NodeLoader(
+            'docker', api_version='1.0', base_class=DockerNode
+        )
+
         self.nmlnode_node_map = OrderedDict()
         self.nmlbiport_iface_map = OrderedDict()
         self.nmlbilink_nmlbiports_map = OrderedDict()
-        self.available_node_types = nodes()
+        self.available_node_types = self.node_loader.load_nodes()
 
         # Create netns folder
         privileged_cmd('mkdir -p /var/run/netns')
