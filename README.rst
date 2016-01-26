@@ -14,6 +14,16 @@ Documentation
 Changelog
 =========
 
+1.1.0
+-----
+
+**New**
+
+- Added a common ``stateprovider`` decorator to ``topology.libraries.utils``
+  that allows to easily inject state to an enode in a Communication library.
+- Added a common ``NodeLoader`` class to ``topology.platforms.utils`` that
+  allows a Platform Engine to find a load nodes for it's platform.
+
 1.0.1
 -----
 
