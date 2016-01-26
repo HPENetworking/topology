@@ -22,7 +22,9 @@ which makes two switches behave like a single switch by forwarding packets to
 the controller.
 """
 
+import pytest
 import time
+from subprocess import check_output
 
 TOPOLOGY = """
 #             +-------+
@@ -63,6 +65,9 @@ sw1:3 -- hs2:1
 """
 
 
+@pytest.mark.skipif(
+    'openvswitch' not in check_output('lsmod').decode('utf-8'),
+    reason='Requires Open vSwitch kernel module.')
 def test_controller_link(topology):
 
     ryu = topology.get('ryu')
