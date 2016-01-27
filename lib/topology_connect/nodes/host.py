@@ -37,7 +37,7 @@ class HostNode(ConnectNode):
     """
     def __init__(self, identifier, **kwargs):
         super(HostNode, self).__init__(identifier, **kwargs)
-        self._shells['bash'] = SshShell('root@.*:.*# ')
+        self._shells['bash'] = SshShell('(^|\n)root@.*:.*# ')
 
 
 class UncheckedHostNode(ConnectNode):
@@ -47,7 +47,7 @@ class UncheckedHostNode(ConnectNode):
     def __init__(self, identifier, **kwargs):
         super(UncheckedHostNode, self).__init__(identifier, **kwargs)
         self._shells['bash'] = SshShell(
-            'root@.*:.*# ',
+            '(^|\n)root@.*:.*# ',
             options=['StrictHostKeyChecking=no']
         )
 
