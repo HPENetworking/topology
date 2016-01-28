@@ -31,12 +31,16 @@ from glob import glob
 from json import loads
 from os import getcwd
 from fnmatch import fnmatch
+from logging import getLogger
 from collections import OrderedDict
 from os.path import isabs, join, abspath, isfile, basename
 
 from six import iteritems
 
 from .parser import parse_txtmeta, find_topology_in_python
+
+
+log = getLogger(__name__)
 
 
 def parse_attribute_injection(injection_file, search_path=None):
@@ -126,6 +130,9 @@ def parse_attribute_injection(injection_file, search_path=None):
                     for attribute, value in modifier['attributes'].items():
                         result[filename][node][attribute] = value
 
+    log.debug('Attribute injection interpreted dictionary:')
+    log.debug(result)
+
     return result
 
 
@@ -140,7 +147,7 @@ def expand_files(files_definitions, search_path):
     ::
 
         '/abs/path/to/my*_thing.py'
-        'myfile.topology'
+        'myfile.szn'
         'relative/test_*.py'
 
     :param list files_definitions: A list of files definitions.
@@ -167,7 +174,7 @@ def expand_files(files_definitions, search_path):
                 continue
 
             if fnmatch(filename, 'test_*.py') or \
-                    fnmatch(filename, '*.topology'):
+                    fnmatch(filename, '*.szn'):
                 matches.append(filepath)
 
         expanded_files.extend(matches)

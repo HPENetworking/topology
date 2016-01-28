@@ -227,7 +227,7 @@ To build an *Engine Node* to support communications libraries make sure to
 create and attribute ``libs`` with an instance of
 :class:`topology.libraries.manager.LibsProxy`:
 
-.. code:: python
+.. code-block:: python
 
    class MyEngineNode(BaseNode):
        def __init__(self, identifier, **kwargs):

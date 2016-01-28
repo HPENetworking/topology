@@ -40,7 +40,7 @@ The format for the textual description of a topology is similar to Graphviz
 syntax and allows to define nodes and ports with shared attributes and links
 between two endpoints with shared attributes too.
 
-::
+.. code-block:: text
 
     # Nodes
     [type=switch attr1=1] sw1 sw2
@@ -71,6 +71,117 @@ For a more programmatic format consider the ``metadict`` format or using the
 :class:`pynml.manager.ExtendedNMLManager` directly.
 
 
+.. _attribute-injection:
+
+Injecting attributes
+====================
+
+It may be necessary to define some attributes for the nodes outside of the
+topology definition. Many cases exists for this, like testing a different image
+using a whole suite of tests, or to specify the IP of a machine to connect to.
+
+These attributes can be *injected* using an *injection file*: a JSON file
+that defines which attributes are to be added to which nodes in which test
+topologies.
+
+The injection file defines a list of *injection specifications*, JSON
+dictionaries with the following keys:
+
+- **files** a list of files where to look for nodes.
+- **modifiers** a list of dictionaries with the following keys:
+
+  + **nodes** a list of nodes where to look for attributes.
+  + **attributes** a dictionary with the attributes and values to inject.
+
+This is an injection file example:
+
+.. _injection-file:
+
+.. code-block:: json
+
+      [
+          {
+              "files": ["/path/to/directory/*", "/test/test_case.py"],
+              "modifiers": [
+                  {
+                      "nodes": ["sw1", "type=host", "sw3"],
+                      "attributes": {
+                          "image": "image_for_sw1_sw3_and_hosts",
+                          "hardware": "hardware_for_sw1_sw3_and_hosts"
+                      }
+                  },
+                  {
+                      "nodes": ["sw4"],
+                      "attributes": {
+                          "image": "image_for_sw4"
+                      }
+                  }
+              ]
+          },
+          {
+              "files": ["/path/to/directory/test_case.py"],
+              "modifiers": [
+                  {
+                      "nodes": ["sw1"],
+                      "attributes": {
+                          "image": "special_image_for_sw1",
+                      }
+                  }
+              ]
+          }
+      ]
+
+In order to avoid lengthy injection files, groups of files or nodes can be
+defined using shorthands:
+
+
+Files
++++++
+
+The items in the *files* list are paths for  *test suites* or *SZN* files.
+
+- **test suites** are files that match with ``test_*.py``
+- **SZN files** are files that match with ``*.szn``
+
+A complete directory can be specified too with ``/path/to/directory/*``.
+
+Only test suites and SZN files are selected when injecting attributes.
+
+Some examples:
+
+- ``test_first_case.py`` and ``test_second_case.py`` can both be selected with
+  ``test_*_case.py``.
+- Any topology file can be selected with ``*.szn``.
+- ``some_test_case.py`` will never be selected, even if it is inside a
+  directory specified with ``/path/to/directory/*`` because it is neither a
+  test suite nor a configuration file.
+
+
+Nodes
++++++
+
+Several nodes can be selected too:
+
+- ``*`` will select any node; in a similar fashion ``hs*`` will select any node
+  whose name begins with ``hs``.
+- ``some_attribute=some_value`` will select any node that has that specific
+  pair of attribute and value already defined (either if that pair was defined
+  in the topology definition or by attribute injection).
+
+
+Overriding attributes
++++++++++++++++++++++
+
+An attribute that was set in the topology definition will be overriden by
+another one with the same name in the injection file.
+
+The order in which attributes are defined in the injection file matters. For
+example, :ref:`in this example <injection-file>` the ``image`` attribute for
+``sw1`` in ``/path/to/directory/*`` was set to ``image_for_sw1_sw3_and_hosts``
+first, but after this, it was overriden to ``special_image_for_sw1`` because of
+the second injection specification.
+
+
 Using the topology executable
 =============================
 
@@ -79,12 +190,13 @@ with them. The ``topology`` program allows to launch a topology from a textual
 description or from a test (see below). The ``topology`` program is installed
 as part of the Topology framework.
 
-::
+.. code-block:: text
 
    $ topology --help
-   usage: topology [-h] [-v] [--version] [--platform {debug}] [--non-interactive]
+   usage: topology [-h] [-v] [--version] [--platform {}] [--non-interactive]
                    [--show-build-commands] [--plot-dir PLOT_DIR]
                    [--plot-format PLOT_FORMAT] [--nml-dir NML_DIR]
+                   [--inject INJECT]
                    topology
 
    Network Topology Framework using NML, with support for pytest.
@@ -96,7 +208,7 @@ as part of the Topology framework.
      -h, --help            show this help message and exit
      -v, --verbose         Increase verbosity level
      --version             show program's version number and exit
-     --platform {debug}    Platform engine to build the topology with
+     --platform {}         Platform engine to build the topology with
      --non-interactive     Just build the topology and exit
      --show-build-commands
                            Show commands executed in nodes during build
@@ -104,12 +216,13 @@ as part of the Topology framework.
      --plot-format PLOT_FORMAT
                            Format for plotting topologies
      --nml-dir NML_DIR     Directory to export topologies as NML XML
+     --inject INJECT       Path to an attributes injection file
 
 You can run a topology and interact with their nodes:
 
-::
+.. code-block:: text
 
-   $ cat my_topology.net
+   $ cat my_topology.szn
    # +-------+                                 +-------+
    # |       |     +-------+     +-------+     |       |
    # |  hs1  <----->  sw1  <----->  sw2  <----->  hs2  |
@@ -129,9 +242,9 @@ You can run a topology and interact with their nodes:
 
 This topology can be run and interacted with like this:
 
-::
+.. code-block:: text
 
-   $ topology --platform=docker my_topology.net
+   $ topology --platform=docker my_topology.szn
    Starting Network Topology Framework v0.1.0
    Building topology, please wait...
    Engine nodes available for communication:
@@ -158,7 +271,7 @@ Test will be able to interact with the topology nodes by calling
 unbuild the topology automatically. In other words, all tests in a module
 share the same topology.
 
-.. code:: python
+.. code-block:: python
 
    TOPOLOGY = """
    # +-------+                                 +-------+
@@ -204,6 +317,10 @@ Added pytest arguments
 :``--topology-platform``:
    Platform Engine to build the topology with.
 
+:``--topology-inject``:
+   Path to an attributes injection file, See the
+   :ref:`Attribute Injection <attribute-injection>` section above.
+
 :``--topology-plot-dir``:
    Directory to auto-plot topologies.
    All topologies found will be plotted to this directory automatically.
@@ -227,7 +344,7 @@ Added pytest markers
 
    For example:
 
-   .. code:: python
+   .. code-block:: python
 
       from pytest import mark
       @mark.test_id(10000)
@@ -241,7 +358,7 @@ Added pytest markers
 
    For example:
 
-   .. code:: python
+   .. code-block:: python
 
       from pytest import marl
       @mark.platform_incompatible(['debug'])
