@@ -45,5 +45,47 @@ class ConnectNode(CommonNode):
     def __init__(self, identifier, **kwargs):
         super(ConnectNode, self).__init__(identifier, **kwargs)
 
+    @abstractmethod
+    def start(self):
+        """
+        Starts the Node.
+        """
 
-__all__ = ['ConnectNode']
+    @abstractmethod
+    def stop(self):
+        """
+        Stops the Node.
+        """
+
+
+@add_metaclass(ABCMeta)
+class CommonConnectNode(CommonNode):
+    """
+    Common Connect Node class for Topology Connect.
+
+    This class will automatically auto-connect to all its shells on start and
+    disconnect on stop.
+
+    See :class:`topology_connect.platform.ConnectNode` for more information.
+    """
+
+    @abstractmethod
+    def __init__(self, identifier, **kwargs):
+        super(ConnectNode, self).__init__(identifier, **kwargs)
+
+    def start(self):
+        """
+        Connect to all node shells.
+        """
+        for shell in self._shells.values():
+            shell.connect()
+
+    def stop(self):
+        """
+        Disconnect from  all node shells.
+        """
+        for shell in self._shells.values():
+            shell.disconnect()
+
+
+__all__ = ['ConnectNode', 'CommonConnectNode']

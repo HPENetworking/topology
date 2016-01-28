@@ -24,14 +24,14 @@ from __future__ import print_function, division
 
 from logging import getLogger
 
-from ..node import ConnectNode
+from ..node import CommonConnectNode
 from ..shell import SshShell
 
 
 log = getLogger(__name__)
 
 
-class HostNode(ConnectNode):
+class HostNode(CommonConnectNode):
     """
     FIXME: Document.
     """
@@ -40,7 +40,7 @@ class HostNode(ConnectNode):
         self._shells['bash'] = SshShell('(^|\n)root@.*:.*# ')
 
 
-class UncheckedHostNode(ConnectNode):
+class UncheckedHostNode(CommonConnectNode):
     """
     FIXME: Document.
     """
