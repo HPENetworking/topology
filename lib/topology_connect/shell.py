@@ -181,7 +181,10 @@ class ConnectShell(object):
             raise Exception('Shell already connected.')
 
         # Create a child process
-        self._spawn = spawn(self._get_connect_command().strip(), echo=False)
+        self._spawn = spawn(
+            self._get_connect_command().strip(),
+            env={'TERM': 'dumb'}, echo=False
+        )
 
         # If connection is via password
         if self._password is not None:
@@ -250,7 +253,7 @@ class SshShell(ConnectShell):
             options = '-o {}'.format(' -o '.join(self._options))
 
         connect_command = (
-            'TERM=dumb ssh {self._user}@{self._hostname} '
+            'ssh {self._user}@{self._hostname} '
             '-p {self._port} {options}'.format(
                 **locals()
             )
@@ -281,7 +284,7 @@ class TelnetShell(ConnectShell):
         FIXME: Document.
         """
         connect_command = (
-            'TERM=dumb telnet {self._hostname} {self._port}'.format(
+            'telnet {self._hostname} {self._port}'.format(
                 **locals()
             )
         )
