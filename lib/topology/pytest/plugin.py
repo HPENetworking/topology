@@ -46,7 +46,7 @@ import logging
 from inspect import stack
 from os import getcwd, makedirs
 from traceback import format_exc
-from os.path import join, isabs, abspath, exists
+from os.path import join, isabs, abspath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
@@ -273,7 +273,16 @@ def pytest_configure(config):
     from ..injection import parse_attribute_injection
     injected_attr = None
     if injection_file is not None:
-        injected_attr = parse_attribute_injection(injection_file)
+
+        # Get a list of all testing directories
+        search_paths = [
+            abspath(arg) for arg in config.args if isdir(arg)
+        ]
+
+        injected_attr = parse_attribute_injection(
+            injection_file,
+            search_paths=search_paths
+        )
 
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(

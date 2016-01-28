@@ -286,7 +286,7 @@ def test_attribute_injection(tmpdir):
 
         # Actually parse the injection file
         actual = parse_attribute_injection(
-            injection_path, search_path=search_path
+            injection_path, search_paths=[search_path]
         )
 
         # Compare the actual and the expected
