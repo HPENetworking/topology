@@ -59,7 +59,7 @@ class ConnectNode(CommonNode):
 
 
 @add_metaclass(ABCMeta)
-class CommonConnectNode(CommonNode):
+class CommonConnectNode(ConnectNode):
     """
     Common Connect Node class for Topology Connect.
 
@@ -71,7 +71,7 @@ class CommonConnectNode(CommonNode):
 
     @abstractmethod
     def __init__(self, identifier, **kwargs):
-        super(ConnectNode, self).__init__(identifier, **kwargs)
+        super(CommonConnectNode, self).__init__(identifier, **kwargs)
 
     def start(self):
         """
