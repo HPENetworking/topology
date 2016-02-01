@@ -43,7 +43,7 @@ from .parser import parse_txtmeta, find_topology_in_python
 log = getLogger(__name__)
 
 
-def parse_attribute_injection(injection_file, search_path=None):
+def parse_attribute_injection(injection_file, search_paths=None):
     """
     Parses a attributes injection file into an attribute injection dictionary.
 
@@ -81,7 +81,7 @@ def parse_attribute_injection(injection_file, search_path=None):
         ]
 
     :param str injection_file: Path for the attribute injection file.
-    :param str search_path: Path to search for files when the file match is
+    :param list search_paths: Paths to search for files when the file match is
      relative in the injection file.
      If ``None`` (the default), the current working directory is used.
     :return: An ordered dictionary with the attributes to inject of the form:
@@ -103,8 +103,9 @@ def parse_attribute_injection(injection_file, search_path=None):
 
     :rtype: `collections.OrderedDict`
     """
-    if search_path is None:
-        search_path = abspath(getcwd())
+    if search_paths is None:
+        search_paths = [abspath(getcwd())]
+    log.debug('Injection search paths: {}'.format(search_paths))
 
     with open(injection_file) as fd:
         injection_spec = loads(fd.read())
@@ -113,7 +114,7 @@ def parse_attribute_injection(injection_file, search_path=None):
 
     # Iterate all specifications, expand files and fill return dictionary
     for spec in injection_spec:
-        for filename in expand_files(spec['files'], search_path):
+        for filename in expand_files(spec['files'], search_paths):
 
             if filename not in result:
                 result[filename] = OrderedDict()
@@ -136,13 +137,13 @@ def parse_attribute_injection(injection_file, search_path=None):
     return result
 
 
-def expand_files(files_definitions, search_path):
+def expand_files(files_definitions, search_paths):
     """
     Expands a list of files definitions into the matching files paths.
 
     A file definition is a string that can match none, one or more files
     (by using wildcards). It can be an absolute path, or a relative path from
-    the search path. For example:
+    the search paths. For example:
 
     ::
 
@@ -151,7 +152,7 @@ def expand_files(files_definitions, search_path):
         'relative/test_*.py'
 
     :param list files_definitions: A list of files definitions.
-    :param str search_path: Path to search for files when the file definition
+    :param str search_paths: Paths to search for files when the file definition
      is relative.
     :return: A list of files paths.
     """
@@ -160,22 +161,28 @@ def expand_files(files_definitions, search_path):
 
     for file_definition in files_definitions:
 
+        # File definitions to look for
+        lookups = []
+
         # Determine if suite must be located in suites search path
-        if not isabs(file_definition):
-            file_definition = join(search_path, file_definition)
+        if isabs(file_definition):
+            lookups.append(file_definition)
+        else:
+            for search_path in search_paths:
+                lookups.append(join(search_path, file_definition))
 
         # Find all file matches for the suite definition
+        for lookup in lookups:
+            matches = []
+            for filepath in glob(lookup):
+                filename = basename(filepath)
 
-        matches = []
-        for filepath in glob(file_definition):
-            filename = basename(filepath)
+                if filepath in expanded_files or not isfile(filepath):
+                    continue
 
-            if filepath in expanded_files or not isfile(filepath):
-                continue
-
-            if fnmatch(filename, 'test_*.py') or \
-                    fnmatch(filename, '*.szn'):
-                matches.append(filepath)
+                if fnmatch(filename, 'test_*.py') or \
+                        fnmatch(filename, '*.szn'):
+                    matches.append(filepath)
 
         expanded_files.extend(matches)
 
