@@ -217,7 +217,7 @@ class OpenSwitchNode(DockerNode):
 
         super(OpenSwitchNode, self).__init__(
             identifier, image=image, command='/sbin/init', binds=binds,
-            **kwargs
+            hostname='switch', **kwargs
         )
 
         # Save location of the shared dir in host

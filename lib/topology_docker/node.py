@@ -43,7 +43,8 @@ class DockerNode(CommonNode):
     An instance of this class will create a detached Docker container.
 
     :param str identifier: The unique identifier of the node.
-    :param str image: The image to run on this node.
+    :param str image: The image to run on this node, in the
+     form ``repository:tag``.
     :param str registry: Docker registry to pull image from.
     :param str command: The command to run when the container is brought up.
     :param list binds: List of directories to bind for this container in the
@@ -63,7 +64,7 @@ class DockerNode(CommonNode):
     def __init__(
             self, identifier,
             image='ubuntu:latest', registry=None, command='bash',
-            binds=None, network_mode='none', **kwargs):
+            binds=None, network_mode='none', hostname=None, **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
 
@@ -71,6 +72,7 @@ class DockerNode(CommonNode):
         self._image = image
         self._registry = registry
         self._command = command
+        self._hostname = hostname
         self._client = Client()
 
         # Autopull docker image if necessary
@@ -90,6 +92,7 @@ class DockerNode(CommonNode):
             name='{}_{}'.format(identifier, str(id(self))),
             detach=True,
             tty=True,
+            hostname=self._hostname,
             host_config=self._host_config
         )['Id']
 
