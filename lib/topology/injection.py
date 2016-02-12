@@ -223,6 +223,7 @@ def expand_nodes(filename, nodes_definitions):
             parsed_dummy = parse_txtmeta(
                 '[{}] dummy1'.format(node_definition)
             )
+
             # Extract the attribute name and value
             attribute, value = list(iteritems(
                 parsed_dummy['nodes'][0]['attributes']
@@ -230,7 +231,8 @@ def expand_nodes(filename, nodes_definitions):
 
             # Look for attribute name matching
             for nodes_group in parsed_topology['nodes']:
-                if attribute in nodes_group['attributes']:
+                attributes = nodes_group['attributes']
+                if attribute in attributes and value == attributes[attribute]:
 
                     # Retain order, and avoid adding repeated nodes
                     for node in nodes_group['nodes']:

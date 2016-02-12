@@ -40,6 +40,7 @@ TOPOLOGY_TO_BUILD = """
 # Nodes
 [shell=vtysh name="Switch 9"] sw9
 [shell=vtysh name="Switch 2"] sw2
+[type=switch name="Switch 8"] sw8
 [type=host name="Host 3"] hs3
 [type=host name="Host 2"] hs2
 # Links
@@ -52,6 +53,7 @@ TOPOLOGY_MATCH_0 = """
 # Nodes
 [shell=vtysh name="Switch 1"] sw1
 [shell=vtysh name="Switch 2"] sw2
+[type=switch name="Switch 8"] sw8
 [type=host name="Host 1"] hs1
 [type=host name="Host 2"] hs2
 # Links
@@ -115,6 +117,12 @@ INJECTION_FILE = """
                     "image": "image_for_sw2",
                     "shell": "vtysh",
                     "name":  "new_name"
+                }}
+            }},
+            {{
+                "nodes": ["type=switch"],
+                "attributes": {{
+                    "chassis": "chassis_for_sw8"
                 }}
             }}
         ]
@@ -185,6 +193,10 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
                     'image': 'image_for_sw2',
                     'shell': 'vtysh',
                     'name': 'new_name',
+                }
+            ), (
+                'sw8', {
+                    'chassis': 'chassis_for_sw8'
                 }
             ), (
                 'hs1', {
@@ -291,12 +303,6 @@ def test_attribute_injection(tmpdir):
 
         # Compare the actual and the expected
         differences = DeepDiff(actual, expected)
-        # from pprint import pprint
-        # print('--------------------')
-        # pprint(actual)
-        # print('--------------------')
-        # pprint(expected)
-        # print('--------------------')
         assert not differences
 
         # Test building with injected attributes
@@ -315,6 +321,7 @@ def test_attribute_injection(tmpdir):
 
         sw9 = topology.get('sw9')
         sw2 = topology.get('sw2')
+        sw8 = topology.get('sw8')
         hs3 = topology.get('hs3')
         hs2 = topology.get('hs2')
 
@@ -322,11 +329,15 @@ def test_attribute_injection(tmpdir):
             'shell': 'vtysh',
             'name': 'Switch 9'
         }
-        # [shell=vtysh name="new_name" image=image_for_sw2] sw2
         assert sw2.metadata == {
             'image': 'image_for_sw2',
             'shell': 'vtysh',
             'name': 'new_name'
+        }
+        assert sw8.metadata == {
+            'type': 'switch',
+            'name': 'Switch 8',
+            'chassis': 'chassis_for_sw8'
         }
         assert hs3.metadata == {
             'type': 'host',
