@@ -73,7 +73,7 @@ class DockerNode(CommonNode):
         self._registry = registry
         self._command = command
         self._hostname = hostname
-        self._client = Client()
+        self._client = Client(version='auto')
 
         # Autopull docker image if necessary
         self._autopull()
