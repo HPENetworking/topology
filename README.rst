@@ -14,6 +14,19 @@ Documentation
 Changelog
 =========
 
+1.3.0
+-----
+
+**Changes**
+
+- Node's/Container's hostname can now be set using the ``hostname`` attribute
+  in the SZN description. OpenSwitch will always enforce the ``switch``
+  hostname for all nodes of this type.
+- Docker-py's will now use the server's API version, instead of the latest.
+  With this it will no longer required to update the Docker daemon to run
+  topology tests.
+- Set ``topology`` minimal version to ``1.2.0``.
+
 1.2.0
 -----
 
