@@ -14,6 +14,24 @@ Documentation
 Changelog
 =========
 
+1.2.0
+-----
+
+**New**
+
+- Added new API for the topology nodes that allow to set the default shell.
+  For example, you may now use ``mynode.default_shell = 'bash'``.
+- Documentation for the *Attribute Injection* feature was added.
+- Improvements for file matching in attribute injection files. Now, if using
+  pytest, all test folders passed as arguments will be used as search paths for
+  relative files specified in the attribute injection file. With this, it is no
+  longer required to use an absolute path, and this practice becomes deprecated.
+
+**Fixes**
+
+- Fixed a bug in attribute injection when using ``attribute=value`` as node
+  identifier that caused all nodes with the attribute to use that value.
+
 1.1.0
 -----
 
