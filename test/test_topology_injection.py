@@ -102,7 +102,7 @@ TOPOLOGY_MATCHES = [
 INJECTION_FILE = """
 [
     {{
-        "files": ["{search_path}/test_topology_match_0.py"],
+        "files": ["test_topology_match_0.py"],
         "modifiers": [
             {{
                 "nodes": ["sw1"],
@@ -149,7 +149,7 @@ INJECTION_FILE = """
         ]
     }},
     {{
-        "files": ["{search_path}/test_topology_match_2.py"],
+        "files": ["test_topology_match_2.py"],
         "modifiers": [
             {{
                 "nodes": ["*"],
@@ -160,7 +160,7 @@ INJECTION_FILE = """
         ]
     }},
     {{
-        "files": ["{search_path}/*"],
+        "files": ["*"],
         "modifiers": [
             {{
                 "nodes": ["hs*"],
