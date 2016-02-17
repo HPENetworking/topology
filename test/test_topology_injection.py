@@ -92,12 +92,15 @@ hs2:1 -- sw2:1
 [attr1=1] sw1:2 -- sw2:2
 """
 
-TOPOLOGY_MATCHES = [
-    TOPOLOGY_MATCH_0,
-    TOPOLOGY_MATCH_1,
-    TOPOLOGY_MATCH_2,
-    TOPOLOGY_MATCH_3
-]
+TOPOLOGY_MATCHES = {
+    '0': TOPOLOGY_MATCH_0,
+    '2': TOPOLOGY_MATCH_2
+}
+
+TOPOLOGY_MATCHES_FOLDER = {
+    '1': TOPOLOGY_MATCH_1,
+    '3': TOPOLOGY_MATCH_3
+}
 
 INJECTION_FILE = """
 [
@@ -211,7 +214,7 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
             ),
         ])
     ), (
-        '{search_path}/test_topology_match_1.py',
+        '{search_path}/subfolder/test_topology_match_1.py',
         OrderedDict([
             (
                 'sw1', {
@@ -244,7 +247,7 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
             ),
         ])
     ), (
-        '{search_path}/test_topology_match_3.py',
+        '{search_path}/subfolder/test_topology_match_3.py',
         OrderedDict([
             (
                 'hs3', {
@@ -274,17 +277,21 @@ def test_attribute_injection(tmpdir):
     """
     workdir = str(tmpdir)
     search_path = str(tmpdir.mkdir('test'))
+    subfolder = str(tmpdir.mkdir('test/subfolder'))
 
     try:
         # Write matching topologies
-        for count, content in enumerate(TOPOLOGY_MATCHES):
-            output_filename = join(
-                search_path, 'test_topology_match_{}.py'.format(count)
-            )
-            with open(output_filename, 'w') as fd:
-                fd.write('TOPOLOGY = """\n')
-                fd.write(content)
-                fd.write('"""')
+        for basepath, matches in (
+                (search_path, TOPOLOGY_MATCHES),
+                (subfolder, TOPOLOGY_MATCHES_FOLDER)):
+            for count, content in matches.items():
+                output_filename = join(
+                    basepath, 'test_topology_match_{}.py'.format(count)
+                )
+                with open(output_filename, 'w') as fd:
+                    fd.write('TOPOLOGY = """\n')
+                    fd.write(content)
+                    fd.write('"""')
 
         # Write the attributes injection file
         injection_path = join(workdir, 'attributes_injection.json')

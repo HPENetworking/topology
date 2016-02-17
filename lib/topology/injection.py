@@ -29,7 +29,7 @@ from __future__ import print_function, division
 from re import match
 from glob import glob
 from json import loads
-from os import getcwd
+from os import getcwd, walk
 from fnmatch import fnmatch
 from logging import getLogger
 from collections import OrderedDict
@@ -103,10 +103,31 @@ def parse_attribute_injection(injection_file, search_paths=None):
 
     :rtype: `collections.OrderedDict`
     """
+    # Define search paths
     if search_paths is None:
         search_paths = [abspath(getcwd())]
     log.debug('Injection search paths: {}'.format(search_paths))
 
+    # Expand search paths recursively to include all subfolders
+    def subfolders(search_path):
+        result = []
+        for root, dirs, files in walk(search_path):
+            result.extend([join(root, directory) for directory in dirs])
+        return result
+
+    paths_to_expand = list(search_paths)
+    for root in paths_to_expand:
+        children = subfolders(root)
+        search_paths.extend(children)
+
+    # Make search paths unique
+    uniques = []
+    for path in search_paths:
+        if path not in uniques:
+            uniques.append(path)
+    search_paths = uniques
+
+    # Read injection file
     with open(injection_file) as fd:
         injection_spec = loads(fd.read())
 
