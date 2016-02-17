@@ -172,8 +172,8 @@ def expand_files(files_definitions, search_paths):
                 lookups.append(join(search_path, file_definition))
 
         # Find all file matches for the suite definition
+        matches = []
         for lookup in lookups:
-            matches = []
             for filepath in glob(lookup):
                 filename = basename(filepath)
 
