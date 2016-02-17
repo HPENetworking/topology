@@ -14,6 +14,19 @@ Documentation
 Changelog
 =========
 
+1.3.0
+-----
+
+**Changes**
+
+- Attribute injection will now try to match files on any subfolder of the
+  search paths and not only on the search paths themselves.
+
+**Fixes**
+
+- Fixed critical bug in injection attribute not considering matches in some
+  cases.
+
 1.2.0
 -----
 
