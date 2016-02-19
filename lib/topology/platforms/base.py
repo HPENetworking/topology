@@ -332,8 +332,8 @@ class CommonNode(BaseNode):
             )
 
         if not silent:
-            print('{} [{}].send_command({}) ::'.format(
-                datetime.now().isoformat(), self.identifier, cmd
+            print('{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
+                datetime.now().isoformat(), self.identifier, cmd, shell
             ))
 
         response = self._shells[shell](cmd)
