@@ -1,3 +1,4 @@
 six
+pexpect
 pyparsing
 pynml>=1.0.0
