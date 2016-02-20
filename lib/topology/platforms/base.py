@@ -211,6 +211,18 @@ class BaseNode(object):
         return self.send_command(cmd, shell=shell, silent=silent)
 
     @abstractmethod
+    def get_shell(self, shell):
+        """
+        Get the shell object associated with the given name.
+
+        The shell object allows to access the low-level shell API.
+
+        :param str shell: Name of the shell.
+        :return: The associated shell object.
+        :rtype: :class:`BaseShell`.
+        """
+
+    @abstractmethod
     def send_command(self, cmd, shell=None, silent=False):
         """
         Send a command to this engine node.
@@ -301,6 +313,21 @@ class CommonNode(BaseNode):
                 'Cannot set default shell. Unknown shell "{}"'.format(value)
             )
         self._default_shell = value
+
+    def get_shell(self, shell):
+        """
+        Implementation of the ``get_shell`` interface.
+
+        This method will return the shell object associated with the given
+        shell name.
+
+        See :meth:`BaseNode.get_shell` for more information.
+        """
+        if shell not in self._shells:
+            raise Exception(
+                'Unknown shell {}'.format(shell)
+            )
+            return self._shells[shell]
 
     def send_command(self, cmd, shell=None, silent=False):
         """
