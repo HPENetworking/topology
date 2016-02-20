@@ -238,4 +238,28 @@ class PExpectShell(BaseShell):
         self._spawn.close()
 
 
-__all__ = ['TERM_CODES_REGEX', 'BaseShell', 'PExpectShell']
+class ShellContext(object):
+    """
+    Context Manager class for default shell swapping.
+
+    This object will handle the swapping of the default shell when in and out
+    of the context.
+
+    :param BaseNode node: Node to default shell to swap.
+    :param str shell_to_use: Shell to use during the context session.
+    """
+
+    def __init__(self, node, shell_to_use):
+        self._node = node
+        self._shell_to_use = shell_to_use
+        self._default_shell = node.default_shell
+
+    def __enter__(self):
+        self._node.default_shell = self._shell_to_use
+        return self._node.get_shell(self._default_shell)
+
+    def __exit__(self, type, value, traceback):
+        self._node.default_shell = self._default_shell
+
+
+__all__ = ['TERM_CODES_REGEX', 'BaseShell', 'PExpectShell', 'ShellContext']

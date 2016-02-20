@@ -31,6 +31,7 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass, iterkeys
 
+from .shell import ShellContext
 from ..libraries.manager import LibsProxy
 
 
@@ -210,6 +211,29 @@ class BaseNode(object):
     def __call__(self, cmd, shell=None, silent=False):
         return self.send_command(cmd, shell=shell, silent=silent)
 
+    def use_shell(self, shell):
+        """
+        Create a context manager that allows to use a different default shell
+        in a context.
+
+        :param str shell: The default shell to use in the context.
+
+        Assuming, for example, that a node has two shells:
+        ``bash`` and ``python``:
+
+        ::
+
+            with mynode.use_shell('python') as python:
+                # This context manager sets the default shell to 'python'
+                mynode('from os import getcwd')
+                cwd = mynode('print(getcwd())')
+
+                # Access to the low-level shell API
+                python.send_command('foo = (', matches=['... '])
+                ...
+        """
+        return ShellContext(self, shell)
+
     @abstractmethod
     def get_shell(self, shell):
         """
@@ -325,7 +349,7 @@ class CommonNode(BaseNode):
         """
         if shell not in self._shells:
             raise Exception(
-                'Unknown shell {}'.format(shell)
+                'Unknown shell "{}"'.format(shell)
             )
             return self._shells[shell]
 
