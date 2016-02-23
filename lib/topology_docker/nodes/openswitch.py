@@ -111,6 +111,8 @@ def create_interfaces():
         logging.info('  - Port {} created.'.format(hwport))
         check_call(shsplit(create_cmd_tpl.format(hwport=hwport)))
         check_call(shsplit(netns_cmd_tpl.format(hwport=hwport)))
+    check_call(shsplit('touch /tmp/ops-virt-ports-ready'))
+    logging.info('  - Ports readiness notified to the image')
 
 def cur_cfg_is_set():
     global sock
@@ -119,8 +121,10 @@ def cur_cfg_is_set():
         sock.connect(db_sock)
     sock.send(dumps(query))
     response = loads(sock.recv(4096))
-    return response['result'][0]['rows'][0]['cur_hw'] == 1
-
+    try: 
+        return response['result'][0]['rows'][0]['cur_hw'] == 1
+    except IndexError:
+        return 0
 
 def main():
 
@@ -157,15 +161,6 @@ def main():
     else:
         raise Exception('Timed out while waiting for DB socket.')
 
-    logging.info('Waiting for cur_cfg...')
-    for i in range(0, config_timeout):
-        if not cur_cfg_is_set():
-            sleep(0.1)
-        else:
-            break
-    else:
-        raise Exception('Timed out while waiting for cur_cfg.')
-
     logging.info('Waiting for switchd pid...')
     for i in range(0, config_timeout):
         if not exists(switchd_pid):
@@ -183,6 +178,15 @@ def main():
             break
     else:
         raise Exception('Timed out while waiting for final hostname.')
+
+    logging.info('Waiting for cur_cfg...')
+    for i in range(0, config_timeout):
+        if not cur_cfg_is_set():
+            sleep(0.1)
+        else:
+            break
+    else:
+        raise Exception('Timed out while waiting for cur_cfg.')
 
 if __name__ == '__main__':
     main()
