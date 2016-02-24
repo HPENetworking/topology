@@ -87,7 +87,7 @@ def create_interfaces():
 
     # Map the port with the labels
     for portlbl in not_in_swns:
-        if portlbl in ['lo', 'oobm']:
+        if portlbl in ['lo', 'oobm', 'bonding_masters']:
             continue
         hwport = hwports.pop(0)
         mapping_ports[portlbl] = hwport
