@@ -151,8 +151,8 @@ class PExpectShell(BaseShell):
             matches = [self._prompt]
 
         # Append prefix if required
-        if self._prefix is None:
-            command = self._prefix + command
+        if self._prefix is not None:
+            command = '{}{}'.format(self._prefix, command)
 
         # Save last command in cache to allow to remove echos in get_response()
         self._last_command = command
@@ -167,7 +167,7 @@ class PExpectShell(BaseShell):
         if timeout is None:
             timeout = self._timeout
 
-        match_index = self._child.expect(matches, timeout=timeout)
+        match_index = self._spawn.expect(matches, timeout=timeout)
         return match_index
 
     def get_response(self):
