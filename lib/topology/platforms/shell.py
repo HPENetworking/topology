@@ -68,38 +68,73 @@ purpose of executing commands and parsing their outputs
 
 @add_metaclass(ABCMeta)
 class BaseShell(object):
+    """
+    Base shell class for Topology nodes.
+
+    This class represents a base interface for a Topology node shell. This
+    shell is expected to be an interactive shell, where an expect-like
+    mechanism is to be used to find a terminal prompt that signals the end of
+    the terminal response to a command sent to it.
+    """
 
     @abstractmethod
     def send_command(self, command, matches=None, newline=True, timeout=None):
         """
-        FIXME: Document.
+        Send a command to the shell.
+
+        :param str command: Command to be sent to the shell.
+        :param list matches: List of strings that may be matched by the shell
+         expect-like mechanism as prompts in the command response.
+        :param bool newline: True to append a newline at the end of the
+         command, False otherwise.
+        :param int timeout: Amount of time to wait until a prompt match is
+         found in the command response.
         """
 
     @abstractmethod
     def get_response(self):
         """
-        FIXME: Document.
+        Get a response from the shell to the previously sent command.
+
+        This method can be used to add extra processing to the shell response
+        if needed, cleaning up terminal control codes is an example.
+
+        :rtype: str
+        :return: Shell response to the previously sent command.
         """
 
     @abstractmethod
     def is_connected(self):
         """
-        FIXME: Document.
+        Shows if there is an active connection to the shell.
+
+        :rtype: bool
+        :return: True if there is an active connection to the shell, False
+         otherwise.
         """
 
     @abstractmethod
     def connect(self):
         """
-        FIXME: Document.
+        Creates a connection to the shell.
         """
 
     @abstractmethod
     def disconnect(self):
-        pass
+        """
+        Terminates a connection to the shell.
+        """
 
     def execute(self, command):
         """
-        FIXME: Document.
+        Executes a command.
+
+        This is just a convenient method that sends a command to the shell
+        using send_command and returns its response using get_response.
+
+        :param str command: Command to be sent.
+        :rtype: str
+        :return: Shell response to the command being sent.
         """
         self.send_command(command)
         return self.get_response()
@@ -111,7 +146,24 @@ class BaseShell(object):
 @add_metaclass(ABCMeta)
 class PExpectShell(BaseShell):
     """
+    Implementation of the BaseShell class using pexpect.
+
+    This class provides a convenient implementation of the BaseShell using
+    the pexpect package. The only thing needed for child classes is to define
+    the command that will be used to connect to the shell.
+
     See :class:`BaseShell`.
+
+    :param str prompt: Regular expression that matches the shell prompt.
+    :param str initial_command: Command that is to be sent at the beginning of
+     the connection.
+    :param str password_match: Regular expression that matches a password
+     prompt.
+    :param str password: Password to be sent at the beginning of the
+     connection.
+    :param int timeout: Default timeout to use in send_command.
+    :param str encoding: Character encoding to use when decoding the shell
+     response.
     """
 
     def __init__(
@@ -135,12 +187,21 @@ class PExpectShell(BaseShell):
     @abstractmethod
     def _get_connect_command(self):
         """
-        FIXME: Document.
+        Get the command to be used when connecting to the shell.
+
+        This must be defined by any child class as the return value of this
+        function will define all the connection details to use when creating a
+        connection to the shell. It will be used usually in conjunction with
+        other shell attributes to define the exact values to use when creating
+        the connection.
+
+        :rtype: str
+        :return: The command to be used when connecting to the shell.
         """
 
     def send_command(self, command, matches=None, newline=True, timeout=None):
         """
-        FIXME: Document.
+        See :meth:`BaseShell.send_command` for more information.
         """
         # Connect if not connected
         if not self.is_connected():
@@ -172,7 +233,7 @@ class PExpectShell(BaseShell):
 
     def get_response(self):
         """
-        FIXME: Document.
+        See :meth:`BaseShell.get_response` for more information.
         """
         # Convert binary representation to unicode using encoding
         text = self._spawn.before.decode(self._encoding)
@@ -198,13 +259,13 @@ class PExpectShell(BaseShell):
 
     def is_connected(self):
         """
-        FIXME: Document.
+        See :meth:`BaseShell.is_connected` for more information.
         """
         return self._spawn is not None and self._spawn.isalive()
 
     def connect(self):
         """
-        FIXME: Document.
+        See :meth:`BaseShell.connect` for more information.
         """
         if self.is_connected():
             raise Exception('Shell already connected.')
@@ -231,7 +292,7 @@ class PExpectShell(BaseShell):
 
     def disconnect(self):
         """
-        FIXME: Document.
+        See :meth:`BaseShell.disconnect` for more information.
         """
         if not self.is_connected():
             raise Exception('Shell already disconnected.')
