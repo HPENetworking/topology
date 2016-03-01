@@ -14,6 +14,33 @@ Documentation
 Changelog
 =========
 
+1.4.0
+-----
+
+**Changes**
+
+- The shell used to execute a command will now be logged.
+
+**New**
+
+- New low level shell API that allows to define a common behavior for all low
+  level shell manipulation. This API is implemented by the
+  ``topology.platforms.shell`` module.
+- Two new high level API methods for accesing the low level shell API::
+
+      myshell = mynode.get_shell('python')
+      response = myshel.execute('1 + 1')
+
+  Or using a context manager::
+
+      with mynode.use_shell('python') as python:
+          # This context manager sets the default shell to 'python'
+          mynode('from os import getcwd')
+          cwd = mynode('print(getcwd())')
+
+          # Access to the low-level shell API
+          python.send_command('foo = (', matches=['... '])
+
 1.3.0
 -----
 
