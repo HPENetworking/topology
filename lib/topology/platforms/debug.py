@@ -23,6 +23,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from datetime import datetime
 
 from .base import BasePlatform, CommonNode
 
@@ -126,8 +127,8 @@ class DebugNode(CommonNode):
         See :meth:`topology.platforms.base.CommonNode.send_command` for more
         information.
         """
-        log.debug('{}.send_command({}, shell={})'.format(
-            str(self), cmd, shell
+        log.debug('{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
+            datetime.now().isoformat(), str(self), cmd, shell
         ))
         return cmd
 
