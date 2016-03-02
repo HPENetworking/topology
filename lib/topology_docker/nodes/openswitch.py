@@ -121,7 +121,7 @@ def cur_cfg_is_set():
         sock.connect(db_sock)
     sock.send(dumps(query))
     response = loads(sock.recv(4096))
-    try: 
+    try:
         return response['result'][0]['rows'][0]['cur_hw'] == 1
     except IndexError:
         return 0
@@ -205,7 +205,7 @@ class OpenSwitchNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='topology/ops:latest',
+            image='topology/ops:latest', binds=None,
             **kwargs):
 
         # Determine shared directory
@@ -213,15 +213,18 @@ class OpenSwitchNode(DockerNode):
         ensure_dir(shared_dir)
 
         # Add binded directories
-        binds = [
+        container_binds = [
             '{}:/tmp'.format(shared_dir),
             '/dev/log:/dev/log',
             '/sys/fs/cgroup:/sys/fs/cgroup:ro'
         ]
+        if binds is not None:
+            container_binds.append(binds)
 
         super(OpenSwitchNode, self).__init__(
-            identifier, image=image, command='/sbin/init', binds=binds,
-            hostname='switch', **kwargs
+            identifier, image=image, command='/sbin/init',
+            binds=';'.join(container_binds), hostname='switch',
+            **kwargs
         )
 
         # Save location of the shared dir in host

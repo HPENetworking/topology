@@ -1,4 +1,4 @@
 six
 pexpect
 docker-py
-topology>=1.2.0
+topology>=1.5.0
