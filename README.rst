@@ -42,7 +42,7 @@ Changelog
 - Two new high level API methods for accesing the low level shell API::
 
       myshell = mynode.get_shell('python')
-      response = myshel.execute('1 + 1')
+      response = myshell.execute('1 + 1')
 
   Or using a context manager::
 
