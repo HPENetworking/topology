@@ -351,7 +351,7 @@ class CommonNode(BaseNode):
             raise Exception(
                 'Unknown shell "{}"'.format(shell)
             )
-            return self._shells[shell]
+        return self._shells[shell]
 
     def send_command(self, cmd, shell=None, silent=False):
         """
