@@ -14,6 +14,19 @@ Documentation
 Changelog
 =========
 
+1.5.0
+-----
+
+**New**
+
+- New ``topology.platforms.shell.PExpectBashShell`` class that allows to easily
+  setup shells that uses bash.
+
+**Fixes**
+
+- Fixed small identation bug that caused the function ``get_shell()`` in the
+  node API to return always ``None``.
+
 1.4.0
 -----
 
