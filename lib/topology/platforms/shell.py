@@ -142,6 +142,12 @@ class BaseShell(object):
     def __call__(self, command):
         return self.execute(command)
 
+    def _setup_shell(self):
+        """
+        Method called by subclasses that will be triggered after matching the
+        initial prompt.
+        """
+
 
 @add_metaclass(ABCMeta)
 class PExpectShell(BaseShell):
@@ -157,20 +163,29 @@ class PExpectShell(BaseShell):
     :param str prompt: Regular expression that matches the shell prompt.
     :param str initial_command: Command that is to be sent at the beginning of
      the connection.
-    :param str password_match: Regular expression that matches a password
-     prompt.
+    :param str initial_prompt: Regular expression that matches the initial
+     prompt. This value will be used to match the prompt before calling private
+     method ``_setup_shell()``.
     :param str password: Password to be sent at the beginning of the
      connection.
+    :param str password_match: Regular expression that matches a password
+     prompt.
+    :param str prefix: The prefix to be prepended to all commands sent to this
+     shell.
     :param int timeout: Default timeout to use in send_command.
     :param str encoding: Character encoding to use when decoding the shell
      response.
+    :param bool try_filter_echo: On platforms that doesn't support some way of
+     turning off the echo of the command try to filter the echo from the output
+     by removing the first line of the output if it match the command.
     """
 
     def __init__(
             self, prompt,
             initial_command=None, initial_prompt=None,
             password=None, password_match='[pP]assword:',
-            prefix=None, timeout=None, encoding='utf-8'):
+            prefix=None, timeout=None, encoding='utf-8',
+            try_filter_echo=True, **kwargs):
 
         self._initial_command = initial_command
         self._prompt = prompt
@@ -180,9 +195,16 @@ class PExpectShell(BaseShell):
         self._prefix = prefix
         self._timeout = timeout or -1
         self._encoding = encoding
+        self._try_filter_echo = try_filter_echo
 
         self._spawn = None
         self._last_command = None
+
+        # Set the initial prompt not specified
+        if self._initial_prompt is None:
+            self._initial_prompt = prompt
+
+        super(PExpectShell, self).__init__(**kwargs)
 
     @abstractmethod
     def _get_connect_command(self):
@@ -251,7 +273,8 @@ class PExpectShell(BaseShell):
         del text
 
         # Remove echo command if it exists
-        if lines and self._last_command is not None \
+        if self._try_filter_echo and \
+                lines and self._last_command is not None \
                 and lines[0].strip() == self._last_command.strip():
             lines.pop(0)
 
@@ -282,6 +305,9 @@ class PExpectShell(BaseShell):
             self._spawn.sendline(self._password)
             self._password = None
 
+        # Setup shell before using it
+        self._setup_shell()
+
         # Execute initial command if required
         if self._initial_command is not None:
             self._spawn.expect(self._initial_prompt, timeout=self._timeout)
@@ -297,6 +323,48 @@ class PExpectShell(BaseShell):
         if not self.is_connected():
             raise Exception('Shell already disconnected.')
         self._spawn.close()
+
+
+class PExpectBashShell(PExpectShell):
+    """
+    Custom shell class for Bash.
+
+    This custom base class will setup the prompt ``PS1`` to the
+    ``FORCED_PROMPT`` value of the class and will disable the echo of the
+    device by issuing the ``stty -echo`` command. All this is done in the
+    ``_setup_shell()`` call, which is overriden by this class.
+    """
+    FORCED_PROMPT = '@~~==::BASH_PROMPT::==~~@'
+
+    def __init__(
+            self,
+            initial_prompt='\w+@.+:.+[#$] ', try_filter_echo=False,
+            **kwargs):
+
+        super(PExpectBashShell, self).__init__(
+            PExpectBashShell.FORCED_PROMPT,
+            initial_prompt=initial_prompt,
+            try_filter_echo=try_filter_echo,
+            **kwargs
+        )
+
+    def _setup_shell(self):
+        """
+        Overriden setup function that will disable the echo on the device on
+        the shell and set a pexpect-safe prompt.
+        """
+        # Wait initial prompt
+        self._spawn.expect(self._initial_prompt, timeout=self._timeout)
+
+        # Remove echo
+        self._spawn.sendline('stty -echo')
+        self._spawn.expect(self._initial_prompt, timeout=self._timeout)
+
+        # Change prompt to a pexpect secure prompt
+        self._spawn.sendline(
+            'export PS1={}'.format(PExpectBashShell.FORCED_PROMPT)
+        )
+        self._initial_prompt = self._prompt = PExpectBashShell.FORCED_PROMPT
 
 
 class ShellContext(object):
@@ -323,4 +391,9 @@ class ShellContext(object):
         self._node.default_shell = self._default_shell
 
 
-__all__ = ['TERM_CODES_REGEX', 'BaseShell', 'PExpectShell', 'ShellContext']
+__all__ = [
+    'TERM_CODES_REGEX',
+    'BaseShell',
+    'PExpectShell', 'PExpectBashShell',
+    'ShellContext'
+]
