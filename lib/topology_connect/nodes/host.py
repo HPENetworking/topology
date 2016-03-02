@@ -25,7 +25,7 @@ from __future__ import print_function, division
 from logging import getLogger
 
 from ..node import CommonConnectNode
-from ..shell import SshShell
+from ..shell import SshBashShell
 
 
 log = getLogger(__name__)
@@ -35,20 +35,32 @@ class HostNode(CommonConnectNode):
     """
     FIXME: Document.
     """
-    def __init__(self, identifier, **kwargs):
+    def __init__(
+            self, identifier,
+            hostname='127.0.0.1', identity_file='id_rsa',
+            **kwargs):
+
         super(HostNode, self).__init__(identifier, **kwargs)
-        self._shells['bash'] = SshShell('(^|\n)root@.*:.*# ')
+        self._shells['bash'] = SshBashShell(
+            hostname=hostname,
+            identity_file=identity_file
+        )
 
 
 class UncheckedHostNode(CommonConnectNode):
     """
     FIXME: Document.
     """
-    def __init__(self, identifier, **kwargs):
+    def __init__(
+            self, identifier,
+            hostname='127.0.0.1', identity_file='id_rsa',
+            **kwargs):
+
         super(UncheckedHostNode, self).__init__(identifier, **kwargs)
-        self._shells['bash'] = SshShell(
-            '(^|\n)root@.*:.*# ',
-            options=['StrictHostKeyChecking=no']
+        self._shells['bash'] = SshBashShell(
+            hostname=hostname,
+            identity_file=identity_file,
+            options=('BatchMode=yes', 'StrictHostKeyChecking=no')
         )
 
 
