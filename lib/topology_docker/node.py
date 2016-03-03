@@ -47,16 +47,13 @@ class DockerNode(CommonNode):
      form ``repository:tag``.
     :param str registry: Docker registry to pull image from.
     :param str command: The command to run when the container is brought up.
-    :param list binds: List of directories to bind for this container in the
-     form:
+    :param str binds: Directories to bind for this container separated by a
+     ``;`` in the form:
 
      ::
 
-        [
-            '/tmp:/tmp',
-            '/dev/log:/dev/log',
-            '/sys/fs/cgroup:/sys/fs/cgroup'
-        ]
+        '/tmp:/tmp;/dev/log:/dev/log;/sys/fs/cgroup:/sys/fs/cgroup'
+
     :param str network_mode: Network mode for this container.
     """
 
@@ -78,6 +75,10 @@ class DockerNode(CommonNode):
         # Autopull docker image if necessary
         self._autopull()
 
+        # Create host config
+        if binds is not None:
+            binds = binds.split(';')
+
         self._host_config = self._client.create_host_config(
             # Container is given access to all devices
             privileged=True,
@@ -86,6 +87,7 @@ class DockerNode(CommonNode):
             binds=binds
         )
 
+        # Create container
         self.container_id = self._client.create_container(
             image=self._image,
             command=self._command,

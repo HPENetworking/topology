@@ -52,7 +52,7 @@ class RyuControllerNode(DockerNode):
 
     def __init__(
             self, identifier,
-            image='topology/ryu:latest',
+            image='topology/ryu:latest', binds=None,
             **kwargs):
 
         # Determine shared directory
@@ -60,10 +60,16 @@ class RyuControllerNode(DockerNode):
         ensure_dir(shared_dir)
 
         # Add binded directories
-        binds = ['{}:/tmp'.format(shared_dir)]
+        container_binds = [
+            '{}:/tmp'.format(shared_dir)
+        ]
+        if binds is not None:
+            container_binds.append(binds)
 
         super(RyuControllerNode, self).__init__(
-            identifier, image=image, binds=binds, **kwargs
+            identifier,
+            image=image, binds=';'.join(container_binds),
+            **kwargs
         )
 
         # Supervisor daemon
