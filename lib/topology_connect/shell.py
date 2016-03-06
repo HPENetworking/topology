@@ -62,7 +62,7 @@ class SshMixin(object):
             self,
             user=None, hostname='127.0.0.1', port=22,
             options=('BatchMode=yes', ), identity_file='id_rsa',
-            **kwargs):
+            *args, **kwargs):
 
         if user is None:
             user = SshMixin.get_username()
@@ -79,7 +79,7 @@ class SshMixin(object):
                 expanduser('~/.ssh/'), self._identity_file
             )
 
-        super(SshMixin, self).__init__(**kwargs)
+        super(SshMixin, self).__init__(*args, **kwargs)
 
     @staticmethod
     def get_username():
@@ -120,12 +120,12 @@ class TelnetMixin(object):
     def __init__(
             self,
             hostname='127.0.0.1', port=23,
-            **kwargs):
+            *args, **kwargs):
 
         self._hostname = hostname
         self._port = port
 
-        super(TelnetMixin, self).__init__(**kwargs)
+        super(TelnetMixin, self).__init__(*args, **kwargs)
 
     def _get_connect_command(self):
         """
