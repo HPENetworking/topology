@@ -14,6 +14,37 @@ Documentation
 Changelog
 =========
 
+1.4.0
+-----
+
+**New**
+
+- The ``binds`` attribute can now be injected and extended by users. If you
+  require to add a new bind directory to a node you may now specify the
+  attribute ``binds`` (and thus, also use attribute injection) separating the
+  pair of binded directories with a ``;``. For example::
+
+      /host/a:/container/a;/host/b:/container/b
+
+- OpenSwitch support node will now notify the container when the setup of the
+  interfaces is done. This fixes many potential race conditions on container
+  initialization. To be able to use this new feature an OpenSwitch image of a
+  date greater than March 4 2016 is required.
+
+**Changes**
+
+- Set ``topology`` minimal version to ``1.5.0``.
+- Internal ``docker exec`` shell layer migrated to Topology's new shell API,
+  available since 1.4.0 and improved in 1.5.0.
+
+**Fixes**
+
+- OpenSwitch support node will now ignore the ``bonding_masters`` interface
+  when creating setting up the ports.
+- Fixed a race condition in OpenSwitch support node caused by a slower than
+  normal db schema setup in ovsdb. This race conditions caused an ``IndexError``
+  when setting up the image, causing the topology build to rollback.
+
 1.3.0
 -----
 
