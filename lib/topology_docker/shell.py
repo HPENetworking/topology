@@ -22,63 +22,44 @@ Docker shell helper class module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pexpect import spawn
+from topology.platforms.shell import PExpectShell, PExpectBashShell
 
 
-class DockerShell(object):
+class DockerExecMixin(object):
     """
-    Shell helper class.
+    Docker ``exec`` connection mixin for the Topology shell API.
 
-    This class wrapps a ``docker exec`` call to a given shell command and
-    manages a pexpect spawn object for it.
+    This class implements a ``_get_connect_command()`` method that allows to
+    interact with a shell through a ``docker exec`` interactive command, and
+    extends the constructor to request for container related parameters.
 
-    It implementes the ``__call__`` method that allows to call the objects
-    as it were the contained shell.
+    :param str container: Container unique identifier.
+    :param str command: Command to be executed with the ``docker exec`` that
+     will launch an interactive session.
     """
 
-    def __init__(
-            self, container, shell, prompt,
-            prefix=None, timeout=None, encoding='utf-8'):
+    def __init__(self, container, command, *args, **kwargs):
         self._container = container
-        self._shell = shell
-        self._prompt = prompt
-        self._prefix = prefix
-        self._timeout = timeout or -1
-        self._encoding = encoding
-        self._spawn = None
+        self._command = command
+        super(DockerExecMixin, self).__init__(*args, **kwargs)
 
-    def __call__(self, command):
-
-        # Lazy-spawn
-        if self._spawn is None:
-            self._spawn = spawn(
-                'docker exec -i -t {} {}'.format(
-                    self._container, self._shell
-                ),
-                echo=False
-            )
-            # Cut output at first prompt
-            self._spawn.expect(self._prompt, timeout=self._timeout)
-
-        # Prefix command if required
-        if self._prefix is not None:
-            command = self._prefix + command
-
-        self._spawn.sendline(command)
-        self._spawn.expect(self._prompt, timeout=self._timeout)
-
-        # Convert binary representation to unicode using encoding
-        raw = self._spawn.before.decode(self._encoding)
-
-        # Remove leading and trailing whitespaces and normalize newlines
-        lines = raw.strip().replace('\r', '').splitlines()
-        del raw
-
-        # Remove echo command if it exists
-        if lines and lines[0].strip() == command.strip():
-            lines.pop(0)
-
-        return '\n'.join(lines)
+    def _get_connect_command(self):
+        return 'docker exec -i -t {} {}'.format(
+            self._container, self._command
+        )
 
 
-__all__ = ['DockerShell']
+class DockerShell(DockerExecMixin, PExpectShell):
+    """
+    Generic ``docker exec`` shell for unspecified interactive session.
+    """
+
+
+class DockerBashShell(DockerExecMixin, PExpectBashShell):
+    """
+    Specialized ``docker exec`` shell that will run and setup a bash
+    interactive session.
+    """
+
+
+__all__ = ['DockerShell', 'DockerBashShell']

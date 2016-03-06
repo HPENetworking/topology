@@ -23,7 +23,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 from topology_docker.node import DockerNode
-from topology_docker.shell import DockerShell
+from topology_docker.shell import DockerBashShell
 
 
 class HostNode(DockerNode):
@@ -39,8 +39,8 @@ class HostNode(DockerNode):
     def __init__(self, identifier, image='ubuntu:latest', **kwargs):
 
         super(HostNode, self).__init__(identifier, image=image, **kwargs)
-        self._shells['bash'] = DockerShell(
-            self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
+        self._shells['bash'] = DockerBashShell(
+            self.container_id, 'bash'
         )
 
 
