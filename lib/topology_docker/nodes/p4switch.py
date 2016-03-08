@@ -28,8 +28,8 @@ from subprocess import Popen
 from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
-from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
+from topology_docker.shell import DockerBashShell
 
 
 class P4SwitchNode(DockerNode):
@@ -72,50 +72,56 @@ class P4SwitchNode(DockerNode):
         self.shared_dir = shared_dir
 
         # Add bash shell
-        self._shells['bash'] = DockerShell(
-            self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
+        self._shells['bash'] = DockerBashShell(
+            self.container_id, 'bash'
         )
 
-        # Add SAI shell (https://github.com/p4lang/switchsai)
-        self._shells['sai'] = DockerShell(
-            self.container_id,
-            'sh -c "TERM=dumb bash"',
-            'root@.*:.*# ',
-            '/p4factory/targets/switch/tests/pd_thrift/switch_sai_rpc-remote '
-            '-h localhost:9092 '
-        )
+        # NOTE: It seems that nobody is using this shells.
+        # They got commented when migrating to the new Shell API as not enough
+        # knowledge was gathered to determine how to migrate them.
 
-        # Add switchapi shell (https://github.com/p4lang/switchapi)
-        self._shells['api'] = DockerShell(
-            self.container_id,
-            'sh -c "TERM=dumb bash"',
-            'root@.*:.*# ',
-            '/p4factory/targets/switch/tests/pd_thrift/switch_api_rpc-remote '
-            '-h localhost:9091 '
-        )
-
+        # Add SAI shell
+        # https://github.com/p4lang/switch/tree/master/switchsai
+        # self._shells['sai'] = DockerShell(
+        #     self.container_id,
+        #     'sh -c "TERM=dumb bash"',
+        #     'root@.*:.*# ',
+        #     '/p4factory/targets/switch/tests/pd_thrift/switch_sai_rpc-remote'
+        #     ' -h localhost:9092 '
+        # )
+        #
+        # Add switchapi shell
+        # https://github.com/p4lang/switch/tree/master/switchapi
+        # self._shells['api'] = DockerShell(
+        #     self.container_id,
+        #     'sh -c "TERM=dumb bash"',
+        #     'root@.*:.*# ',
+        #     '/p4factory/targets/switch/tests/pd_thrift/switch_api_rpc-remote'
+        #     ' -h localhost:9091 '
+        # )
+        #
         # Add PD shells
-        self._shells['pd_conn_mgr'] = DockerShell(
-            self.container_id,
-            'sh -c "TERM=dumb bash"',
-            'root@.*:.*# ',
-            '/p4factory/targets/switch/tests/pd_thrift/conn_mgr-remote '
-            '-h localhost:9090 '
-        )
-        self._shells['pd_mc'] = DockerShell(
-            self.container_id,
-            'sh -c "TERM=dumb bash"',
-            'root@.*:.*# ',
-            '/p4factory/targets/switch/tests/pd_thrift/mc-remote '
-            '-h localhost:9090 '
-        )
-        self._shells['pd_p4'] = DockerShell(
-            self.container_id,
-            'sh -c "TERM=dumb bash"',
-            'root@.*:.*# ',
-            '/p4factory/targets/switch/tests/pd_thrift/dc-remote '
-            '-h localhost:9090 '
-        )
+        # self._shells['pd_conn_mgr'] = DockerShell(
+        #     self.container_id,
+        #     'sh -c "TERM=dumb bash"',
+        #     'root@.*:.*# ',
+        #     '/p4factory/targets/switch/tests/pd_thrift/conn_mgr-remote '
+        #     '-h localhost:9090 '
+        # )
+        # self._shells['pd_mc'] = DockerShell(
+        #     self.container_id,
+        #     'sh -c "TERM=dumb bash"',
+        #     'root@.*:.*# ',
+        #     '/p4factory/targets/switch/tests/pd_thrift/mc-remote '
+        #     '-h localhost:9090 '
+        # )
+        # self._shells['pd_p4'] = DockerShell(
+        #     self.container_id,
+        #     'sh -c "TERM=dumb bash"',
+        #     'root@.*:.*# ',
+        #     '/p4factory/targets/switch/tests/pd_thrift/dc-remote '
+        #     '-h localhost:9090 '
+        # )
 
     def notify_post_build(self):
         """

@@ -27,8 +27,8 @@ from __future__ import print_function, division
 from json import loads
 
 from topology_docker.node import DockerNode
-from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
+from topology_docker.shell import DockerShell, DockerBashShell
 
 
 SETUP_SCRIPT = """\
@@ -231,19 +231,19 @@ class OpenSwitchNode(DockerNode):
         self.shared_dir = shared_dir
 
         # Add vtysh (default) and bash shell
+        # FIXME: Create a subclass to handle better the particularities of
+        # vtysh, like prompt setup etc.
         self._shells['vtysh'] = DockerShell(
             self.container_id, 'vtysh', '(^|\n)switch(\([\-a-zA-Z0-9]*\))?#'
         )
-        self._shells['bash'] = DockerShell(
-            self.container_id, 'sh -c "TERM=dumb bash"', 'bash-.*#'
+        self._shells['bash'] = DockerBashShell(
+            self.container_id, 'bash'
         )
-        self._shells['bash_swns'] = DockerShell(
-            self.container_id,
-            'sh -c "TERM=dumb ip netns exec swns bash"',
-            'bash-.*#'
+        self._shells['bash_swns'] = DockerBashShell(
+            self.container_id, 'ip netns exec swns bash'
         )
-        self._shells['vsctl'] = DockerShell(
-            self.container_id, 'sh -c "TERM=dumb bash"', 'bash-.*#',
+        self._shells['vsctl'] = DockerBashShell(
+            self.container_id, 'bash',
             prefix='ovs-vsctl ', timeout=60
         )
 

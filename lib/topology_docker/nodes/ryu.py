@@ -31,8 +31,8 @@ from subprocess import Popen
 from shlex import split as shsplit
 
 from topology_docker.node import DockerNode
-from topology_docker.shell import DockerShell
 from topology_docker.utils import ensure_dir
+from topology_docker.shell import DockerBashShell
 
 
 class RyuControllerNode(DockerNode):
@@ -84,8 +84,8 @@ class RyuControllerNode(DockerNode):
             copy(self.app_name, self.shared_dir)
 
         # Add bash shell
-        self._shells['bash'] = DockerShell(
-            self.container_id, 'sh -c "TERM=dumb bash"', 'root@.*:.*# '
+        self._shells['bash'] = DockerBashShell(
+            self.container_id, 'bash'
         )
 
     def notify_post_build(self):
