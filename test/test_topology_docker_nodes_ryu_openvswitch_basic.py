@@ -106,14 +106,17 @@ def test_controller_link(topology):
     sw1.libs.common.assert_batch(commands)
 
     # Poll until the switch is connected to Ryu
-    timeout = 100  # 10 seconds
+    timeout = 10  # 10 seconds
     for i in range(timeout):
         status = sw1('ovs-vsctl show')
         if 'is_connected: true' in status:
             break
-        sleep(0.1)
+        sleep(1)
     else:
         assert False, 'Ryu controller never connected'
+
+    # Wait for Open vSwitch
+    sleep(1)
 
     # Test simple_switch with pings between hs1 and hs2
     ping_hs2 = hs1.libs.ping.ping(1, '192.168.0.2')
