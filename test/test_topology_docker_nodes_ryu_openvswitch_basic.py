@@ -17,14 +17,19 @@
 
 """
 Test for basic switching behaviour using Ryu + Openvswitch.
-Runs the simple_switch ryu application
-which makes two switches behave like a single switch by forwarding packets to
-the controller.
+
+Runs the simple_switch ryu application which makes two switches behave like a
+single switch by forwarding packets to the controller.
 """
 
-import pytest
-import time
+from __future__ import unicode_literals, absolute_import
+from __future__ import print_function, division
+
+from time import sleep
 from subprocess import check_output
+
+import pytest
+
 
 TOPOLOGY = """
 #             +-------+
@@ -49,19 +54,19 @@ TOPOLOGY = """
 [type=host name="Host 2"] hs2
 
 # Ports
-[ipv4="10.0.10.1/24" up=True] ryu:1
-[ipv4="10.0.10.2/24" up=True] sw1:1
+[ipv4="10.0.10.1/24" up=True] ryu:oobm
+[ipv4="10.0.10.2/24" up=True] sw1:oobm
+[up=True] sw1:1
 [up=True] sw1:2
-[up=True] sw1:3
 
 # Hosts in same network
 [ipv4="192.168.0.1/24" up=True] hs1:1
 [ipv4="192.168.0.2/24" up=True] hs2:1
 
 # Links
-ryu:1 -- sw1:1
-sw1:2 -- hs1:1
-sw1:3 -- hs2:1
+ryu:oobm -- sw1:oobm
+sw1:1 -- hs1:1
+sw1:2 -- hs2:1
 """
 
 
@@ -83,39 +88,36 @@ def test_controller_link(topology):
     # ---- OVS Setup ----
 
     # Configuration:
-    # - Create a bridge
-    # - Bring up ovs interface
-    # - Add the front port connecting to the controller
+    # - Create a virtual bridge
     # - Drop packets if the connection to controller fails
-    # - Remove the front port's IP address
-    # - Add the fronts port connecting to the hosts
-    # - Give the virtual switch an IP address
+    # - Add frontal ports to virtual bridge
+    # - Give the virtual bridge an IP address
+    # - Bring up virtual bridge
     # - Connect to the OpenFlow controller
     commands = """
     ovs-vsctl add-br br0
-    ip link set br0 up
-    ovs-vsctl add-port br0 1
     ovs-vsctl set-fail-mode br0 secure
-    ifconfig 1 0 up
+    ovs-vsctl add-port br0 1
     ovs-vsctl add-port br0 2
-    ovs-vsctl add-port br0 3
-    ifconfig 2 0 up
-    ifconfig 3 0 up
-    ifconfig br0 10.0.10.2 netmask 255.255.255.0 up
+    ip addr add 10.0.10.3/24 dev br0
+    ip link set br0 up
     ovs-vsctl set-controller br0 tcp:10.0.10.1:6633
     """
     sw1.libs.common.assert_batch(commands)
 
-    # Wait for OVS to connect to controller
-    time.sleep(5)
-
-    # Assert that switch is connected to Ryu
-    vsctl_sw1_show = sw1('ovs-vsctl show')
-    assert 'is_connected: true' in vsctl_sw1_show
+    # Poll until the switch is connected to Ryu
+    timeout = 100  # 10 seconds
+    for i in range(timeout):
+        status = sw1('ovs-vsctl show')
+        if 'is_connected: true' in status:
+            break
+        sleep(0.1)
+    else:
+        assert False, 'Ryu controller never connected'
 
     # Test simple_switch with pings between hs1 and hs2
-    ping_hs2 = hs1('ping -c 1 192.168.0.2')
-    assert '1 packets transmitted, 1 received' in ping_hs2
+    ping_hs2 = hs1.libs.ping.ping(1, '192.168.0.2')
+    assert ping_hs2['transmitted'] == ping_hs2['received'] == 1
 
-    ping_hs1 = hs2('ping -c 1 192.168.0.1')
-    assert '1 packets transmitted, 1 received' in ping_hs1
+    ping_hs1 = hs2.libs.ping.ping(1, '192.168.0.1')
+    assert ping_hs1['transmitted'] == ping_hs1['received'] == 1

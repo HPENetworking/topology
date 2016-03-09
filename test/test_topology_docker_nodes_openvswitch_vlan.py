@@ -24,11 +24,12 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import time
-import pytest
 from subprocess import check_output
 
-TOPOLOGY = """
+import pytest
 
+
+TOPOLOGY = """
 #        +-------+         +-------+
 #        |  sw1  |---------|  sw2  |
 #        +-------+         +-------+
@@ -103,17 +104,19 @@ def test_ping(topology):
 
     # Ping between the hosts
     # Should work, hosts are in same VLAN
-    ping_hs1_to_hs3 = hs1('ping -c 1 192.168.0.3')
-    assert '1 packets transmitted, 1 received' in ping_hs1_to_hs3
+    ping_hs1_to_hs3 = hs1.libs.ping.ping(1, '192.168.0.3')
+    assert ping_hs1_to_hs3['transmitted'] == ping_hs1_to_hs3['received'] == 1
 
     # Should not work, different VLANs
-    ping_hs1_to_hs4 = hs1('ping -c 1 192.168.0.4')
-    assert '1 packets transmitted, 0 received' in ping_hs1_to_hs4
+    ping_hs1_to_hs4 = hs1.libs.ping.ping(1, '192.168.0.4')
+    assert ping_hs1_to_hs4['transmitted'] == 1
+    assert ping_hs1_to_hs4['received'] == 0
 
     # Should work, hosts are in same VLAN
-    ping_hs2_to_hs4 = hs2('ping -c 1 192.168.0.4')
-    assert '1 packets transmitted, 1 received' in ping_hs2_to_hs4
+    ping_hs2_to_hs4 = hs2.libs.ping.ping(1, '192.168.0.4')
+    assert ping_hs2_to_hs4['transmitted'] == ping_hs2_to_hs4['received'] == 1
 
     # Should not work, different VLANs
-    ping_hs2_to_hs3 = hs2('ping -c 1 192.168.0.3')
-    assert '1 packets transmitted, 0 received' in ping_hs2_to_hs3
+    ping_hs2_to_hs3 = hs2.libs.ping.ping(1, '192.168.0.3')
+    assert ping_hs2_to_hs3['transmitted'] == 1
+    assert ping_hs2_to_hs3['received'] == 0

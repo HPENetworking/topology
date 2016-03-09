@@ -16,8 +16,12 @@
 # under the License.
 
 """
-Tests for hosts
+Tests for hosts.
 """
+
+from __future__ import unicode_literals, absolute_import
+from __future__ import print_function, division
+
 
 TOPOLOGY = """
 [image="ubuntu:12.04" type=host name="Host 1"] hs1

@@ -22,107 +22,68 @@ Test suite for module topology_docker.platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pynml import Node, BidirectionalPort, BidirectionalLink
-import pytest
+from time import sleep
 from subprocess import check_output
 
-from topology_docker.platform import DockerPlatform
+import pytest
+
+
+TOPOLOGY = """
+# +------+                               +------+
+# |      |     +------+     +------+     |      |
+# |  h1  <----->  s1  <----->  s2  <----->  h2  |
+# |      |     +------+     +------+     |      |
+# +------+                               +------+
+
+# Nodes
+[type=openvswitch name="Switch 1"] sw1
+[type=openvswitch name="Switch 2"] sw2
+[type=host name="Host 1"] hs1
+[type=host name="Host 2"] hs2
+
+# Ports
+[up=True] sw1:1
+[up=True] sw1:2
+[up=True] sw2:1
+[up=True] sw2:2
+[ipv4="192.168.0.1/24" up=True] hs1:1
+[ipv4="192.168.0.2/24" up=True] hs2:1
+
+# Links
+hs1:1 -- sw1:1
+sw1:2 -- sw2:2
+sw2:1 -- hs2:1
+"""
 
 
 @pytest.mark.skipif(
     'openvswitch' not in check_output('lsmod').decode('utf-8'),
     reason='Requires Open vSwitch kernel module.')
-def test_ping_openvswitch():
-    """
-    Builds the topology described on the following schema and ping h2 from h1.
+def test_ping_openvswitch(topology):
 
-    ::
+    hs1 = topology.get('hs1')
+    hs2 = topology.get('hs2')
+    sw1 = topology.get('sw1')
+    sw2 = topology.get('sw2')
 
-       +------+                               +------+
-       |      |     +------+     +------+     |      |
-       |  h1  <----->  s1  <----->  s2  <----->  h2  |
-       |      |     +------+     +------+     |      |
-       +------+                               +------+
-    """
-    # Build topology
-    platform = DockerPlatform(None, None)
-    platform.pre_build()
+    assert hs1 is not None
+    assert hs2 is not None
+    assert sw1 is not None
+    assert sw2 is not None
 
-    h1 = Node(identifier='hs1', type='host')
-    h2 = Node(identifier='hs2', type='host')
-    s1 = Node(identifier='sw1', type='openvswitch')
-    s2 = Node(identifier='sw2', type='openvswitch')
-
-    hs1 = platform.add_node(h1)
-    hs2 = platform.add_node(h2)
-    sw1 = platform.add_node(s1)
-    sw2 = platform.add_node(s2)
-
-    s1p1 = BidirectionalPort(identifier='sw1-3')
-    s1p2 = BidirectionalPort(identifier='sw1-4')
-    platform.add_biport(s1, s1p1)
-    platform.add_biport(s1, s1p2)
-
-    s2p1 = BidirectionalPort(identifier='sw2-3')
-    s2p2 = BidirectionalPort(identifier='sw2-4')
-    platform.add_biport(s2, s2p1)
-    platform.add_biport(s2, s2p2)
-
-    h1p1 = BidirectionalPort(identifier='hs1-1')
-    h2p1 = BidirectionalPort(identifier='hs2-1')
-    platform.add_biport(h1, h1p1)
-    platform.add_biport(h2, h2p1)
-
-    link1 = BidirectionalLink(identifier='link1')
-    platform.add_bilink((s1, s1p1), (h1, h1p1), link1)
-
-    link2 = BidirectionalLink(identifier='link2')
-    platform.add_bilink((s1, s1p2), (s2, s2p1), link2)
-
-    link3 = BidirectionalLink(identifier='link3')
-    platform.add_bilink((s2, s2p2), (h2, h2p1), link3)
-
-    platform.post_build()
-
-    # Ping test
-    ###########
-
-    # Configure IP and bring UP host 1 interfaces
+    # Configure switches
     commands = """
-    ip link set hs1-1 up
-    ip addr add 10.0.10.1/24 dev hs1-1
-    ip route add default via 10.0.10.2
-    """
-    hs1.libs.common.assert_batch(commands)
-
-    # Configure IP and bring UP host 2 interfaces
-    commands = """
-    ip link set hs2-1 up
-    ip addr add 10.0.30.1/24 dev hs2-1
-    ip route add default via 10.0.30.2
-    """
-    hs2.libs.common.assert_batch(commands)
-
-    # Configure IP and bring UP switch 1 interfaces
-    commands = """
-    ip link set sw1-3 up
-    ip link set sw1-4 up
-    ip addr add 10.0.10.2/24 dev sw1-3
-    ip addr add 10.0.20.1/24 dev sw1-4
-    ip route add 10.0.30.0/24 via 10.0.20.2
+    ovs-vsctl add-br br0
+    ovs-vsctl add-port br0 1
+    ovs-vsctl add-port br0 2
+    ip link set br0 up
     """
     sw1.libs.common.assert_batch(commands)
-
-    # Configure IP and bring UP switch 2 interfaces
-    commands = """
-    ip link set sw2-3 up
-    ip link set sw2-4 up
-    ip addr add 10.0.20.2/24 dev sw2-3
-    ip addr add 10.0.30.2/24 dev sw2-4
-    ip route add 10.0.10.0/24 via 10.0.20.1
-    """
     sw2.libs.common.assert_batch(commands)
 
-    ping_result = hs1.send_command('ping -c 1 10.0.30.1')
-    platform.destroy()
-    assert '1 packets transmitted, 1 received' in ping_result
+    # Wait for Open vSwitch
+    sleep(1)
+
+    # Ping between the hosts
+    ping_hs2 = hs1.libs.ping.ping(1, '192.168.0.2')
+    assert ping_hs2['transmitted'] == ping_hs2['received'] == 1

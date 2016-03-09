@@ -16,7 +16,7 @@
 # under the License.
 
 """
-Test for basic switching behavior in the P4 switch node
+Test for basic switching behavior in the P4 switch node.
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -60,8 +60,8 @@ def test_ping(topology):
     assert sw2 is not None
 
     # Test ping
-    ping_result = hs1('ping -c 1 192.168.0.2')
-    assert '1 packets transmitted, 1 received' in ping_result
+    ping_hs2 = hs1.libs.ping.ping(1, '192.168.0.2')
+    assert ping_hs2['transmitted'] == ping_hs2['received'] == 1
 
-    ping_result = hs2('ping -c 1 192.168.0.1')
-    assert '1 packets transmitted, 1 received' in ping_result
+    ping_hs1 = hs2.libs.ping.ping(1, '192.168.0.1')
+    assert ping_hs1['transmitted'] == ping_hs1['received'] == 1
