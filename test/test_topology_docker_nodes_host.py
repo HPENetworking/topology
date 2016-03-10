@@ -27,16 +27,42 @@ TOPOLOGY = """
 [image="ubuntu:12.04" type=host name="Host 1"] hs1
 [type=host name="Host 1"] hs2
 
+[ipv4="192.168.15.1/24" up=True] hs1:1
+[ipv4="192.168.15.2/24" up=True] hs2:1
+
 hs1:1 -- hs2:1
 """
 
 
 def test_image(topology, step):
     """
-    Test that a vlan configuration is functional with a OpenSwitch switch.
+    Test that image selection features works as expected.
     """
     hs1 = topology.get('hs1')
     hs2 = topology.get('hs2')
 
-    assert '12.04' in (hs1('cat /etc/issue', shell='bash'))
-    assert '14.04' in (hs2('cat /etc/issue', shell='bash'))
+    issue = hs1('cat /etc/issue', shell='bash')
+    assert '12.04' in issue
+
+    issue = hs2('cat /etc/issue', shell='bash')
+    assert '14.04' in issue
+
+
+def test_ping(topology, step):
+    """
+    Test that two nodes can ping themselves.
+    """
+    hs1 = topology.get('hs1')  # noqa
+    hs2 = topology.get('hs2')
+
+    # FIXME: Ubuntu 12.04 doesn't have ping pre-installed
+    # ping_hs1_to_hs2 = hs1.libs.ping.ping(1, '192.168.15.2')
+    # assert ping_hs1_to_hs2['transmitted'] == ping_hs1_to_hs2['received'] == 1
+
+    ping_hs2_to_hs1 = hs2.libs.ping.ping(1, '192.168.15.1')
+    assert ping_hs2_to_hs1['transmitted'] == ping_hs2_to_hs1['received'] == 1
+
+    # Should not work, not node exists with that ip
+    no_ping = hs2.libs.ping.ping(1, '192.168.15.3')
+    assert no_ping['transmitted'] == 1
+    assert no_ping['received'] == 0

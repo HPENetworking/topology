@@ -90,34 +90,6 @@ def test_shell():
     assert 'var' in reply
 
 
-def test_vtysh():
-    """
-    Checks that the vtysh shell of a host sends a proper reply.
-    """
-    platform = DockerPlatform(None, None)
-    platform.pre_build()
-
-    # Add node
-    node1 = Node(identifier='switch1', type='openswitch')
-    switch1 = platform.add_node(node1)
-
-    # Add ports
-    p1 = BidirectionalPort(identifier='p1', label=1)
-    platform.add_biport(switch1, p1)
-    p2 = BidirectionalPort(identifier='p2', label=2)
-    platform.add_biport(switch1, p2)
-    p3 = BidirectionalPort(identifier='p3', label=3)
-    platform.add_biport(switch1, p3)
-
-    platform.post_build()
-
-    reply = switch1('show vlan')
-
-    platform.destroy()
-
-    assert 'vlan' in reply
-
-
 def test_build_topology():
     """
     Builds (and destroys) a basic topology consisting in one switch and one
