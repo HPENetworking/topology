@@ -14,6 +14,32 @@ Documentation
 Changelog
 =========
 
+1.5.0
+-----
+
+**Changes**
+
+The only change in this version is the transference of all specialized support
+nodes previously included with this platform engine into their own repositories.
+This change seeks to improve maintainability of the platform engine, separation
+of the support nodes issues, requirements and enhancements from those of the
+platform and, finally, endorse shared ownership of the nodes.
+
+The new home for those support nodes are:
+
+:OpenSwitch support node:
+ https://github.com/HPENetworking/topology_docker_openswitch
+
+:Open vSwitch support node:
+ https://github.com/HPENetworking/topology_docker_openvswitch
+
+:P4Switch support node:
+ https://github.com/HPENetworking/topology_docker_p4switch
+
+:Ryu Controller support node:
+ https://github.com/HPENetworking/topology_docker_ryu
+
+
 1.4.0
 -----
 
