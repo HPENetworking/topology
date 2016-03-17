@@ -49,29 +49,37 @@ class SshMixin(object):
     as expected by the Topology shell low level API you must pass the
     ``password`` (and ``password_match`` if required) to the constructor.
 
+    Note: The constructor of this class should look as follow::
+
+        # Using PEP 3102 -- Keyword-Only Arguments
+        def __init__(
+            self, *args,
+            user=None, hostname='127.0.0.1', port=22,  # noqa
+            options=('BatchMode=yes', ), identity_file='id_rsa',
+            **kwargs):
+
+    Sadly, this is Python 3 only. Python 2.7 didn't backported this feature.
+    So, this is the legacy way to achieve the same goal. Awful, I know :/
+
     :param str user: User to connect with. If ``None``, the user running the
      process will be used.
     :param str hostname: Hostname or IP to connect to.
     :param int port: SSH port to connect to.
     :param tuple options: SSH options to use.
     :param str identity_file: Absolute or relative (in relation to ``~/.ssh/``)
-     path to the identity file.
+     path to the private key identity file. If ``None`` is provided, key based
+     authentication will not be used.
     """
+    def __init__(self, *args, **kwargs):
+        self._user = kwargs.pop('user', None)
+        self._hostname = kwargs.pop('hostname', '127.0.0.1')
+        self._port = kwargs.pop('port', 22)
+        self._options = kwargs.pop('options', ('BatchMode=yes', ))
+        self._identity_file = kwargs.pop('identity_file', 'id_rsa')
 
-    def __init__(
-            self,
-            user=None, hostname='127.0.0.1', port=22,
-            options=('BatchMode=yes', ), identity_file='id_rsa',
-            *args, **kwargs):
-
-        if user is None:
-            user = SshMixin.get_username()
-
-        self._user = user
-        self._hostname = hostname
-        self._port = port
-        self._options = options
-        self._identity_file = identity_file
+        # Use current user if not specified
+        if self._user is None:
+            self._user = SshMixin.get_username()
 
         # Provide a sensible default for the identity file
         if self._identity_file is not None and not isabs(self._identity_file):
@@ -113,17 +121,23 @@ class TelnetMixin(object):
     """
     Telnet connection mixin for the Topology shell API.
 
+    Note: The constructor of this class should look as follow::
+
+        # Using PEP 3102 -- Keyword-Only Arguments
+        def __init__(
+            self, *args,
+            hostname='127.0.0.1', port=23,
+            **kwargs):
+
+    Sadly, this is Python 3 only. Python 2.7 didn't backported this feature.
+    So, this is the legacy way to achieve the same goal. Awful, I know :/
+
     :param str hostname: Hostname or IP to connect to.
     :param int port: Telnet port to connect to.
     """
-
-    def __init__(
-            self,
-            hostname='127.0.0.1', port=23,
-            *args, **kwargs):
-
-        self._hostname = hostname
-        self._port = port
+    def __init__(self, *args, **kwargs):
+        self._hostname = kwargs.pop('hostname', '127.0.0.1')
+        self._port = kwargs.pop('port', 23)
 
         super(TelnetMixin, self).__init__(*args, **kwargs)
 
