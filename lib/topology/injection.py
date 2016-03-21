@@ -32,6 +32,7 @@ from json import loads
 from os import getcwd, walk
 from fnmatch import fnmatch
 from logging import getLogger
+from traceback import format_exc
 from collections import OrderedDict
 from os.path import isabs, join, abspath, isfile, basename
 
@@ -248,7 +249,15 @@ def expand_nodes(filename, nodes_definitions):
     log.debug('Found:\n{}'.format(topology))
 
     # Parse content
-    parsed_topology = parse_txtmeta(topology)
+    try:
+        parsed_topology = parse_txtmeta(topology)
+    except:
+        log.error((
+            'Skipping node expansion for attribute injection in filename '
+            '{} in the lookup path as SZN format parsing failed.'
+        ).format(filename))
+        log.debug(format_exc())
+        return []
 
     for node_definition in nodes_definitions:
 
