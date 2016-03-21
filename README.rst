@@ -14,6 +14,27 @@ Documentation
 Changelog
 =========
 
+1.6.0
+-----
+
+**Changes**
+
+- When expanding the search path for attribute injection all hidden folders
+  (starting with '.') will now be ignored.
+- When processing files that matched the search path for attribute injection
+  all files that have ill formed / unparseable SZN strings will be logged as
+  error and skipped instead of raising an exception.
+- When processing files that matched the search path for attribute injection
+  all ``.py``'s that doesn't possess a ``TOPOLOGY`` variable will now be warned
+  and skipped instead of raising an exception.
+
+**Fixes**
+
+- Fixed attribute injection crashing when a SZN file is in the node expansion
+  search path.
+- Fixed rollback routine not being triggered when an non ``Exception`` subclass
+  is raised.
+
 1.5.0
 -----
 
