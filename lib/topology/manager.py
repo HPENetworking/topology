@@ -27,6 +27,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from sys import exc_info
 from copy import deepcopy
 from datetime import datetime
 from traceback import format_exc
@@ -284,7 +285,8 @@ class TopologyManager(object):
 
             self._platform.post_build()
 
-        except Exception as e:
+        except:
+            e = exc_info()[1]
             log.critical(
                 (
                     'Build failed at stage "{}" with "{}". '
@@ -293,7 +295,7 @@ class TopologyManager(object):
             )
             log.debug(format_exc())
             self._platform.rollback(stage, self.nodes, e)
-            raise e
+            raise
 
         self._built = True
 
