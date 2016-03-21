@@ -112,7 +112,9 @@ def parse_attribute_injection(injection_file, search_paths=None):
     # Expand search paths recursively to include all subfolders
     def subfolders(search_path):
         result = []
-        for root, dirs, files in walk(search_path):
+        for root, dirs, files in walk(search_path, topdown=True):
+            # Ignore hidden folders
+            dirs[:] = [d for d in dirs if not d.startswith('.')]
             result.extend([join(root, directory) for directory in dirs])
         return result
 
@@ -127,6 +129,7 @@ def parse_attribute_injection(injection_file, search_paths=None):
         if path not in uniques:
             uniques.append(path)
     search_paths = uniques
+    log.debug('Expanded injection search paths: {}'.format(search_paths))
 
     # Read injection file
     with open(injection_file) as fd:
