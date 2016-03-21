@@ -232,11 +232,20 @@ def expand_nodes(filename, nodes_definitions):
     expanded_nodes = []
 
     # Grab the topology definition from a file that contains one
+    log.debug('Trying to expand nodes in {}'.format(filename))
     if filename.endswith('.py'):
         topology = find_topology_in_python(filename)
+        if topology is None:
+            log.warning((
+                'Skipping node expansion for attribute injection in filename '
+                '{} in the lookup path as it does not contain a TOPOLOGY '
+                'definition.'
+            ).format(filename))
+            return []
     else:
         with open(filename, 'r') as fd:
             topology = fd.read().strip()
+    log.debug('Found:\n{}'.format(topology))
 
     # Parse content
     parsed_topology = parse_txtmeta(topology)
