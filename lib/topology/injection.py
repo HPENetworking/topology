@@ -231,8 +231,14 @@ def expand_nodes(filename, nodes_definitions):
 
     expanded_nodes = []
 
-    # Grab the TOPOLOGY constant from a file that defines a topology.
-    topology = find_topology_in_python(filename)
+    # Grab the topology definition from a file that contains one
+    if filename.endswith('.py'):
+        topology = find_topology_in_python(filename)
+    else:
+        with open(filename, 'r') as fd:
+            topology = fd.read().strip()
+
+    # Parse content
     parsed_topology = parse_txtmeta(topology)
 
     for node_definition in nodes_definitions:
