@@ -5,7 +5,7 @@
    plugins
    developer
    architecture
-   topology/topology
+   reference
 
 ==========================
 Network Topology Framework
@@ -30,7 +30,7 @@ Development
 
 - :doc:`Developer Guide. <developer>`
 - :doc:`Architecture Overview. <architecture>`
-- :doc:`Internal Documentation Reference. <topology/topology>`
+- :doc:`Framework API Reference. <reference>`
 - `Project repository. <https://github.com/HPENetworking/topology>`_
 
 

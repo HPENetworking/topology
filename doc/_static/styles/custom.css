@@ -39,3 +39,7 @@ object[type="image/svg+xml"] {
     max-width: 100%;
     height: auto !important;
 }
+
+.container-wrapper img {
+    width: 100%;
+}

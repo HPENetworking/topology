@@ -3,7 +3,3 @@ pep8-naming
 pytest===2.8.4
 pytest-cov
 deepdiff
-sphinx
-sphinx_rtd_theme
-sphinxcontrib-plantuml
-autoapi

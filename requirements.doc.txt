@@ -1,0 +1,16 @@
+# Sphinx
+sphinx
+guzzle_sphinx_theme
+sphinxcontrib-plantuml
+autoapi
+
+# AutoAPI imports dependencies
+pytest===2.8.4
+
+# Platform engines
+topology_docker
+topology_connect
+
+# Communication libraries
+topology_lib_ping
+topology_lib_ip

@@ -98,7 +98,7 @@ exclude_patterns = ['_build']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'monokai'
+# pygments_style = 'monokai'
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -311,7 +311,9 @@ def setup(app):
 
 # autoapi configuration
 autoapi_modules = {
-    'topology': None
+    'topology': {'output': 'reference'},
+    'topology_docker': {'output': 'reference'},
+    'topology_connect': {'output': 'reference'},
 }
 
 # Configure PlantUML
@@ -329,6 +331,18 @@ intersphinx_mapping = {
 # Setup theme if not building in readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) is not None
 if not on_rtd:
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+    import guzzle_sphinx_theme
+
+    # Adds an HTML table visitor to apply Bootstrap table classes
+    html_translator_class = 'guzzle_sphinx_theme.HTMLTranslator'
+    html_theme_path = guzzle_sphinx_theme.html_theme_path()
+    html_theme = 'guzzle_sphinx_theme'
+
+    # Register the theme as an extension to generate a sitemap.xml
+    extensions.append("guzzle_sphinx_theme")
+
+    # Guzzle theme options (see theme.conf for more information)
+    html_theme_options = {
+        # Set the name of the project to appear in the sidebar
+        "project_nav_name": "Project Name"
+    }
