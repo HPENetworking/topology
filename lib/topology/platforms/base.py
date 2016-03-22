@@ -193,12 +193,15 @@ class BaseNode(object):
 
     :param str identifier: Unique identifier of the engine node.
     :var metadata: Additional metadata (kwargs leftovers).
+    :var ports: Mapping between node ports and engine ports. This variable
+     is populated by the :class:`topology.manager.TopologyManager`.
     """
 
     @abstractmethod
     def __init__(self, identifier, **kwargs):
         self.identifier = identifier
         self.metadata = kwargs
+        self.ports = OrderedDict()
 
     @property
     def default_shell(self):
