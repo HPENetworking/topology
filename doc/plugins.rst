@@ -1,7 +1,5 @@
 .. toctree::
 
-.. highlight:: python
-
 =========================
 Plugins Development Guide
 =========================
@@ -11,6 +9,9 @@ platform where the topology is built and run (virtual, physical, etc) and
 extend the mechanisms available to communicate with the nodes (shells like
 vtysh or bash, RESTful API, OpenFlow, OVSDB management protocol, protobuffers,
 etc).
+
+.. contents::
+   :local:
 
 
 Provide a new Platform Engine
@@ -39,7 +40,7 @@ It is recommended, but not required, that your package is called
 
 For example, in your module ``topology_my.platform``:
 
-::
+.. code-block:: python
 
     from topology.platforms.base import BasePlatform
     class MyPlatform(BasePlatform):
@@ -47,7 +48,7 @@ For example, in your module ``topology_my.platform``:
 
 Then specify in your `setup.py`:
 
-::
+.. code-block:: python
 
     # Entry points
     entry_points={
@@ -171,7 +172,7 @@ It is recommended, but not required, that your package is called
 
 For example, in your module ``topology_lib_my.library``:
 
-::
+.. code-block:: python
 
     def foo_function(enode, myarg1=None, myarg2=100):
        return {'ham': myarg1}
@@ -187,7 +188,7 @@ For example, in your module ``topology_lib_my.library``:
 
 Then specify in your `setup.py`:
 
-::
+.. code-block:: python
 
     # Entry points
     entry_points={
@@ -198,7 +199,7 @@ With this, and if your *Platform Engine* builds your *Engine Nodes* to support
 communication libraries (see below), your functions will be available
 to the ``enode`` like this:
 
-::
+.. code-block:: python
 
     >>> sw1.libs.my.foo_function(myarg1=275)
     {'ham': 275}
@@ -208,24 +209,61 @@ to the ``enode`` like this:
 Please note, all your functions and classes are registered inside a namespace
 with the name of the communication library as you specified in the ``setup.py``
 
-Also, please note that all communication functions and classes receive the
-*Engine Node* as first parameter, all other parameters are up to the function.
-The ``enode`` argument can be used to store state or data for the library or to
-trigger calls to other libraries or commands as part of the communication flow.
+
+Saving state
+------------
+
+All communication functions and classes receive the *Engine Node* as first
+parameter, all other parameters are up to the function. The ``enode`` argument
+can be used to store state or data for the library or to trigger calls to other
+libraries or commands as part of the communication flow.
 
 A common pattern is to use a class to store the state of the communication
 library and store an instances of that class inside the enode. The decorator
 :func:`topology.libraries.utils.stateprovider` allows to easily implement this
-pattern.
+pattern:
+
+.. code-block:: python
+
+    from topology.libraries.utils import stateprovider
+
+    class MyState(object):
+        def __init__(self):
+            self.my_variable_one = 100
+
+    stateprovider(MyState)
+    def my_library_function(enode, state, arg1, arg2, keyword_arg1=None):
+        print(state.my_variable_one)
+        state.my_variable_one += 100
+
+     __all__ = ['my_library_function']
+
+
+Shell command wrapping libraries
+--------------------------------
+
+A common pattern is to use communication libraries to wrap and parse shell
+commands.
 
 It is recommended to check first the availability of any dependency shell
 using the method :meth:`topology.platforms.base.BaseNode.available_shells`.
 See :class:`topology.platforms.base.BaseNode` for more information about the
 *Engine Node* interface.
 
-To build an *Engine Node* to support communications libraries make sure to
-create and attribute ``libs`` with an instance of
-:class:`topology.libraries.manager.LibsProxy`:
+For an example of a communication library that wrap shells commands please
+review the topology_lib_ping_ library documentation for more information..
+
+.. _topology_lib_ping: https://github.com/HPENetworking/topology_lib_ping/blob/master/lib/topology_lib_ping/library.py
+
+
+Supporting communication libraries
+----------------------------------
+
+Most of the nodes you use will derive from the common
+:class:`topology.platforms.CommonNode`. If for some reason you require to use
+a different base node, say :class:`topology.platforms.BaseNode` and you still
+want to support communication libraries make sure to create and attribute
+``libs`` with an instance of :class:`topology.libraries.manager.LibsProxy`:
 
 .. code-block:: python
 
