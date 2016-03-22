@@ -23,10 +23,10 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from os.path import join, expanduser
 from atexit import register
-from traceback import format_exc
 from inspect import ismodule
+from traceback import format_exc
+from os.path import join, expanduser, isfile
 
 
 log = logging.getLogger(__name__)
@@ -167,10 +167,11 @@ def interact(mgr):
     import readline
 
     histfile = join(expanduser('~'), '.topology_history')
-    try:
-        readline.read_history_file(histfile)
-    except IOError:
-        log.error(format_exc())
+    if isfile(histfile):
+        try:
+            readline.read_history_file(histfile)
+        except IOError:
+            log.error(format_exc())
     register(readline.write_history_file, histfile)
 
     completer = NamespaceCompleter(ns)
