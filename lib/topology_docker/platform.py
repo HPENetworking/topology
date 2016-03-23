@@ -23,6 +23,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from traceback import format_exc
 from collections import OrderedDict
 
 from topology.platforms.base import BasePlatform
@@ -76,6 +77,11 @@ class DockerPlatform(BasePlatform):
         enode = self.available_node_types[node_type](
             node.identifier, **node.metadata
         )
+
+        # Register node
+        self.nmlnode_node_map[node.identifier] = enode
+
+        # Start node
         enode.start()
 
         # Install container netns locally
@@ -84,8 +90,6 @@ class DockerPlatform(BasePlatform):
             pid=enode._pid
         )
 
-        # Register and return node
-        self.nmlnode_node_map[node.identifier] = enode
         return enode
 
     def add_biport(self, node, biport):
@@ -212,13 +216,21 @@ class DockerPlatform(BasePlatform):
         """
         See :meth:`BasePlatform.destroy` for more information.
         """
+        # NOTE: Implementation is split on purpose
+
         # Request termination of all containers
         for enode in self.nmlnode_node_map.values():
-            enode.stop()
+            try:
+                enode.stop()
+            except:
+                log.error(format_exc())
 
         # Remove the linked netns
         for enode in self.nmlnode_node_map.values():
-            privileged_cmd('rm /var/run/netns/{pid}', pid=enode._pid)
+            try:
+                privileged_cmd('rm /var/run/netns/{pid}', pid=enode._pid)
+            except:
+                log.error(format_exc())
 
     def rollback(self, stage, enodes, exception):
         """
