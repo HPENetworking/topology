@@ -8,8 +8,8 @@ autoapi
 pytest===2.8.4
 
 # Platform engines
-topology_docker
-topology_connect
+-e git+https://github.com/HPENetworking/topology_docker.git@master#egg=topology_docker
+-e git+https://github.com/HPENetworking/topology_connect.git@master#egg=topology_connect
 
 # Communication libraries
 topology_lib_ping
