@@ -22,7 +22,7 @@ Framework Core
 Platform Engines
 ================
 
-Platform Engines are plugins that define how a topology is built.
+*Platform Engines* are plugins that define how a topology is built.
 
 .. contents::
    :local:
@@ -58,15 +58,42 @@ using SSH and Telnet connections.
 Communication Libraries
 =======================
 
+*Communication Libraries* are glue Software components that allow to talk the
+dialect a node speaks. Be it a REST API, SNMP, specialized interactive terminal,
+commands, etc.
+
+Ping
+++++
+
+Communication library for the Linux ``ping`` command.
+
+.. toctree::
+   :includehidden:
+
+   reference/topology_lib_ping
+
+
+IP
+++
+
+Communication library for the Linux ``ip`` command that allows to setup ip
+addresses, routes, etc.
+
+.. toctree::
+   :includehidden:
+
+   reference/topology_lib_ip
+
+
 Vtysh
 +++++
 
 The Vtysh communication library allows to abstract contexts and commands for
 OpenSwitch_'s vtysh interactive shell.
 
+.. _OpenSwitch: http://openswitch.net/
+
 .. toctree::
    :includehidden:
 
    reference/topology_lib_vtysh
-
-.. _OpenSwitch: http://openswitch.net/

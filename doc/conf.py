@@ -310,11 +310,18 @@ def setup(app):
     app.add_stylesheet('styles/custom.css')
 
 # autoapi configuration
+autoapi_common_options = {
+    'output': 'reference',
+    'prune': True
+}
+
 autoapi_modules = {
-    'topology': {'output': 'reference'},
-    'topology_docker': {'output': 'reference'},
-    'topology_connect': {'output': 'reference'},
-    'topology_lib_vtysh': {'output': 'reference'},
+    'topology': autoapi_common_options,
+    'topology_docker': autoapi_common_options,
+    'topology_connect': autoapi_common_options,
+    'topology_lib_ping': autoapi_common_options,
+    'topology_lib_ip': autoapi_common_options,
+    'topology_lib_vtysh': autoapi_common_options,
 }
 
 # Configure PlantUML
@@ -340,10 +347,10 @@ if not on_rtd:
     html_theme = 'guzzle_sphinx_theme'
 
     # Register the theme as an extension to generate a sitemap.xml
-    extensions.append("guzzle_sphinx_theme")
+    extensions.append('guzzle_sphinx_theme')
 
     # Guzzle theme options (see theme.conf for more information)
     html_theme_options = {
         # Set the name of the project to appear in the sidebar
-        "project_nav_name": "Project Name"
+        'project_nav_name': 'Topology Network Framework'
     }
