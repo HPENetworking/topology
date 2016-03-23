@@ -22,8 +22,8 @@ dl.class dd,
 dl.function dd,
 dl.exception dd,
 dl.data dd {
-  margin: 0 !important;
-  padding: 15px !important;
+    margin: 0 !important;
+    padding: 15px !important;
 }
 
 /* Remove namespace in reference, we know where we are thank you */
@@ -34,12 +34,23 @@ dl.data dt code.descclassname {
     display: none !important;
 }
 
-/* Make PlantUML SVGs responsive */
+/* Make mages responsive */
+.container-wrapper img {
+    max-width: 100%;
+}
+
+/* PlantUML SVGs */
 object[type="image/svg+xml"] {
     max-width: 100%;
     height: auto !important;
 }
 
-.container-wrapper img {
-    width: 100%;
+/* Guzzle theme fixes */
+.container.float-right {
+    float: right;
+    width: initial;
+}
+
+.section h1 code {
+    font-size: 1em;
 }
