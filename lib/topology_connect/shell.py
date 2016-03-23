@@ -92,13 +92,20 @@ class SshMixin(object):
     @staticmethod
     def get_username():
         """
-        FIXME: Document.
+        Get the username.
+
+        :return: The user currently running the process.
+        :rtype: str
         """
         return getpwuid(getuid()).pw_name
 
     def _get_connect_command(self):
         """
-        FIXME: Document.
+        Implementation of the private method defined by the PExpectShell class
+        to define the connection command.
+
+        :return: The command that will be used to launch the shell process.
+        :rtype: str
         """
 
         options = ''
@@ -143,7 +150,11 @@ class TelnetMixin(object):
 
     def _get_connect_command(self):
         """
-        FIXME: Document.
+        Implementation of the private method defined by the PExpectShell class
+        to define the connection command.
+
+        :return: The command that will be used to launch the shell process.
+        :rtype: str
         """
         connect_command = (
             'telnet {self._hostname} {self._port}'.format(
@@ -155,26 +166,32 @@ class TelnetMixin(object):
 
 class SshShell(SshMixin, PExpectShell):
     """
-    FIXME: Document.
+    Simple class mixing the pexcept based shell with the SSH mixin.
     """
 
 
 class TelnetShell(TelnetMixin, PExpectShell):
     """
-    FIXME: Document.
+    Simple class mixing the pexcept based shell with the Telnet mixin.
     """
 
 
 class SshBashShell(SshMixin, PExpectBashShell):
     """
-    FIXME: Document.
+    Simple class mixing the Bash specialized pexcept based shell with the SSH
+    mixin.
     """
 
 
 class TelnetBashShell(TelnetMixin, PExpectBashShell):
     """
-    FIXME: Document.
+    Simple class mixing the Bash specialized pexcept based shell with the
+    Telnet mixin.
     """
 
 
-__all__ = ['SshShell', 'TelnetShell', 'SshBashShell', 'TelnetBashShell']
+__all__ = [
+    'SshMixin', 'TelnetMixin',
+    'SshShell', 'TelnetShell',
+    'SshBashShell', 'TelnetBashShell'
+]
