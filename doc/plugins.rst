@@ -260,9 +260,9 @@ Supporting communication libraries
 ----------------------------------
 
 Most of the nodes you use will derive from the common
-:class:`topology.platforms.CommonNode`. If for some reason you require to use
-a different base node, say :class:`topology.platforms.BaseNode` and you still
-want to support communication libraries make sure to create and attribute
+:class:`topology.platforms.base.CommonNode`. If for some reason you require to
+use a different base node, say :class:`topology.platforms.base.BaseNode` and you
+still want to support communication libraries make sure to create and attribute
 ``libs`` with an instance of :class:`topology.libraries.manager.LibsProxy`:
 
 .. code-block:: python
