@@ -53,3 +53,20 @@ using SSH and Telnet connections.
    :includehidden:
 
    reference/topology_connect
+
+
+Communication Libraries
+=======================
+
+Vtysh
++++++
+
+The Vtysh communication library allows to abstract contexts and commands for
+OpenSwitch_'s vtysh interactive shell.
+
+.. toctree::
+   :includehidden:
+
+   reference/topology_lib_vtysh
+
+.. _OpenSwitch: http://openswitch.net/

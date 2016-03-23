@@ -314,6 +314,7 @@ autoapi_modules = {
     'topology': {'output': 'reference'},
     'topology_docker': {'output': 'reference'},
     'topology_connect': {'output': 'reference'},
+    'topology_lib_vtysh': {'output': 'reference'},
 }
 
 # Configure PlantUML

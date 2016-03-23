@@ -14,3 +14,5 @@ topology_connect
 # Communication libraries
 topology_lib_ping
 topology_lib_ip
+
+-e git+https://git.openswitch.net/openswitch/ops-topology-lib-vtysh@master#egg=topology_lib_vtysh
