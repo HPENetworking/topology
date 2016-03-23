@@ -6,7 +6,7 @@ dl.function,
 dl.exception,
 dl.data {
     background: #f3f6f6 !important;
-    border: 1px solid #D3D3D3 !important;
+    border: 1px solid #e0e0e0 !important;
 }
 
 /* Extend reference heads to the width */
@@ -53,4 +53,73 @@ object[type="image/svg+xml"] {
 
 .section h1 code {
     font-size: 1em;
+}
+
+
+/* Guzzle theme overrides */
+@font-face {
+  font-family: 'FiraSans';
+  font-style: normal;
+  font-weight: 300;
+  src: local('FiraSans Light'), local('FiraSans-Light'), url(../fonts/FiraSans-Light.woff) format('woff');
+}
+@font-face {
+  font-family: 'FiraSans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('FiraSans'), local('FiraSans-Regular'), url(../fonts/FiraSans-Regular.woff) format('woff');
+}
+@font-face {
+  font-family: 'FiraSans';
+  font-style: normal;
+  font-weight: 600;
+  src: local('FiraSans SemiBold'), local('FiraSans-SemiBold'), url(../fonts/FiraSans-SemiBold.woff) format('woff');
+}
+@font-face {
+  font-family: 'FiraSans';
+  font-style: normal;
+  font-weight: 700;
+  src: local('FiraSans Bold'), local('FiraSans-Bold'), url(../fonts/FiraSans-Bold.woff) format('woff');
+}
+@font-face {
+  font-family: 'FiraMono';
+  font-style: normal;
+  font-weight: 400;
+  src: local('FiraMono'), local('FiraMono-Regular'), url(../fonts/FiraMono-Regular.woff) format('woff');
+}
+
+body {
+    font-family: FiraSans,'Noto Serif',serif;
+    background-color: #ffffff;
+    color: #3a4145;
+}
+
+p {
+    color: #3a4145;
+    font-size: 1.1em;
+    line-height: 1.8em;
+}
+
+a, a:hover, a:focus {
+    text-decoration: none;
+    color: #57a3e8;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #3a4145;
+    text-rendering: optimizeLegibility;
+    line-height: 1;
+    font-family: FiraSans,'Open Sans',sans-serif;
+}
+
+li {
+    line-height: 1.9em;
+}
+
+#right-column {
+    border-right: 1px solid #e0e0e0;
+}
+
+.footer {
+    border-right: 1px solid #e0e0e0;
 }
