@@ -125,7 +125,7 @@ class BaseShell(object):
         Terminates a connection to the shell.
         """
 
-    def execute(self, command):
+    def execute(self, command, prompt=None, timeout=None):
         """
         Executes a command.
 
@@ -136,11 +136,11 @@ class BaseShell(object):
         :rtype: str
         :return: Shell response to the command being sent.
         """
-        self.send_command(command)
+        self.send_command(command, matches=prompt, timeout=timeout)
         return self.get_response()
 
-    def __call__(self, command):
-        return self.execute(command)
+    def __call__(self, command, prompt=None, timeout=None):
+        return self.execute(command, prompt=prompt, timeout=timeout)
 
     def _setup_shell(self):
         """
