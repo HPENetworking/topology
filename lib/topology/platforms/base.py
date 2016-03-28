@@ -211,8 +211,8 @@ class BaseNode(object):
     def default_shell(self, value):
         raise NotImplementedError('default_shell.setter')
 
-    def __call__(self, cmd, shell=None, silent=False):
-        return self.send_command(cmd, shell=shell, silent=silent)
+    def __call__(self, cmd, shell=None, silent=False, prompt=None, timeout=None):
+        return self.send_command(cmd, shell=shell, silent=silent, prompt=prompt, timeout=timeout)
 
     def use_shell(self, shell):
         """
@@ -250,7 +250,7 @@ class BaseNode(object):
         """
 
     @abstractmethod
-    def send_command(self, cmd, shell=None, silent=False):
+    def send_command(self, cmd, shell=None, silent=False, prompt=None, timeout=None):
         """
         Send a command to this engine node.
 
@@ -356,7 +356,7 @@ class CommonNode(BaseNode):
             )
         return self._shells[shell]
 
-    def send_command(self, cmd, shell=None, silent=False):
+    def send_command(self, cmd, shell=None, silent=False, prompt=None, timeout=None):
         """
         Implementation of the ``send_command`` interface.
 
@@ -386,11 +386,17 @@ class CommonNode(BaseNode):
             )
 
         if not silent:
-            print('{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
-                datetime.now().isoformat(), self.identifier, cmd, shell
+            p_timeout = ""
+            if timeout is not None:
+                p_timeout = ', timeout=\'{}\''.format(timeout)
+            p_prompt = ""
+            if prompt is not None:
+                p_prompt = ', expect=\'{}\''.format(prompt)
+            print('{} [{}].send_command(\'{}\', shell=\'{}\'{}{}) ::'.format(
+                datetime.now().isoformat(), self.identifier, cmd, shell, p_timeout, p_prompt
             ))
 
-        response = self._shells[shell](cmd)
+        response = self._shells[shell](cmd, prompt=prompt, timeout=timeout)
 
         if not silent:
             print(response)
