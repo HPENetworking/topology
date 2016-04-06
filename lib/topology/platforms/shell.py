@@ -178,6 +178,10 @@ class PExpectShell(BaseShell):
     :param bool try_filter_echo: On platforms that doesn't support some way of
      turning off the echo of the command try to filter the echo from the output
      by removing the first line of the output if it match the command.
+    :param dict spawn_args: Arguments to be passed to the Pexpect spawn
+     constructor. If this is left as ``None``, then
+     ``env={'TERM': 'dumb'}, echo=False`` will be passed as keyword
+     arguments to the spawn constructor.
     """
 
     def __init__(
@@ -185,7 +189,8 @@ class PExpectShell(BaseShell):
             initial_command=None, initial_prompt=None,
             password=None, password_match='[pP]assword:',
             prefix=None, timeout=None, encoding='utf-8',
-            try_filter_echo=True, **kwargs):
+            try_filter_echo=True,
+            spawn_args=None, **kwargs):
 
         self._initial_command = initial_command
         self._prompt = prompt
@@ -196,6 +201,12 @@ class PExpectShell(BaseShell):
         self._timeout = timeout or -1
         self._encoding = encoding
         self._try_filter_echo = try_filter_echo
+        # Doing this to avoid having a mutable object as default value in the
+        # arguments.
+        if spawn_args is None:
+            self._spawn_args = {'env': {'TERM': 'dumb'}, 'echo': False}
+        else:
+            self._spawn_args = spawn_args
 
         self._spawn = None
         self._last_command = None
@@ -296,7 +307,7 @@ class PExpectShell(BaseShell):
         # Create a child process
         self._spawn = spawn(
             self._get_connect_command().strip(),
-            env={'TERM': 'dumb'}, echo=False
+            **self._spawn_args
         )
 
         # If connection is via password
