@@ -256,8 +256,8 @@ class BaseNode(object):
 
         :param str cmd: Command to send.
         :param str shell: Shell that must interpret the command.
-         `None` for the default shell. Is up to the platform engine to
-         determine what the default shell is.
+         ``None`` for the default shell. Is up to the engine node to
+         determine what its default shell is.
         :param bool silent: If ``False``, print input command and response to
          stdout.
         :rtype: str

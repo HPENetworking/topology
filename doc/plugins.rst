@@ -231,7 +231,7 @@ pattern:
         def __init__(self):
             self.my_variable_one = 100
 
-    stateprovider(MyState)
+    @stateprovider(MyState)
     def my_library_function(enode, state, arg1, arg2, keyword_arg1=None):
         print(state.my_variable_one)
         state.my_variable_one += 100
