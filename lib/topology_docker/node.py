@@ -32,6 +32,7 @@ from docker import Client
 from six import add_metaclass
 
 from topology.platforms.base import CommonNode
+from topology_docker.utils import ensure_dir
 
 
 log = getLogger(__name__)
@@ -41,6 +42,11 @@ log = getLogger(__name__)
 class DockerNode(CommonNode):
     """
     An instance of this class will create a detached Docker container.
+
+    This node binds the ``/tmp/`` directory of the container to a local path
+    in the host system under ``/tmp/topology_{identifier}_{uuid}/``. This value
+    is stored under ``node.shared_dir`` attribute and can be used to share
+    files.
 
     :param str identifier: The unique identifier of the node.
     :param str image: The image to run on this node, in the
@@ -75,16 +81,26 @@ class DockerNode(CommonNode):
         # Autopull docker image if necessary
         self._autopull()
 
-        # Create host config
-        if binds is not None:
-            binds = binds.split(';')
+        # Create shared directory
+        self.shared_dir = '/tmp/topology_{}_{}'.format(
+            identifier, str(id(self))
+        )
+        ensure_dir(self.shared_dir)
 
+        # Add binded directories
+        container_binds = [
+            '{}:/tmp'.format(self.shared_dir)
+        ]
+        if binds is not None:
+            container_binds.extend(binds.split(';'))
+
+        # Create host config
         self._host_config = self._client.create_host_config(
             # Container is given access to all devices
             privileged=True,
             # Avoid connecting to host bridge, usually docker0
             network_mode=network_mode,
-            binds=binds
+            binds=container_binds
         )
 
         # Create container
