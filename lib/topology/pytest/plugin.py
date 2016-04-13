@@ -157,7 +157,7 @@ def topology(request):
             topomgr.build()
         except:
             fail(
-                'Error building topogy in module {}:\n{}'.format(
+                'Error building topology in module {}:\n{}'.format(
                     module.__name__,
                     format_exc()
                 ), pytrace=False
