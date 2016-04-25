@@ -193,6 +193,27 @@ class DockerNode(CommonNode):
         Get notified that the post build stage of the topology build was
         reached.
         """
+        # Log container data
+        image_data = self._client.inspect_image(
+            image=self._image
+        )
+        log.info(
+            'Starting container {}:\n'
+            '    Image name: {}\n'
+            '    Image id: {}\n'
+            '    Image creation date: {}'
+            '    Image tags: {}'.format(
+                self.container_id,
+                self._image,
+                image_data.get('Id', '????'),
+                image_data.get('Created', '????'),
+                ', '.join(image_data.get('RepoTags', []))
+            )
+        )
+        container_data = self._client.inspect_container(
+            container=self.container_id
+        )
+        log.debug(container_data)
 
     def start(self):
         """
