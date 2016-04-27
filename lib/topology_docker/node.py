@@ -82,7 +82,7 @@ class DockerNode(CommonNode):
         self._autopull()
 
         # Create shared directory
-        self.shared_dir = '/tmp/topology_{}_{}'.format(
+        self.shared_dir = '/tmp/topology/{}_{}'.format(
             identifier, str(id(self))
         )
         ensure_dir(self.shared_dir)
