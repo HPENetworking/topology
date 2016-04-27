@@ -112,7 +112,8 @@ def parse_attribute_injection(injection_file, search_paths=None):
     # Expand search paths recursively to include all subfolders
     def subfolders(search_path):
         result = []
-        for root, dirs, files in walk(search_path, topdown=True):
+        for root, dirs, files in walk(search_path, topdown=True,
+                                      followlinks=True):
             # Ignore hidden folders
             dirs[:] = [d for d in dirs if not d.startswith('.')]
             result.extend([join(root, directory) for directory in dirs])
