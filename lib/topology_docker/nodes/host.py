@@ -36,7 +36,7 @@ class HostNode(DockerNode):
     See :class:`topology_docker.node.DockerNode`.
     """
 
-    def __init__(self, identifier, image='ubuntu:latest', **kwargs):
+    def __init__(self, identifier, image='ubuntu:14.04', **kwargs):
 
         super(HostNode, self).__init__(identifier, image=image, **kwargs)
         self._shells['bash'] = DockerBashShell(
