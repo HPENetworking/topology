@@ -276,17 +276,21 @@ class DockerNode(CommonNode):
         self._client.wait(self._container_id)
         self._client.remove_container(self._container_id)
 
-    def pause(self):
+    def disable(self):
         """
-        Pause the current node.
+        Disable the node.
+
+        In Docker implementation this pauses the container.
         """
         for portlbl in self.ports:
             self.set_port_state(portlbl, False)
         self._client.pause(self._container_id)
 
-    def unpause(self):
+    def enable(self):
         """
-        Unpause the current node.
+        Enable the node.
+
+        In Docker implementation this unpauses the container.
         """
         self._client.unpause(self._container_id)
         for portlbl in self.ports:
