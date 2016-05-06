@@ -24,6 +24,7 @@ from __future__ import print_function, division
 
 from os import getpid
 from json import loads
+from os.path import join
 from logging import getLogger
 from datetime import datetime
 from shlex import split as shsplit
@@ -61,7 +62,10 @@ class DockerNode(CommonNode):
         '/tmp:/tmp;/dev/log:/dev/log;/sys/fs/cgroup:/sys/fs/cgroup'
 
     :param str network_mode: Network mode for this container.
-    :param str container_shared_dir: Mount point of the shared directory in the
+    :param str shared_dir_base: Base path in the host where the shared
+     directory will be created. The shared directory will always have the name
+     of the container inside this directory.
+    :param str shared_dir_mount: Mount point of the shared directory in the
      container.
 
     Read only public attributes:
@@ -84,6 +88,7 @@ class DockerNode(CommonNode):
             self, identifier,
             image='ubuntu:latest', registry=None, command='bash',
             binds=None, network_mode='none', hostname=None,
+            shared_dir_base='/tmp/topology/docker/',
             shared_dir_mount='/var/topology',
             **kwargs):
 
@@ -100,8 +105,12 @@ class DockerNode(CommonNode):
             identifier=identifier, pid=getpid(),
             timestamp=datetime.now().isoformat().replace(':', '-')
         )
+        self._shared_dir_base = shared_dir_base
         self._shared_dir_mount = shared_dir_mount
-        self._shared_dir = '/tmp/topology/{}'.format(self._container_name)
+        self._shared_dir = join(
+            shared_dir_base,
+            self._container_name
+        )
 
         # Autopull docker image if necessary
         self._autopull()
