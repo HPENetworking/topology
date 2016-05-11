@@ -1,18 +1,17 @@
 # Sphinx
-sphinx
-guzzle_sphinx_theme
-sphinxcontrib-plantuml
-autoapi
+sphinx==1.4.1
+guzzle_sphinx_theme==0.7.11
+sphinxcontrib-plantuml==0.8.1
+autoapi==1.2.2
 
 # AutoAPI imports dependencies
-pytest===2.8.4
+pytest==2.8.4
 
 # Platform engines
 -e git+https://github.com/HPENetworking/topology_docker.git@master#egg=topology_docker
 -e git+https://github.com/HPENetworking/topology_connect.git@master#egg=topology_connect
 
 # Communication libraries
-topology_lib_ping
-topology_lib_ip
-
+-e git+https://github.com/HPENetworking/topology_lib_ping.git@master#egg=topology_lib_ping
+-e git+https://github.com/HPENetworking/topology_lib_ip.git@master#egg=topology_lib_ip
 -e git+https://git.openswitch.net/openswitch/ops-topology-lib-vtysh@master#egg=topology_lib_vtysh
