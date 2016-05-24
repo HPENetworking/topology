@@ -14,6 +14,41 @@ Documentation
 Changelog
 =========
 
+1.6.0
+-----
+
+**New**
+
+- A *dockerfile* for a test host container has been added. The purpose of this
+  container is to serve as a general purpose test host, which includes by
+  default several tools (iperf, tcpdump, for example) that are useful for test
+  case execution.
+- Fixing default host image in ``ubuntu:14.04``. The default image for hosts
+  used to be ``ubuntu:latest`` but since the actual image to which this points
+  to can change, it could introduce issues for test cases that were developed
+  under the assumption that the pointed-to image included the necessary tools
+  for the test case.
+- Logging the image and container data. Image name, id, creation date, etc. are
+  now logged automatically for every container.
+- Docker nodes now mount their ``/tmp`` directory under the host ``/tmp``. The
+  mount path of this directory under the host ``/tmp`` is defined using the
+  container ``id``.
+- A new test that checks the proper functionality of host routes has been
+  added. This is a functional test in which 2 hosts ping each other.
+
+**Changes**
+
+- Documentation for ``image`` attribute has been improved. This attribute was a
+  source of confusion since it was not explicitly documented that the ``TAG``
+  column needed to be included in the ``image`` value.
+
+**Fixes**
+
+- Nodes which fail to start are now not considered for rollback. Also, this
+  rollback process is now a *best effort* since it just tries to stop nodes. If
+  one of these nodes fails to stop, this will be logged and the process will
+  continue.
+
 1.5.0
 -----
 
