@@ -1,4 +1,4 @@
 six==1.10.0
-pexpect==4.0.1
+pexpect
 pyparsing==2.1.3
 pynml==1.0.0
