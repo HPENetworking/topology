@@ -14,6 +14,36 @@ Documentation
 Changelog
 =========
 
+1.7.0
+-----
+
+**Changes**
+
+- The documentation for *communication libraries* has been improved a lot with
+  specific examples for common use cases added.
+- The ``pexpect`` ``spawn`` arguments are now reachable from the initialization
+  of a shell object.
+- The attribute injection feature is now capable of following symbolic links
+  while walking through directory paths.
+- The version of all dependencies has been fixed. This is to avoid unexpected
+  code breaks when a bug is introduced in one of them.
+
+**New**
+
+- The reference documentation for the *vtysh*, *ping* and *ip* communication
+  libraries has been added to the documentation.
+- PExpect shells now support multiple connections. This means that the same
+  shell object can now use several ``pexpect`` ``spawn`` objects.
+
+**Fixes**
+
+- The base node class ``BaseNode`` now includes a ``ports`` attribute. This has
+  been used by all platform engine nodes so far, but was missing in their base
+  class.
+- A missing history file does not raise an error whene executing ``topology``,
+  but is just logged as an error.
+- A few CSS and other theme issues have been fixed.
+
 1.6.0
 -----
 
