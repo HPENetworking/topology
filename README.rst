@@ -14,6 +14,14 @@ Documentation
 Changelog
 =========
 
+1.7.1
+-----
+
+**Changes**
+
+- Removing the version requirement of Pexpect since this may cause version
+  collisions with other Python packages commonly used with the framework.
+
 1.7.0
 -----
 
