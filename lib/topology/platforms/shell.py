@@ -314,6 +314,7 @@ class PExpectShell(BaseShell):
     def __init__(
             self, prompt,
             initial_command=None, initial_prompt=None,
+            user=None, user_match='[uU]ser:',
             password=None, password_match='[pP]assword:',
             prefix=None, timeout=None, encoding='utf-8',
             try_filter_echo=True, auto_connect=True,
@@ -325,6 +326,8 @@ class PExpectShell(BaseShell):
         self._initial_command = initial_command
         self._prompt = prompt
         self._initial_prompt = initial_prompt
+        self._user = user
+        self._user_match = user_match
         self._password = password
         self._password_match = password_match
         self._prefix = prefix
@@ -496,6 +499,13 @@ class PExpectShell(BaseShell):
         self._connections[connection] = spawn
 
         try:
+            # If connection is via user
+            if self._user is not None:
+                spawn.expect(
+                    [self._user_match], timeout=self._timeout
+                )
+                spawn.sendline(self._user)
+
             # If connection is via password
             if self._password is not None:
                 spawn.expect(
