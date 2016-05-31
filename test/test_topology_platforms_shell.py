@@ -310,6 +310,23 @@ def test_setup_shell(spawn, shell):
     assert shell._initial_prompt == initial_prompt
 
 
+def test_connect(spawn, shell):
+    """
+    Test that the connect method works properly.
+    """
+
+    class SetupShellError(Exception):
+        pass
+
+    def _setup_shell(self, connection=None):
+        raise SetupShellError
+
+    shell._setup_shell = _setup_shell
+
+    with raises(SetupShellError):
+        shell.connect()
+
+
 def test_connect_disconnect_connect(spawn, shell):
     """
     Test that the connect - disconnect - connect use case works properly.

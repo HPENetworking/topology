@@ -531,6 +531,7 @@ class PExpectShell(BaseShell):
         except:
             # Always remove bad connections if it failed
             del self._connections[connection]
+            raise
 
         # Set connection as default connection if required
         if self.default_connection is None:
