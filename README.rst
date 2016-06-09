@@ -14,6 +14,19 @@ Documentation
 Changelog
 =========
 
+1.7.2
+-----
+
+**Changes**
+
+- Adding ``user`` as an option for ``PExpectShell`` to support shells that use
+  this kind of authentication.
+
+**Fixes**
+
+- Raising the proper exception when a shell connection fails for the user to
+  handle it properly.
+
 1.7.1
 -----
 
