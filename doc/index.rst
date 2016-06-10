@@ -8,14 +8,15 @@
    reference
 
 ==========================
-Network Topology Framework
+Topology Modular Framework
 ==========================
 
 .. container:: float-right
 
    .. image:: _static/images/logo.png
 
-Network Topology Framework using NML, with support for pytest.
+Advanced modular framework for building and testing network topologies and
+Software.
 
 
 Documentation

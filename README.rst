@@ -1,14 +1,15 @@
 ==========================
-Network Topology Framework
+Topology Modular Framework
 ==========================
 
-Network Topology Framework using NML, with support for pytest.
+Advanced modular framework for building and testing network topologies and
+Software.
 
 
 Documentation
 =============
 
-    http://topology.rtfd.org/
+    http://topology.rtfd.io/
 
 
 Changelog
