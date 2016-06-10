@@ -48,11 +48,11 @@ def catch_exc(func):
 
 
 class NamespaceCompleter(object):
+    """
+    Readline completer using a dictionary namespace.
+    """
 
     def __init__(self, ns):
-        """
-        Readline completer using a dictionary namespace.
-        """
         self.matches = []
         self.ns = ns
 
