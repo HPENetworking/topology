@@ -137,10 +137,8 @@ class DockerPlatform(BasePlatform):
         #   docs.docker.com/v1.5/articles/networking/#building-a-point-to-point-connection # noqa
         commands = """\
         ip link add {tmp_iface_a} type veth peer name {tmp_iface_b}
-        ip link set {tmp_iface_a} netns {enode_a._pid}
-        ip link set {tmp_iface_b} netns {enode_b._pid}
-        ip netns exec {enode_a._pid} ip link set {tmp_iface_a} name {iface_a}
-        ip netns exec {enode_b._pid} ip link set {tmp_iface_b} name {iface_b}\
+        ip link set {tmp_iface_a} netns {enode_a._pid} name {iface_a}
+        ip link set {tmp_iface_b} netns {enode_b._pid} name {iface_b}\
         """
         privileged_cmd(commands, **locals())
 

@@ -22,8 +22,11 @@ topology_docker base node module.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from os import getpid
 from json import loads
+from os.path import join
 from logging import getLogger
+from datetime import datetime
 from shlex import split as shsplit
 from subprocess import check_output
 from abc import ABCMeta, abstractmethod
@@ -43,12 +46,10 @@ class DockerNode(CommonNode):
     """
     An instance of this class will create a detached Docker container.
 
-    This node binds the ``/tmp/`` directory of the container to a local path
-    in the host system under ``/tmp/topology_{identifier}_{uuid}/``. This value
-    is stored under ``node.shared_dir`` attribute and can be used to share
-    files.
+    This node binds the ``shared_dir_mount`` directory of the container to a
+    local path in the host system defined in ``self.shared_dir``.
 
-    :param str identifier: The unique identifier of the node.
+    :param str identifier: Node unique identifier in the topology being built.
     :param str image: The image to run on this node, in the
      form ``repository:tag``.
     :param str registry: Docker registry to pull image from.
@@ -61,13 +62,35 @@ class DockerNode(CommonNode):
         '/tmp:/tmp;/dev/log:/dev/log;/sys/fs/cgroup:/sys/fs/cgroup'
 
     :param str network_mode: Network mode for this container.
+    :param str shared_dir_base: Base path in the host where the shared
+     directory will be created. The shared directory will always have the name
+     of the container inside this directory.
+    :param str shared_dir_mount: Mount point of the shared directory in the
+     container.
+
+    Read only public attributes:
+
+    :var image: Name of the Docker image being used by this node.
+     Same as the ``image`` keyword argument.
+    :var container_id: Unique container identifier assigned by the Docker
+     daemon in the form of a hash.
+    :var container_name: Unique container name assigned by the framework in the
+     form ``{identifier}_{pid}_{timestamp}``.
+    :var shared_dir: Share directory in the host for this container. Always
+     ``/tmp/topology/{container_name}``.
+    :var shared_dir_mount: Directory inside the container where the
+     ``shared_dir`` is mounted. Same as the ``shared_dir_mount`` keyword
+     argument.
     """
 
     @abstractmethod
     def __init__(
             self, identifier,
             image='ubuntu:latest', registry=None, command='bash',
-            binds=None, network_mode='none', hostname=None, **kwargs):
+            binds=None, network_mode='none', hostname=None,
+            shared_dir_base='/tmp/topology/docker/',
+            shared_dir_mount='/var/topology',
+            **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
 
@@ -78,18 +101,29 @@ class DockerNode(CommonNode):
         self._hostname = hostname
         self._client = Client(version='auto')
 
+        self._container_name = '{identifier}_{pid}_{timestamp}'.format(
+            identifier=identifier, pid=getpid(),
+            timestamp=datetime.now().isoformat().replace(':', '-')
+        )
+        self._shared_dir_base = shared_dir_base
+        self._shared_dir_mount = shared_dir_mount
+        self._shared_dir = join(
+            shared_dir_base,
+            self._container_name
+        )
+
         # Autopull docker image if necessary
         self._autopull()
 
         # Create shared directory
-        self.shared_dir = '/tmp/topology/{}_{}'.format(
-            identifier, str(id(self))
-        )
-        ensure_dir(self.shared_dir)
+        ensure_dir(self._shared_dir)
 
         # Add binded directories
         container_binds = [
-            '{}:/tmp'.format(self.shared_dir)
+            '{}:{}'.format(
+                self._shared_dir,
+                self._shared_dir_mount
+            )
         ]
         if binds is not None:
             container_binds.extend(binds.split(';'))
@@ -104,15 +138,35 @@ class DockerNode(CommonNode):
         )
 
         # Create container
-        self.container_id = self._client.create_container(
+        self._container_id = self._client.create_container(
             image=self._image,
             command=self._command,
-            name='{}_{}'.format(identifier, str(id(self))),
+            name=self._container_name,
             detach=True,
             tty=True,
             hostname=self._hostname,
             host_config=self._host_config
         )['Id']
+
+    @property
+    def image(self):
+        return self._image
+
+    @property
+    def container_id(self):
+        return self._container_id
+
+    @property
+    def container_name(self):
+        return self._container_name
+
+    @property
+    def shared_dir(self):
+        return self._shared_dir
+
+    @property
+    def shared_dir_mount(self):
+        return self._shared_dir_mount
 
     def _autopull(self):
         """
@@ -198,12 +252,12 @@ class DockerNode(CommonNode):
             image=self._image
         )
         log.info(
-            'Starting container {}:\n'
+            'Started container {}:\n'
             '    Image name: {}\n'
             '    Image id: {}\n'
             '    Image creation date: {}'
             '    Image tags: {}'.format(
-                self.container_id,
+                self._container_name,
                 self._image,
                 image_data.get('Id', '????'),
                 image_data.get('Created', '????'),
@@ -211,7 +265,7 @@ class DockerNode(CommonNode):
             )
         )
         container_data = self._client.inspect_container(
-            container=self.container_id
+            container=self._container_id
         )
         log.debug(container_data)
 
@@ -219,31 +273,35 @@ class DockerNode(CommonNode):
         """
         Start the docker node and configures a netns for it.
         """
-        self._client.start(self.container_id)
+        self._client.start(self._container_id)
         self._pid = self._client.inspect_container(
-            self.container_id)['State']['Pid']
+            self._container_id)['State']['Pid']
 
     def stop(self):
         """
         Request container to stop.
         """
-        self._client.stop(self.container_id)
-        self._client.wait(self.container_id)
-        self._client.remove_container(self.container_id)
+        self._client.stop(self._container_id)
+        self._client.wait(self._container_id)
+        self._client.remove_container(self._container_id)
 
-    def pause(self):
+    def disable(self):
         """
-        Pause the current node.
+        Disable the node.
+
+        In Docker implementation this pauses the container.
         """
         for portlbl in self.ports:
             self.set_port_state(portlbl, False)
-        self._client.pause(self.container_id)
+        self._client.pause(self._container_id)
 
-    def unpause(self):
+    def enable(self):
         """
-        Unpause the current node.
+        Enable the node.
+
+        In Docker implementation this unpauses the container.
         """
-        self._client.unpause(self.container_id)
+        self._client.unpause(self._container_id)
         for portlbl in self.ports:
             self.set_port_state(portlbl, True)
 
@@ -267,12 +325,12 @@ class DockerNode(CommonNode):
         :param str command: The command to execute.
         """
         log.debug(
-            '[{}]._docker_exec({}) ::'.format(self.container_id, command)
+            '[{}]._docker_exec(\'{}\') ::'.format(self._container_id, command)
         )
 
         response = check_output(shsplit(
             'docker exec {container_id} {command}'.format(
-                container_id=self.container_id, command=command.strip()
+                container_id=self._container_id, command=command.strip()
             )
         )).decode('utf8')
 
