@@ -134,7 +134,7 @@ class DockerPlatform(BasePlatform):
         iface_b = self.nmlbiport_iface_map[port_b.identifier]['iface']
 
         # Create links between nodes:
-        #   docs.docker.com/articles/networking/#building-a-point-to-point-connection # noqa
+        #   docs.docker.com/v1.5/articles/networking/#building-a-point-to-point-connection # noqa
         commands = """\
         ip link add {tmp_iface_a} type veth peer name {tmp_iface_b}
         ip link set {tmp_iface_a} netns {enode_a._pid}
