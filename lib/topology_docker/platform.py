@@ -90,6 +90,100 @@ class DockerPlatform(BasePlatform):
             pid=enode._pid
         )
 
+        # Manage network and their netns creation (if necessary)
+        if enode.network_config is not None:
+            for category, config in enode.network_config['mapping'].items():
+
+                # Setup docker-managed networks
+                if config['managed_by'] is 'docker':
+                    netname = enode.identifier + '_' + category
+                    enode._client.create_network(
+                        name=netname,
+                        driver='bridge'
+                    )
+
+                    # Disconnect from 'none' to be able to connect to other
+                    # networks (https://github.com/docker/docker/issues/21132)
+                    networks = enode._client.inspect_container(
+                        enode.container_id
+                    )['NetworkSettings']['Networks']
+                    if 'none' in networks:
+                        enode._client.disconnect_container_from_network(
+                            container=enode._container_id,
+                            net_id='none'
+                        )
+
+                    # Connect container to this newly-created docker network
+                    enode._client.connect_container_to_network(
+                        container=enode._container_id,
+                        net_id=netname
+                    )
+
+                    # Check if this category has a defined netns
+                    if config['netns'] is not None:
+                        # Create this network's namespace inside the container
+                        # https://imgflip.com/i/16621d
+                        enode._docker_exec(
+                            'ip netns add {config[netns]}'.format(
+                                **locals()
+                            )
+                        )
+
+                        # Figure out the interface name inside the container
+                        # for this network
+                        # FIXME: there must be a better way to do this
+                        # https://github.com/docker/docker/issues/17064
+                        docker_netconf = enode._client.inspect_container(
+                            enode.container_id
+                        )['NetworkSettings']['Networks'][netname]
+                        ifaces_conf = enode._docker_exec(
+                            'ip -o link list'
+                        ).split('\n')
+                        for iface_conf in ifaces_conf:
+                            if docker_netconf['MacAddress'] in iface_conf:
+                                iface = iface_conf.split(': ')[1].split('@')[0]
+                                break
+
+                        prefixed_iface = config['prefix'] + iface
+                        # Move this network's interface to its netns
+                        enode._docker_exec(
+                            'ip link set {iface} netns {config[netns]}\
+                                name {prefixed_iface}'.format(
+                                    **locals()
+                                )
+                        )
+
+                        # Reset the interface to original config
+                        cmd_prefix = 'ip netns exec {config[netns]} '.format(
+                            **locals()
+                        )
+                        # Reset the IP address
+                        cidr_address = str(docker_netconf['IPAddress']) + '/'
+                        cidr_address += str(docker_netconf['IPPrefixLen'])
+                        enode._docker_exec(
+                            cmd_prefix +
+                            'ip address add {cidr_address}\
+                                dev {prefixed_iface}'.format(
+                                    **locals()
+                                )
+                        )
+                        enode._docker_exec(
+                            cmd_prefix +
+                            'ip link set {prefixed_iface} up'.format(
+                                **locals()
+                            )
+                        )
+
+                if config['managed_by'] is 'platform':
+                    # Check if this category has a defined netns
+                    if config['netns'] is not None:
+                        # Create the front_panel network namespace
+                        enode._docker_exec(
+                            'ip netns add {config[netns]}'.format(
+                                **locals()
+                            )
+                        )
+
         return enode
 
     def add_biport(self, node, biport):
@@ -159,31 +253,83 @@ class DockerPlatform(BasePlatform):
         for enode, port, iface in \
                 ((enode_a, port_a, iface_a), (enode_b, port_b, iface_b)):
 
-            prefix = 'ip netns exec {pid} '.format(pid=enode._pid)
+            if enode.network_config is not None:
+                default_category = enode.network_config['default_category']
+                category = port.metadata.get('category', default_category)
+                net_config = enode.network_config['mapping'][category]
 
-            # Set ipv4 and ipv6 addresses
-            for version in [4, 6]:
-                attribute = 'ipv{}'.format(version)
-                if attribute not in port.metadata:
+                cmd_prefix = ''
+                prefixed_iface = iface
+                if net_config['netns'] is not None:
+                    prefixed_iface = net_config['prefix'] + iface
+                    # Move the ports to their defined netns
+                    enode._docker_exec(
+                        'ip link set {iface} netns {net_config[netns]}\
+                            name {prefixed_iface}'.format(
+                                **locals()
+                            )
+                    )
+
+                    # Set the cmd_prefix so that the next commands are executed
+                    # in the correct namespace
+                    cmd_prefix = 'ip netns exec {net_config[netns]} '.format(
+                        **locals()
+                    )
+
+                # Set ipv4 and ipv6 addresses
+                for version in [4, 6]:
+                    attribute = 'ipv{}'.format(version)
+                    if attribute not in port.metadata:
+                        continue
+
+                    addr = port.metadata[attribute]
+                    cmd = 'ip -{version} addr add {addr}\
+                            dev {prefixed_iface}'.format(
+                        **locals()
+                    )
+                    enode._docker_exec(cmd_prefix + cmd)
+
+                # Bring-up or down
+                if bilink.metadata.get('up', None) is None and \
+                        port.metadata.get('up', None) is None:
                     continue
 
-                addr = port.metadata[attribute]
-                cmd = 'ip -{version} addr add {addr} dev {iface}'.format(
+                up = bilink.metadata.get('up', True) and \
+                    port.metadata.get('up', True)
+
+                state = 'up' if up else 'down'
+                cmd = 'ip link set dev {prefixed_iface} {state}'.format(
                     **locals()
                 )
+                enode._docker_exec(cmd_prefix + cmd)
+
+            else:
+
+                prefix = 'ip netns exec {pid} '.format(pid=enode._pid)
+
+                # Set ipv4 and ipv6 addresses
+                for version in [4, 6]:
+                    attribute = 'ipv{}'.format(version)
+                    if attribute not in port.metadata:
+                        continue
+
+                    addr = port.metadata[attribute]
+                    cmd = 'ip -{version} addr add {addr} dev {iface}'.format(
+                        **locals()
+                    )
+                    privileged_cmd(prefix + cmd)
+
+                # Bring-up or down
+                if bilink.metadata.get('up', None) is None and \
+                        port.metadata.get('up', None) is None:
+                    continue
+
+                up = bilink.metadata.get('up', True) and \
+                    port.metadata.get('up', True)
+
+                state = 'up' if up else 'down'
+                cmd = 'ip link set dev {iface} {state}'.format(**locals())
                 privileged_cmd(prefix + cmd)
-
-            # Bring-up or down
-            if bilink.metadata.get('up', None) is None and \
-                    port.metadata.get('up', None) is None:
-                continue
-
-            up = bilink.metadata.get('up', True) and \
-                port.metadata.get('up', True)
-
-            state = 'up' if up else 'down'
-            cmd = 'ip link set dev {iface} {state}'.format(**locals())
-            privileged_cmd(prefix + cmd)
 
     def post_build(self):
         """
@@ -227,6 +373,21 @@ class DockerPlatform(BasePlatform):
         for enode in self.nmlnode_node_map.values():
             try:
                 privileged_cmd('rm /var/run/netns/{pid}', pid=enode._pid)
+            except:
+                log.error(format_exc())
+
+        # Remove all docker-managed networks
+        for enode in self.nmlnode_node_map.values():
+            try:
+                if enode.network_config is not None:
+                    for category, config in\
+                            enode.network_config['mapping'].items():
+                        if config['managed_by'] is 'docker':
+                            enode._client.remove_network(
+                                net_id='{enode.identifier}_{category}'.format(
+                                    **locals()
+                                )
+                            )
             except:
                 log.error(format_exc())
 

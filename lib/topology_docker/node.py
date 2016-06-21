@@ -126,6 +126,8 @@ class DockerNode(CommonNode):
             self._container_name
         )
 
+        self.network_config = None
+
         # Autopull docker image if necessary
         self._autopull()
 
