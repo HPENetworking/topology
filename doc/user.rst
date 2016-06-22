@@ -181,6 +181,235 @@ example, :ref:`in this example <injection-file>` the ``image`` attribute for
 first, but after this, it was overriden to ``special_image_for_sw1`` because of
 the second injection specification.
 
+The low-level shell API
+=======================
+
+The test execution machine communicates with the topology nodes through their
+*shells*. This can be done by simply sending a command to the node like this:
+
+.. code-block:: python
+
+    ops1('some command', shell='the_node_shell')
+
+This kind of communication is informally known as *rapid fire*.
+
+Usually, this kind of command execution is not done directly in the test case,
+but done inside a *communication library*.
+
+Now, rapid fire allows the user to send commands to the node without much
+typing but without much fine control also. For certain situations, is necessary
+to specify several other shell communication parameter besides of the command
+that is to be sent. For this situations, the **low-level shell API** comes
+handy.
+
+Using the API
++++++++++++++
+
+Each node object has one or more shells that can be used to communicate with
+it. These shells are closely related to the nature of the node. For example, a
+*host* node (basically, a node that represents a computer that runs Linux) has
+a ``bash`` shell, because these Linux hosts come with a ``bash`` shell.
+
+These shells are represented by a *shell object* that can be obtained directly
+from the node in this way:
+
+.. code-block:: python
+
+    bash = hs1.get_shell('bash')
+
+The ``get_shell`` method of the nodes returns the shell object specified in its
+argument. This object is the one who provides the low-level shell API to the
+user.
+
+The complete API is defined in the methods for the ``BaseShell`` class of the
+``shell.py`` module included in the ``platforms`` package of ``topology``,
+found in :class:`topology.platforms.shell.BaseShell`.
+
+.. warning::
+
+    The low-level shell API is public and intended for advanced usage. This
+    means that the user will have access to certain shell attributes like the
+    prompt that it should be matching. Misuse of this low-level API can make
+    the high-level API (rapid fire) to get out of sync if the prompt is not
+    rematched properly in the low-level API. Use with caution.
+
+Context manager for non-default shells
+++++++++++++++++++++++++++++++++++++++
+
+To avoid setting a non-default shell repeatedly in rapid fire calls, like in:
+
+.. code-block:: python
+
+    hs1('from bar import foo', shell='python')
+    hs1('foo.something()', shell='python')
+    hs1('foo.otherthing()', shell='python')
+
+a *context manager* can be used. For example, this can be done for high-level
+shell usage:
+
+.. code-block:: python
+
+    with hs1.use_shell('python') as python:
+        hs1('from bar import foo')
+        hs1('foo.something()')
+        hs1('foo.otherthing()')
+
+This can be done for low-level shell usage:
+
+.. code-block:: python
+
+    with hs1.use_shell('python') as python:
+        python.send_command('from bar import foo')
+        python.send_command('foo.something()')
+        python.send_command('foo.otherthing()', timeout=99)
+        python.get_response()
+
+Overview of the API methods
++++++++++++++++++++++++++++
+
+There are two main methods that provide most of the functionality in the API:
+
+#. ``send_command``
+#. ``get_response``
+
+The first one receives the following arguments:
+
+#. ``command``: the command to be executed in the shell, mandatory
+#. ``matches``: a list of strings that are to be matched by the shell (please
+   see `Some examples of send_command`_), optional, defaults to ``None``
+#. ``newline``: ``True`` if the shell should add a return character after the
+   command, ``False`` otherwise, optional, defaults to ``True``
+#. ``timeout``: the amount of seconds to wait for the shell to return something
+   that matches with the shell prompt (or with some element of ``matches`` if
+   defined), optional, defaults to ``None``
+#. ``connection``: the shell *connection* to use (this will be explained in
+   more detail in `Using multiple shell connections`_), optional, defaults to
+   ``None``
+
+Some examples of ``send_command``
++++++++++++++++++++++++++++++++++
+
+matches
+-------
+
+This is useful for situations where the execution of a command will not return
+the usual shell prompt. For example, if a command needs confirmation from the
+user, this can be handled like this:
+
+.. code-block:: python
+
+
+    bash = hs1.get_shell('bash')
+    bash.send_command(
+        'rm -i some_file', matches=['rm: remove regular file ‘some_file’?']
+    )
+    bash.send_command('y')
+
+newline
+-------
+
+If you have to handle a shell that performs some action immediately when a
+certain command is typed (some command that does not need a following return
+key press), then this argument can be useful because no extra return will be
+sent after the command:
+
+.. code-block:: python
+
+    bash = hs1.get_shell('bash')
+    bash.send_command('command that needs no following return', newline=False)
+
+timeout
+-------
+
+Shells will usually have a default timeout value that is used always when a
+command is executed. One example of such shell is the topology-provided
+``PExpectShell`` that uses the ``pexpect`` package for its implementation.
+When a command takes more than this default time to execute, a timeout
+exception will be raised, to avoid this, you can use this argument:
+
+.. code-block:: python
+
+    bash = hs1.get_shell('bash')
+    bash.send_command('command that takes very long to return', timeout=900)
+
+Some examples of ``get_response``
++++++++++++++++++++++++++++++++++
+
+Be aware that ``send_command`` returns no output, if a command is sent to the
+shell in this way, ``get_response`` is to be executed after it to get any
+output that the command execution may have produced:
+
+.. code-block:: python
+
+    bash = hs1.get_shell('bash')
+    bash.send_command('echo "something")
+    assert bash.get_response() == 'something'
+
+Using multiple shell connections
+++++++++++++++++++++++++++++++++
+
+Nodes have a close relationship with their shells, as mentioned before a Linux
+host will have one ``bash`` shell only, for example. Nevertheless, it may be
+possible to have more than one *connection* to the mentioned shell.
+
+The shell API provides a ``connection`` argument in its methods to allow the
+user to specify the shell connection that is to be used to execute the command
+in the shell.
+
+Shells will have a *default connection*, which is the connection that is used
+if ``connection`` is not specified (that means, using the default value of
+``None`` for ``connection``). Of course, before using any additional connection
+it must be created first. This can be done explicitly by calling the shell
+``connect`` method, but is usually not necessary, by specifying a new
+connection in ``send_command`` a new connection is created automatically:
+
+.. code-block:: python
+
+    bash = hs1.get_shell('bash')
+
+    bash.send_command('echo "connection 1", connection='1')
+    bash.send_command('echo "connection 2", connection='2')
+
+    assert bash.get_response(connection='1') == 'connection 1'
+    assert bash.get_response(connection='2') == 'connection 2'
+
+Managing the default connection
++++++++++++++++++++++++++++++++
+
+The shell objects have a ``default_connection`` attribute that returns the
+default connection that is set at that moment. By assigning it to other value,
+the default connection can be changed:
+
+.. code-block:: python
+
+    bash = hs1.get_shell('bash')
+
+    bash.send_command('echo "connection 0")
+    assert bash.get_response() == 'connection 0'
+
+    bash.send_command('echo "connection 1", connection='1')
+
+    assert '0' == bash.default_connection
+
+    bash.default_connection = '1'
+
+    # Notice how by not specifying the connection argument here, the default
+    # connection is used
+    assert bash.get_response() == 'connection 1'
+
+Connecting and disconnecting multiple connections
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+The API provides the following methods too:
+
+#. ``connect``
+#. ``disconnect``
+#. ``is_connected``
+
+They are quite self-explanatory, and they all receive the ``connection``
+argument that specifies on which connection the method operates. Please
+remember that the default connection is used if no value is set for the
+``connection`` argument.
 
 Using the topology executable
 =============================
