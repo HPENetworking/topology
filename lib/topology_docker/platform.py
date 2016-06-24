@@ -91,8 +91,8 @@ class DockerPlatform(BasePlatform):
         )
 
         # Manage network and their netns creation (if necessary)
-        if enode.network_config is not None:
-            for category, config in enode.network_config['mapping'].items():
+        if enode._network_config is not None:
+            for category, config in enode._network_config['mapping'].items():
 
                 # Setup docker-managed networks
                 if config['managed_by'] is 'docker':
@@ -253,10 +253,10 @@ class DockerPlatform(BasePlatform):
         for enode, port, iface in \
                 ((enode_a, port_a, iface_a), (enode_b, port_b, iface_b)):
 
-            if enode.network_config is not None:
-                default_category = enode.network_config['default_category']
+            if enode._network_config is not None:
+                default_category = enode._network_config['default_category']
                 category = port.metadata.get('category', default_category)
-                net_config = enode.network_config['mapping'][category]
+                net_config = enode._network_config['mapping'][category]
 
                 cmd_prefix = ''
                 prefixed_iface = iface
@@ -379,9 +379,9 @@ class DockerPlatform(BasePlatform):
         # Remove all docker-managed networks
         for enode in self.nmlnode_node_map.values():
             try:
-                if enode.network_config is not None:
+                if enode._network_config is not None:
                     for category, config in\
-                            enode.network_config['mapping'].items():
+                            enode._network_config['mapping'].items():
                         if config['managed_by'] is 'docker':
                             enode._client.remove_network(
                                 net_id='{enode.identifier}_{category}'.format(
