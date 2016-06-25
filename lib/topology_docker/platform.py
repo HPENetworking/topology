@@ -147,10 +147,10 @@ class DockerPlatform(BasePlatform):
                         prefixed_iface = config['prefix'] + iface
                         # Move this network's interface to its netns
                         enode._docker_exec(
-                            'ip link set {iface} netns {config[netns]}\
-                                name {prefixed_iface}'.format(
-                                    **locals()
-                                )
+                            'ip link set {iface} netns {config[netns]} '
+                            'name {prefixed_iface}'.format(
+                                **locals()
+                             )
                         )
 
                         # Reset the interface to original config
@@ -158,14 +158,13 @@ class DockerPlatform(BasePlatform):
                             **locals()
                         )
                         # Reset the IP address
-                        cidr_address = str(docker_netconf['IPAddress']) + '/'
-                        cidr_address += str(docker_netconf['IPPrefixLen'])
                         enode._docker_exec(
                             cmd_prefix +
-                            'ip address add {cidr_address}\
-                                dev {prefixed_iface}'.format(
-                                    **locals()
-                                )
+                            'ip address add {docker_netconf[IPAddress]}/'
+                            '{docker_netconf[IPPrefixLen]} '
+                            'dev {prefixed_iface}'.format(
+                                **locals()
+                            )
                         )
                         enode._docker_exec(
                             cmd_prefix +
@@ -264,10 +263,10 @@ class DockerPlatform(BasePlatform):
                     prefixed_iface = net_config['prefix'] + iface
                     # Move the ports to their defined netns
                     enode._docker_exec(
-                        'ip link set {iface} netns {net_config[netns]}\
-                            name {prefixed_iface}'.format(
-                                **locals()
-                            )
+                        'ip link set {iface} netns {net_config[netns]} '
+                        'name {prefixed_iface}'.format(
+                            **locals()
+                        )
                     )
 
                     # Set the cmd_prefix so that the next commands are executed
@@ -283,10 +282,12 @@ class DockerPlatform(BasePlatform):
                         continue
 
                     addr = port.metadata[attribute]
-                    cmd = 'ip -{version} addr add {addr}\
-                            dev {prefixed_iface}'.format(
-                        **locals()
-                    )
+                    cmd = (
+                            'ip -{version} addr add {addr} '
+                            'dev {prefixed_iface}'
+                          ).format(
+                            **locals()
+                          )
                     enode._docker_exec(cmd_prefix + cmd)
 
                 # Bring-up or down
