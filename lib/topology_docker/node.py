@@ -96,6 +96,8 @@ class DockerNode(CommonNode):
      ``shared_dir`` is mounted. Same as the ``shared_dir_mount`` keyword
     """
 
+    _network_config = None
+
     @abstractmethod
     def __init__(
             self, identifier,
@@ -125,8 +127,6 @@ class DockerNode(CommonNode):
             shared_dir_base,
             self._container_name
         )
-
-        self._network_config = None
 
         # Autopull docker image if necessary
         self._autopull()

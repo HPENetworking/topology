@@ -43,5 +43,21 @@ class HostNode(DockerNode):
             self.container_id, 'bash'
         )
 
+        self._network_config = {
+            'default_category': 'front_panel',
+            'mapping': {
+                'oobm': {
+                    'netns': 'oobm',
+                    'managed_by': 'docker',
+                    'prefix': ''
+                },
+                'front_panel': {
+                    'netns': 'front_panel',
+                    'managed_by': 'platform',
+                    'prefix': ''
+                }
+            }
+        }
+
 
 __all__ = ['HostNode']
