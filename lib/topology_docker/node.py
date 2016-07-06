@@ -96,7 +96,21 @@ class DockerNode(CommonNode):
      ``shared_dir`` is mounted. Same as the ``shared_dir_mount`` keyword
     """
 
-    _network_config = None
+    _network_config = {
+        'default_category': 'front_panel',
+        'mapping': {
+            'oobm': {
+                'netns': None,
+                'managed_by': 'docker',
+                'prefix': ''
+            },
+            'front_panel': {
+                'netns': 'front_panel',
+                'managed_by': 'platform',
+                'prefix': ''
+            }
+        }
+    }
 
     @abstractmethod
     def __init__(
