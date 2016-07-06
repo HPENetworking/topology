@@ -157,6 +157,12 @@ class DockerPlatform(BasePlatform):
                         cmd_prefix = 'ip netns exec {config[netns]} '.format(
                             **locals()
                         )
+                        # lo should always be up
+                        enode._docker_exec(
+                            cmd_prefix +
+                            'ip link set lo up'
+                        )
+
                         # Reset the IP address
                         enode._docker_exec(
                             cmd_prefix +
@@ -179,6 +185,14 @@ class DockerPlatform(BasePlatform):
                         # Create the front_panel network namespace
                         enode._docker_exec(
                             'ip netns add {config[netns]}'.format(
+                                **locals()
+                            )
+                        )
+
+                        # lo should always be up
+                        enode._docker_exec(
+                            'ip netns exec {config[netns]} '
+                            'ip link set lo up'.format(
                                 **locals()
                             )
                         )
