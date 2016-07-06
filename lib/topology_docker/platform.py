@@ -249,19 +249,6 @@ class DockerPlatform(BasePlatform):
         """
         privileged_cmd(commands, **locals())
 
-        # Notify enodes of created interfaces
-        enode_a.notify_add_bilink(nodeport_a, bilink)
-        enode_b.notify_add_bilink(nodeport_b, bilink)
-
-        # Mark interfaces as created
-        self.nmlbiport_iface_map[port_a.identifier]['created'] = True
-        self.nmlbiport_iface_map[port_b.identifier]['created'] = True
-
-        # Register this links
-        self.nmlbilink_nmlbiports_map[bilink.identifier] = (
-            port_a.identifier, port_b.identifier
-        )
-
         # Apply some attributes
         for enode, port, iface in \
                 ((enode_a, port_a, iface_a), (enode_b, port_b, iface_b)):
@@ -345,6 +332,19 @@ class DockerPlatform(BasePlatform):
                 state = 'up' if up else 'down'
                 cmd = 'ip link set dev {iface} {state}'.format(**locals())
                 privileged_cmd(prefix + cmd)
+
+        # Notify enodes of created interfaces
+        enode_a.notify_add_bilink(nodeport_a, bilink)
+        enode_b.notify_add_bilink(nodeport_b, bilink)
+
+        # Mark interfaces as created
+        self.nmlbiport_iface_map[port_a.identifier]['created'] = True
+        self.nmlbiport_iface_map[port_b.identifier]['created'] = True
+
+        # Register these links
+        self.nmlbilink_nmlbiports_map[bilink.identifier] = (
+            port_a.identifier, port_b.identifier
+        )
 
     def post_build(self):
         """
