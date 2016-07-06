@@ -255,8 +255,7 @@ class DockerPlatform(BasePlatform):
 
             if enode._network_config is not None:
                 default_category = enode._network_config['default_category']
-                category = port.metadata.get('category', default_category)
-                net_config = enode._network_config['mapping'][category]
+                net_config = enode._network_config['mapping'][default_category]
 
                 cmd_prefix = ''
                 prefixed_iface = iface
