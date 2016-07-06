@@ -179,6 +179,10 @@ class DockerNode(CommonNode):
             environment=self._environment
         )['Id']
 
+    @classmethod
+    def get_network_config(cls):
+        return cls._network_config
+
     @property
     def image(self):
         return self._image

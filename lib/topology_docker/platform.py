@@ -91,7 +91,7 @@ class DockerPlatform(BasePlatform):
         )
 
         # Manage network and their netns creation
-        for category, config in enode._network_config['mapping'].items():
+        for category, config in enode.get_network_config()['mapping'].items():
 
             # Setup docker-managed networks
             if config['managed_by'] is 'docker':
@@ -252,8 +252,9 @@ class DockerPlatform(BasePlatform):
         for enode, port, iface in \
                 ((enode_a, port_a, iface_a), (enode_b, port_b, iface_b)):
 
-            default_category = enode._network_config['default_category']
-            net_config = enode._network_config['mapping'][default_category]
+            net_config = enode.get_network_config()[
+                'mapping'
+            ][enode.get_network_config()['default_category']]
 
             cmd_prefix = ''
             prefixed_iface = iface
@@ -364,7 +365,7 @@ class DockerPlatform(BasePlatform):
         for enode in self.nmlnode_node_map.values():
             try:
                 for category, config in\
-                        enode._network_config['mapping'].items():
+                        enode.get_network_config()['mapping'].items():
                     if config['managed_by'] is 'docker':
                         enode._client.remove_network(
                             net_id='{enode.identifier}_{category}'.format(
