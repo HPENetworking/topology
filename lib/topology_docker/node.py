@@ -67,20 +67,33 @@ class DockerNode(CommonNode):
      of the container inside this directory.
     :param str shared_dir_mount: Mount point of the shared directory in the
      container.
+    :param environment: Environment variables to pass to the
+     container. They can be set as a list of strings in the following format:
+
+     ::
+
+        ['environment_variable=value']
+
+     or as a dictionary in the following format:
+
+     ::
+
+        {'environment_variable': 'value'}
+
+    :type environment: list or dict
 
     Read only public attributes:
 
-    :var image: Name of the Docker image being used by this node.
+    :var str image: Name of the Docker image being used by this node.
      Same as the ``image`` keyword argument.
-    :var container_id: Unique container identifier assigned by the Docker
+    :var str container_id: Unique container identifier assigned by the Docker
      daemon in the form of a hash.
-    :var container_name: Unique container name assigned by the framework in the
-     form ``{identifier}_{pid}_{timestamp}``.
-    :var shared_dir: Share directory in the host for this container. Always
+    :var str container_name: Unique container name assigned by the framework in
+     the form ``{identifier}_{pid}_{timestamp}``.
+    :var str shared_dir: Share directory in the host for this container. Always
      ``/tmp/topology/{container_name}``.
-    :var shared_dir_mount: Directory inside the container where the
+    :var str shared_dir_mount: Directory inside the container where the
      ``shared_dir`` is mounted. Same as the ``shared_dir_mount`` keyword
-     argument.
     """
 
     @abstractmethod
@@ -89,7 +102,7 @@ class DockerNode(CommonNode):
             image='ubuntu:latest', registry=None, command='bash',
             binds=None, network_mode='none', hostname=None,
             shared_dir_base='/tmp/topology/docker/',
-            shared_dir_mount='/var/topology',
+            shared_dir_mount='/var/topology', environment=None,
             **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
@@ -99,6 +112,7 @@ class DockerNode(CommonNode):
         self._registry = registry
         self._command = command
         self._hostname = hostname
+        self._environment = environment
         self._client = Client(version='auto')
 
         self._container_name = '{identifier}_{pid}_{timestamp}'.format(
@@ -145,7 +159,8 @@ class DockerNode(CommonNode):
             detach=True,
             tty=True,
             hostname=self._hostname,
-            host_config=self._host_config
+            host_config=self._host_config,
+            environment=self._environment
         )['Id']
 
     @property
