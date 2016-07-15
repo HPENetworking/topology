@@ -10,3 +10,4 @@ Objectives
 #. Provide a basic class for links
 #. Provide better logging features
 #. Separate the ``SZN`` parser
+#. Add support for attribute injection in ports and links also.
