@@ -30,7 +30,7 @@ from inspect import isclass
 
 from pkg_resources import iter_entry_points
 
-from .base import BasePlatform
+from .platform import BasePlatform
 
 
 log = logging.getLogger(__name__)

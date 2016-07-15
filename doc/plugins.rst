@@ -32,7 +32,7 @@ The entry point to provide a new Platform Engine is
 ``topology_platform_<api_version>``, currently ``topology_platform_10``.
 
 To extend `topology` to support your platform first implement in your package a
-subclass of :class:`topology.platforms.base.BasePlatform`.
+subclass of :class:`topology.platforms.platform.BasePlatform`.
 
 It is recommended, but not required, that your package is called
 ``topology_<platform_name>`` and your sublcass is called
@@ -42,7 +42,7 @@ For example, in your module ``topology_my.platform``:
 
 .. code-block:: python
 
-    from topology.platforms.base import BasePlatform
+    from topology.platforms.platform import BasePlatform
     class MyPlatform(BasePlatform):
         pass
 
@@ -63,7 +63,7 @@ Platform Engine Worflow
 
 The new platform needs to implement a set of hooks that will be called during
 the build and unbuild phases of a topology setup. For a textual description of
-each hook please consult the :class:`topology.platforms.base.BasePlatform`
+each hook please consult the :class:`topology.platforms.platform.BasePlatform`
 class.
 
 The following sequence diagram shows the interaction between the
@@ -77,7 +77,7 @@ hook receives a *Specification Node* in standard NML format and must return a
 interface. Users of the topology interact with *Engine Nodes*, not with
 *Specification Nodes*. Is up to the *Platform Engine* to implement the one
 (or many) *Engine Nodes*. Each *Engine Node* inherits from the
-:class:`topology.platforms.base.BaseNode` class and must implement its
+:class:`topology.platforms.node.BaseNode` class and must implement its
 interface.
 
 Another detail is that the *Platform Engine* must return the real or final port
@@ -246,8 +246,8 @@ A common pattern is to use communication libraries to wrap and parse shell
 commands.
 
 It is recommended to check first the availability of any dependency shell
-using the method :meth:`topology.platforms.base.BaseNode.available_shells`.
-See :class:`topology.platforms.base.BaseNode` for more information about the
+using the method :meth:`topology.platforms.node.BaseNode.available_shells`.
+See :class:`topology.platforms.node.BaseNode` for more information about the
 *Engine Node* interface.
 
 For an example of a communication library that wrap shells commands please
@@ -260,8 +260,8 @@ Supporting communication libraries
 ----------------------------------
 
 Most of the nodes you use will derive from the common
-:class:`topology.platforms.base.CommonNode`. If for some reason you require to
-use a different base node, say :class:`topology.platforms.base.BaseNode` and you
+:class:`topology.platforms.node.CommonNode`. If for some reason you require to
+use a different base node, say :class:`topology.platforms.node.BaseNode` and you
 still want to support communication libraries make sure to create and attribute
 ``libs`` with an instance of :class:`topology.libraries.manager.LibsProxy`:
 

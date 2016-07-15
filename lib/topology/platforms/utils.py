@@ -29,7 +29,7 @@ from collections import OrderedDict
 
 from pkg_resources import iter_entry_points
 
-from .base import BaseNode
+from .node import BaseNode
 
 
 log = logging.getLogger(__name__)
@@ -75,7 +75,7 @@ class NodeLoader(object):
          force reload of all plugins registered for the entry point.
         :rtype: OrderedDict
         :return: An ordered dictionary associating the name of the node type
-         and the class (subclass of :class:`topology.platforms.base.baseNode`)
+         and the class (subclass of :class:`topology.platforms.node.BaseNode`)
          implementing it.
         """
 

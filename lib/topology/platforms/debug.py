@@ -25,7 +25,8 @@ from __future__ import print_function, division
 import logging
 from datetime import datetime
 
-from .base import BasePlatform, CommonNode
+from .node import CommonNode
+from .platform import BasePlatform
 
 
 log = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class DebugPlatform(BasePlatform):
     """
     Plugin to build a topology for debugging.
 
-    See :class:`topology.platforms.base.BasePlatform` for more information.
+    See :class:`topology.platforms.platform.BasePlatform` for more information.
     """
 
     def __init__(self, timestamp, nmlmanager):
@@ -124,7 +125,7 @@ class DebugNode(CommonNode):
 
         This test node will just echo the command.
 
-        See :meth:`topology.platforms.base.CommonNode.send_command` for more
+        See :meth:`topology.platforms.node.CommonNode.send_command` for more
         information.
         """
         log.debug('{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
@@ -138,7 +139,7 @@ class DebugNode(CommonNode):
 
         This test node has no shells available.
 
-        See :meth:`topology.platforms.base.CommonNode.available_shells` for
+        See :meth:`topology.platforms.node.CommonNode.available_shells` for
         more information.
         """
         log.debug('{}.available_shells()'.format(str(self)))
