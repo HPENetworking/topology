@@ -296,3 +296,56 @@ def test_unlink_relink():
 
     finally:
         mgr.unbuild()
+
+
+def test_netns_list():
+    """
+    Test the list of network namespaces
+
+    Creates a topology with one host. After the node is added to the topology
+    it should have one network namespace named "front_panel".
+    """
+
+    # Build topology
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
+
+    h1 = Node(identifier='hs1', type='host')
+    hs1 = platform.add_node(h1)
+
+    result = hs1('ip netns list', shell='bash')
+
+    platform.destroy()
+
+    assert "front_panel" in result
+
+    # Test that an unknown network namespace is not in the list
+    assert "back_panel" not in result
+
+
+def test_docker_network():
+    """
+    Test the docker network used for oobm
+
+    Creates a topology with one host. After the node is added (with node_add)
+    it should be connected to the oobm docker network and the information for
+    this network should be inspectable by "docker network inspect".
+    """
+
+    # Build topology
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
+
+    h1 = Node(identifier='hs1', type='host')
+    hs1 = platform.add_node(h1)
+
+    container_info = hs1._client.inspect_container(hs1._container_name)
+    network_info = hs1._client.inspect_network(hs1._container_name + '_oobm')
+
+    platform.destroy()
+
+    container_ids = network_info['Containers'].keys()
+    assert container_ids
+
+    # The container id for hs1 should be in the network's list of containers
+    assert container_info['Id'] in container_ids
