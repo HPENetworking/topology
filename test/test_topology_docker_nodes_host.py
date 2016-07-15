@@ -25,7 +25,7 @@ from __future__ import print_function, division
 
 TOPOLOGY = """
 [image="ubuntu:12.04" type=host name="Host 1"] hs1
-[type=host name="Host 1"] hs2
+[type=host name="Host 2"] hs2
 
 [ipv4="192.168.15.1/24" up=True] hs1:1
 [ipv4="192.168.15.2/24" up=True] hs2:1
