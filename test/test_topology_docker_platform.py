@@ -319,8 +319,8 @@ def test_netns_list():
 
     assert "front_panel" in result
 
-    # Test that an unknown network namespace is not in the list
-    assert "back_panel" not in result
+    # Test that an another network namespace is not in the list
+    assert "\n" not in result
 
 
 def test_docker_network():
