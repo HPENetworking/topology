@@ -353,7 +353,10 @@ class DockerNode(CommonNode):
         iface = self.ports[portlbl]
         state = 'up' if state else 'down'
 
-        command = 'ip link set dev {iface} {state}'.format(**locals())
+        command = (
+            'ip netns exec front_panel '
+            'ip link set dev {iface} {state}'.format(**locals())
+        )
         self._docker_exec(command)
 
     def _docker_exec(self, command):
