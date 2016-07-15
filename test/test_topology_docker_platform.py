@@ -349,3 +349,34 @@ def test_docker_network():
 
     # The container id for hs1 should be in the network's list of containers
     assert container_info['Id'] in container_ids
+
+
+def test_lo_up():
+    """
+    Test that loopback interface in all netns are up
+
+    Creates a topology with one host. After the node is added to the topology
+    it should have one loopback interface per netns (a total of two for this
+    test) and they should all be in state != DOWN (we can't test for state = UP
+    because some older kernel versions use UNKNOWN instead of UP for when lo
+    interfaces are UP)
+    """
+
+    # Build topology
+    platform = DockerPlatform(None, None)
+    platform.pre_build()
+
+    h1 = Node(identifier='hs1', type='host')
+    hs1 = platform.add_node(h1)
+
+    result = hs1('ip link list lo', shell='bash')
+    result_front_panel = hs1('ip link list lo', shell='bash_front_panel')
+    # from pdb import set_trace
+    # set_trace()
+
+    platform.destroy()
+
+    # FIXME: change to test for "UP" in result once this becomes the correct
+    # operstate for lo interfaces in all supported kernels (see comment above)
+    assert "DOWN" not in result
+    assert "DOWN" not in result_front_panel
