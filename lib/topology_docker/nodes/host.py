@@ -42,6 +42,9 @@ class HostNode(DockerNode):
         self._shells['bash'] = DockerBashShell(
             self.container_id, 'bash'
         )
+        self._shells['bash_front_panel'] = DockerBashShell(
+            self.container_id, 'ip netns exec front_panel bash'
+        )
 
 
 __all__ = ['HostNode']
