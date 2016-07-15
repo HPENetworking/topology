@@ -51,7 +51,7 @@ def test_image(topology, step):
 
 def test_ping(topology, step):
     """
-    Test that two nodes can ping themselves.
+    Test that two nodes can ping each other.
     """
     # Setup which shell to use
     shell = 'bash_front_panel'
