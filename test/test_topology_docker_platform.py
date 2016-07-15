@@ -22,6 +22,7 @@ Test suite for module topology_docker.platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+from re import search
 from pynml import Node, BidirectionalPort, BidirectionalLink
 
 from topology.manager import TopologyManager
@@ -32,34 +33,44 @@ def test_add_port():
     """
     Add ports and uses 'ip link list' to check they exist.
     """
+
+    # Setup which shell to use
+    shell = 'bash_front_panel'
+
     platform = DockerPlatform(None, None)
     platform.pre_build()
 
     node1 = Node(identifier='host1', type='host')
     host1 = platform.add_node(node1)
+    node2 = Node(identifier='host2', type='host')
+    host2 = platform.add_node(node2)
     assert platform.nmlnode_node_map[node1.identifier] is not None
+    assert platform.nmlnode_node_map[node2.identifier] is not None
 
     # Add ports
     p1 = BidirectionalPort(identifier='p1')
     platform.add_biport(node1, p1)
     p2 = BidirectionalPort(identifier='p2')
-    platform.add_biport(node1, p2)
+    platform.add_biport(node2, p2)
     p3 = BidirectionalPort(identifier='p3')
     platform.add_biport(node1, p3)
 
     # Add link
     link = BidirectionalLink(identifier='link')
-    platform.add_bilink((node1, p1), (node1, p2), link)
+    platform.add_bilink((node1, p1), (node2, p2), link)
 
     platform.post_build()
 
-    result = host1('ip link list')
+    result1 = host1('ip link list', shell=shell)
+    result2 = host2('ip link list', shell=shell)
 
     platform.destroy()
 
-    assert 'p1: <BROADCAST,MULTICAST> ' in result
-    assert 'p2: <BROADCAST,MULTICAST> ' in result
-    assert 'p3: <BROADCAST,MULTICAST> ' in result
+    # On newer kernels, ip link list will append the name of the peer
+    # interface of a veth link after an @, like this: p1@if34
+    assert search('p1.*: <BROADCAST,MULTICAST> ', result1)
+    assert search('p2.*: <BROADCAST,MULTICAST> ', result2)
+    assert 'p3: <BROADCAST,MULTICAST> ' in result1
 
 
 def test_shell():
