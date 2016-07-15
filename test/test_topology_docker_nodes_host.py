@@ -52,14 +52,19 @@ def test_ping(topology, step):
     """
     Test that two nodes can ping themselves.
     """
-    hs1 = topology.get('hs1')  # noqa
+    # Setup which shell to use
+    shell = 'bash_front_panel'
+
+    # FIXME: See FIXME below
+    # hs1 = topology.get('hs1')  # noqa
     hs2 = topology.get('hs2')
 
     # FIXME: Ubuntu 12.04 doesn't have ping pre-installed
     # ping_hs1_to_hs2 = hs1.libs.ping.ping(1, '192.168.15.2')
     # assert ping_hs1_to_hs2['transmitted'] == ping_hs1_to_hs2['received'] == 1
 
-    ping_hs2_to_hs1 = hs2.libs.ping.ping(1, '192.168.15.1')
+    ping_hs2_to_hs1 = hs2.libs.ping.ping(1, '192.168.15.1', shell=shell)
+
     assert ping_hs2_to_hs1['transmitted'] == ping_hs2_to_hs1['received'] == 1
 
     # Should not work, not node exists with that ip
