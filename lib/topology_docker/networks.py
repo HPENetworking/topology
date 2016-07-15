@@ -83,7 +83,7 @@ def create_docker_network(enode, category, config):
     netns_exec = 'ip netns exec {}'.format(netns)
 
     # lo should always be up
-    enode._docker_exec('{} ip link set lo up'.format(netns_exec))
+    enode._docker_exec('{} ip link set dev lo up'.format(netns_exec))
 
     # Figure out the interface name inside the container
     # for this network
@@ -116,7 +116,7 @@ def create_docker_network(enode, category, config):
 
     # Move this network's interface to its netns
     enode._docker_exec(
-        'ip link set {iface} netns {netns} name {prefixed_iface}'.format(
+        'ip link set dev {iface} netns {netns} name {prefixed_iface}'.format(
             **locals()
         )
     )
@@ -133,7 +133,7 @@ def create_docker_network(enode, category, config):
         )
     )
     enode._docker_exec(
-        '{netns_exec} ip link set {prefixed_iface} up'.format(
+        '{netns_exec} ip link set dev {prefixed_iface} up'.format(
             **locals()
         )
     )
@@ -166,7 +166,7 @@ def create_platform_network(enode, category, config):
     enode._docker_exec('ip netns add {}'.format(netns))
 
     # lo should always be up
-    enode._docker_exec('ip netns exec {} ip link set lo up'.format(netns))
+    enode._docker_exec('ip netns exec {} ip link set dev lo up'.format(netns))
 
 
 __all__ = ['create_docker_network', 'create_platform_network']

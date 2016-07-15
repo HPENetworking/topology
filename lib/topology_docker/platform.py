@@ -184,7 +184,7 @@ class DockerPlatform(BasePlatform):
             netns = port_spec['netns']
             if netns:
                 enode._docker_exec(
-                    'ip link set {iface} netns {netns}'.format(
+                    'ip link set dev {iface} netns {netns}'.format(
                         **locals()
                     )
                 )
@@ -256,7 +256,7 @@ class DockerPlatform(BasePlatform):
             if port_spec['netns']:
                 enode = self.nmlnode_node_map[port_spec['owner']]
                 enode._docker_exec(
-                    'ip link set {iface} netns {netns}'.format(
+                    'ip link set dev {iface} netns {netns}'.format(
                         **port_spec
                     )
                 )
