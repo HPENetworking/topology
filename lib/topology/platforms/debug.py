@@ -125,25 +125,22 @@ class DebugNode(CommonNode):
 
         This test node will just echo the command.
 
-        See :meth:`topology.platforms.node.CommonNode.send_command` for more
-        information.
+        See :meth:`CommonNode.send_command` for more information.
         """
         log.debug('{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
             datetime.now().isoformat(), str(self), cmd, shell
         ))
         return cmd
 
-    def available_shells(self):
+    def _get_services_address(self):
         """
-        Implementation of the ``available_shells`` interface.
+        Implementation of the ``_get_services_address`` interface.
 
-        This test node has no shells available.
+        This test node will return '127.0.0.1'.
 
-        See :meth:`topology.platforms.node.CommonNode.available_shells` for
-        more information.
+        See :meth:`CommonNode._get_services_address` for more information.
         """
-        log.debug('{}.available_shells()'.format(str(self)))
-        return []
+        return '127.0.0.1'
 
     def __str__(self):
         return 'DebugNode(identifier={}, metadata={})'.format(
