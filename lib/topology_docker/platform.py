@@ -31,6 +31,7 @@ from topology.platforms.utils import NodeLoader
 
 from .node import DockerNode
 from .utils import tmp_iface, privileged_cmd
+from .networks import create_docker_network, create_platform_network
 
 
 log = logging.getLogger(__name__)
@@ -90,6 +91,24 @@ class DockerPlatform(BasePlatform):
             pid=enode._pid
         )
 
+        # Manage network and their netns creation
+        network_handlers = {
+            'docker': create_docker_network,
+            'platform': create_platform_network
+        }
+
+        for category, config in enode._get_network_config()['mapping'].items():
+
+            managed_by = config['managed_by']
+            handler = network_handlers.get(managed_by, None)
+
+            if handler is None:
+                raise RuntimeError(
+                    'Unknown "managed_by" handler {}'.format(managed_by)
+                )
+
+            handler(enode, category, config)
+
         return enode
 
     def add_biport(self, node, biport):
@@ -101,11 +120,20 @@ class DockerPlatform(BasePlatform):
         enode = self.nmlnode_node_map[node.identifier]
         eport = enode.notify_add_biport(node, biport)
 
+        # Get network configuration of given port
+        network_config = enode._get_network_config()
+        category_config = network_config['mapping'][
+            network_config['default_category']
+        ]
+
         # Register this port for later creation
         self.nmlbiport_iface_map[biport.identifier] = {
             'created': False,
-            'iface': eport,
-            'netns': enode._pid,
+            'iface_base': eport,
+            'prefix': category_config['prefix'],
+            'iface': '{}{}'.format(category_config['prefix'], eport),
+            'container_ns': enode._pid,
+            'netns': category_config['netns'],
             'owner': node.identifier,
             'label': biport.metadata.get('label', biport.identifier)
         }
@@ -129,9 +157,13 @@ class DockerPlatform(BasePlatform):
         tmp_iface_a = tmp_iface()
         tmp_iface_b = tmp_iface()
 
+        # Get port spec dictionary
+        port_spec_a = self.nmlbiport_iface_map[port_a.identifier]
+        port_spec_b = self.nmlbiport_iface_map[port_b.identifier]
+
         # Determine final interface names
-        iface_a = self.nmlbiport_iface_map[port_a.identifier]['iface']
-        iface_b = self.nmlbiport_iface_map[port_b.identifier]['iface']
+        iface_a = port_spec_a['iface']
+        iface_b = port_spec_b['iface']
 
         # Create links between nodes:
         #   docs.docker.com/v1.5/articles/networking/#building-a-point-to-point-connection # noqa
@@ -142,24 +174,23 @@ class DockerPlatform(BasePlatform):
         """
         privileged_cmd(commands, **locals())
 
-        # Notify enodes of created interfaces
-        enode_a.notify_add_bilink(nodeport_a, bilink)
-        enode_b.notify_add_bilink(nodeport_b, bilink)
+        # Apply some attributes to nodes and ports
+        for enode, port, port_spec, iface in (
+            (enode_a, port_a, port_spec_a, iface_a),
+            (enode_b, port_b, port_spec_b, iface_b)
+        ):
 
-        # Mark interfaces as created
-        self.nmlbiport_iface_map[port_a.identifier]['created'] = True
-        self.nmlbiport_iface_map[port_b.identifier]['created'] = True
-
-        # Register this links
-        self.nmlbilink_nmlbiports_map[bilink.identifier] = (
-            port_a.identifier, port_b.identifier
-        )
-
-        # Apply some attributes
-        for enode, port, iface in \
-                ((enode_a, port_a, iface_a), (enode_b, port_b, iface_b)):
-
-            prefix = 'ip netns exec {pid} '.format(pid=enode._pid)
+            # Move interfaces to correct network namespace
+            netns = port_spec['netns']
+            if netns:
+                enode._docker_exec(
+                    'ip link set dev {iface} netns {netns}'.format(
+                        **locals()
+                    )
+                )
+                cmd_prefix = 'ip netns exec {netns} '.format(**locals())
+            else:
+                cmd_prefix = ''
 
             # Set ipv4 and ipv6 addresses
             for version in [4, 6]:
@@ -168,10 +199,10 @@ class DockerPlatform(BasePlatform):
                     continue
 
                 addr = port.metadata[attribute]
-                cmd = 'ip -{version} addr add {addr} dev {iface}'.format(
-                    **locals()
-                )
-                privileged_cmd(prefix + cmd)
+                cmd = (
+                    '{cmd_prefix}ip -{version} addr add {addr} dev {iface}'
+                ).format(**locals())
+                enode._docker_exec(cmd)
 
             # Bring-up or down
             if bilink.metadata.get('up', None) is None and \
@@ -182,8 +213,23 @@ class DockerPlatform(BasePlatform):
                 port.metadata.get('up', True)
 
             state = 'up' if up else 'down'
-            cmd = 'ip link set dev {iface} {state}'.format(**locals())
-            privileged_cmd(prefix + cmd)
+            cmd = '{cmd_prefix}ip link set dev {iface} {state}'.format(
+                **locals()
+            )
+            enode._docker_exec(cmd)
+
+        # Notify enodes of created interfaces
+        enode_a.notify_add_bilink(nodeport_a, bilink)
+        enode_b.notify_add_bilink(nodeport_b, bilink)
+
+        # Mark interfaces as created
+        self.nmlbiport_iface_map[port_a.identifier]['created'] = True
+        self.nmlbiport_iface_map[port_b.identifier]['created'] = True
+
+        # Register these links
+        self.nmlbilink_nmlbiports_map[bilink.identifier] = (
+            port_a.identifier, port_b.identifier
+        )
 
     def post_build(self):
         """
@@ -193,7 +239,10 @@ class DockerPlatform(BasePlatform):
         See :meth:`BasePlatform.post_build` for more information.
         """
         # Create remaining interfaces
-        cmd_tpl = 'ip netns exec {netns} ip tuntap add dev {iface} mode tap'
+        cmd_tpl = (
+            'ip netns exec {container_ns} '
+            'ip tuntap add dev {iface} mode tap'
+        )
         for port_spec in self.nmlbiport_iface_map.values():
 
             # Ignore already created interfaces
@@ -202,6 +251,15 @@ class DockerPlatform(BasePlatform):
 
             # Create port as dummy tuntap device
             privileged_cmd(cmd_tpl, **port_spec)
+
+            # Move port to network namespace if required
+            if port_spec['netns']:
+                enode = self.nmlnode_node_map[port_spec['owner']]
+                enode._docker_exec(
+                    'ip link set dev {iface} netns {netns}'.format(
+                        **port_spec
+                    )
+                )
 
             # Mark as created
             port_spec['created'] = True
@@ -227,6 +285,23 @@ class DockerPlatform(BasePlatform):
         for enode in self.nmlnode_node_map.values():
             try:
                 privileged_cmd('rm /var/run/netns/{pid}', pid=enode._pid)
+            except:
+                log.error(format_exc())
+
+        # Remove all docker-managed networks
+        for enode in self.nmlnode_node_map.values():
+            try:
+                network_config = enode._get_network_config()['mapping']
+
+                for category, config in network_config.items():
+                    if config['managed_by'] == 'docker':
+
+                        netname = '{}_{}'.format(
+                            enode._container_name,
+                            category
+                        )
+
+                        enode._client.remove_network(net_id=netname)
             except:
                 log.error(format_exc())
 

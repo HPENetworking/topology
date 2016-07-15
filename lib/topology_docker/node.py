@@ -183,6 +183,29 @@ class DockerNode(CommonNode):
     def shared_dir_mount(self):
         return self._shared_dir_mount
 
+    def _get_network_config(self):
+        """
+        Defines the network configuration for this node.
+
+        :returns: The dictionary defining the network configuration.
+        :rtype: dict
+        """
+        return {
+            'default_category': 'front_panel',
+            'mapping': {
+                'oobm': {
+                    'netns': None,
+                    'managed_by': 'docker',
+                    'prefix': ''
+                },
+                'front_panel': {
+                    'netns': 'front_panel',
+                    'managed_by': 'platform',
+                    'prefix': ''
+                }
+            }
+        }
+
     def _autopull(self):
         """
         Autopulls the docker image of the node, if necessary.
@@ -330,7 +353,10 @@ class DockerNode(CommonNode):
         iface = self.ports[portlbl]
         state = 'up' if state else 'down'
 
-        command = 'ip link set dev {iface} {state}'.format(**locals())
+        command = (
+            'ip netns exec front_panel '
+            'ip link set dev {iface} {state}'.format(**locals())
+        )
         self._docker_exec(command)
 
     def _docker_exec(self, command):

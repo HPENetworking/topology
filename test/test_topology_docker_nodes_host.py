@@ -22,10 +22,11 @@ Tests for hosts.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+import subprocess
 
 TOPOLOGY = """
 [image="ubuntu:12.04" type=host name="Host 1"] hs1
-[type=host name="Host 1"] hs2
+[type=host name="Host 2"] hs2
 
 [ipv4="192.168.15.1/24" up=True] hs1:1
 [ipv4="192.168.15.2/24" up=True] hs2:1
@@ -50,8 +51,11 @@ def test_image(topology, step):
 
 def test_ping(topology, step):
     """
-    Test that two nodes can ping themselves.
+    Test that two nodes can ping each other.
     """
+    # Setup which shell to use
+    shell = 'bash_front_panel'
+
     hs1 = topology.get('hs1')  # noqa
     hs2 = topology.get('hs2')
 
@@ -59,10 +63,27 @@ def test_ping(topology, step):
     # ping_hs1_to_hs2 = hs1.libs.ping.ping(1, '192.168.15.2')
     # assert ping_hs1_to_hs2['transmitted'] == ping_hs1_to_hs2['received'] == 1
 
-    ping_hs2_to_hs1 = hs2.libs.ping.ping(1, '192.168.15.1')
+    ping_hs2_to_hs1 = hs2.libs.ping.ping(1, '192.168.15.1', shell=shell)
+
     assert ping_hs2_to_hs1['transmitted'] == ping_hs2_to_hs1['received'] == 1
+
+    # Test oobm
+    hostname = hs1._client.inspect_container(hs1.container_id)[
+        'NetworkSettings'
+    ]['Networks'][hs1._container_name + '_oobm']['IPAddress']
+
+    assert subprocess.call(["ping", "-c1", "-w5", hostname]) == 0
+
+    hostname = hs2._client.inspect_container(hs2.container_id)[
+        'NetworkSettings'
+    ]['Networks'][hs2._container_name + '_oobm']['IPAddress']
+
+    assert subprocess.call(["ping", "-c1", "-w5", hostname]) == 0
 
     # Should not work, not node exists with that ip
     no_ping = hs2.libs.ping.ping(1, '192.168.15.3')
     assert no_ping['transmitted'] == 1
     assert no_ping['received'] == 0
+
+    # Test oobm: call() should return 1 when using an IP that is unassigned
+    assert subprocess.call(["ping", "-c1", "-w5", "192.168.15.3"]) == 1

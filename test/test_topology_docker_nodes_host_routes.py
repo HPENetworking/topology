@@ -52,6 +52,10 @@ def test_route(topology):
     """
     Set static routes and test a ping.
     """
+
+    # Setup which shell to use
+    shell = 'bash_front_panel'
+
     hs1 = topology.get('hs1')
     hs2 = topology.get('hs2')
     hs3 = topology.get('hs3')
@@ -63,11 +67,11 @@ def test_route(topology):
     assert hs4 is not None
 
     # Setup static routes
-    hs1.libs.ip.add_route('default', '10.0.10.2')
-    hs2.libs.ip.add_route('10.0.30.0/24', '10.0.20.2')
-    hs3.libs.ip.add_route('10.0.10.0/24', '10.0.20.1')
-    hs4.libs.ip.add_route('default', '10.0.30.1')
+    hs1.libs.ip.add_route('default', '10.0.10.2', shell=shell)
+    hs2.libs.ip.add_route('10.0.30.0/24', '10.0.20.2', shell=shell)
+    hs3.libs.ip.add_route('10.0.10.0/24', '10.0.20.1', shell=shell)
+    hs4.libs.ip.add_route('default', '10.0.30.1', shell=shell)
 
     # Test ping
-    ping = hs1.libs.ping.ping(5, '10.0.30.2')
+    ping = hs1.libs.ping.ping(5, '10.0.30.2', shell=shell)
     assert ping['transmitted'] == ping['received'] == 5
