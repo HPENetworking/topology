@@ -326,7 +326,7 @@ class TopologyManager(object):
         Get a platform engine with given identifier.
 
         :param str identifier: The node identifier.
-        :rtype: A subclass of :class:`topology.platforms.base.BaseNode`
+        :rtype: A subclass of :class:`topology.platforms.node.BaseNode`
         :return: The engine node implementing the communication with the node.
         """
         return self.nodes.get(identifier, None)

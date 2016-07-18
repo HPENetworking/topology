@@ -16,10 +16,10 @@ The topology framework was built with the following design principles in mind:
 #. Standard internal representation of the topology using NML_.
 #. The framework must delegate to a plugin, a *Platform Engine*, the
    responsibility to build the topology from the description, using a standard
-   interface (:class:`topology.platforms.base.BasePlatform`) and
+   interface (:class:`topology.platforms.platform.BasePlatform`) and
    :ref:`process <engine-platform-worflow>`.
 #. The *Platform Engine* will return an *Engine Node* that implements an
-   standard interface (:class:`topology.platforms.base.BaseNode`) for the user
+   standard interface (:class:`topology.platforms.node.BaseNode`) for the user
    to interact with.
 #. Nodes, ports and links support undetermined attributes or *metadata*, it is
    up to the *Platform Engine* to interpret and determine what metadata to use

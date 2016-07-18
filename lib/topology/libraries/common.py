@@ -29,7 +29,7 @@ def assert_batch(enode, commands, replace=None, shell=None):
     Execute a batch of return-less template commands in the enode shell.
 
     :param enode:
-    :type: topology.platforms.base.BaseNode
+    :type: topology.platforms.node.BaseNode
     :param str commands: Multiline docstring template with the return-less
      commnads to execute and assert.
     :param dict replace: Namespace to replace tokens in commands.

@@ -93,7 +93,7 @@ def libraries(cache=True):
             )
             continue
 
-        # Validate functions
+        # Validate entities
         invalid = [
             func for func in library.__all__
             if not isfunction(getattr(library, func, None)) and
@@ -103,7 +103,7 @@ def libraries(cache=True):
         if invalid:
             log.error(
                 'Ignoring library "{}". '
-                'Found non-functions: {}.'.format(
+                'Found non-functions or classes: {}.'.format(
                     name, ', '.join(invalid)
                 )
             )
@@ -125,7 +125,7 @@ class LibsProxy(object):
     for communication libraries.
 
     :param enode: The engine node to communicate with.
-    :type enode: topology.platforms.base.BaseNode
+    :type enode: topology.platforms.node.BaseNode
     """
     def __init__(self, enode):
         self._enode = enode
