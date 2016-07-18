@@ -256,7 +256,7 @@ def test_unlink_relink():
     # Setup which shell to use
     shell = 'bash_front_panel'
 
-    topology = "[identifier=thelink] hs1:a -- hs2:b"
+    topology = '[identifier=thelink] hs1:a -- hs2:b'
 
     mgr = TopologyManager(engine='docker')
     mgr.parse(topology)
@@ -317,10 +317,10 @@ def test_netns_list():
 
     platform.destroy()
 
-    assert "front_panel" in result
+    assert 'front_panel' in result
 
     # Test that an another network namespace is not in the list
-    assert "\n" not in result
+    assert '\n' not in result
 
 
 def test_docker_network():
@@ -371,12 +371,10 @@ def test_lo_up():
 
     result = hs1('ip link list lo', shell='bash')
     result_front_panel = hs1('ip link list lo', shell='bash_front_panel')
-    # from pdb import set_trace
-    # set_trace()
 
     platform.destroy()
 
-    # FIXME: change to test for "UP" in result once this becomes the correct
+    # FIXME: change to test for 'UP' in result once this becomes the correct
     # operstate for lo interfaces in all supported kernels (see comment above)
-    assert "DOWN" not in result
-    assert "DOWN" not in result_front_panel
+    assert 'DOWN' not in result
+    assert 'DOWN' not in result_front_panel
