@@ -39,11 +39,21 @@ class HostNode(DockerNode):
     def __init__(self, identifier, image='ubuntu:14.04', **kwargs):
 
         super(HostNode, self).__init__(identifier, image=image, **kwargs)
-        self._shells['bash'] = DockerBashShell(
-            self.container_id, 'bash'
+
+        # Create and register shells
+        self._register_shell(
+            'bash',
+            DockerBashShell(
+                self.container_id,
+                'bash'
+            )
         )
-        self._shells['bash_front_panel'] = DockerBashShell(
-            self.container_id, 'ip netns exec front_panel bash'
+        self._register_shell(
+            'bash_front_panel',
+            DockerBashShell(
+                self.container_id,
+                'ip netns exec front_panel bash'
+            )
         )
 
 
