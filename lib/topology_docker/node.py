@@ -34,7 +34,7 @@ from abc import ABCMeta, abstractmethod
 from docker import Client
 from six import add_metaclass
 
-from topology.platforms.base import CommonNode
+from topology.platforms.node import CommonNode
 from topology_docker.utils import ensure_dir
 
 

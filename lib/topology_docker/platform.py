@@ -26,8 +26,8 @@ import logging
 from traceback import format_exc
 from collections import OrderedDict
 
-from topology.platforms.base import BasePlatform
 from topology.platforms.utils import NodeLoader
+from topology.platforms.platform import BasePlatform
 
 from .node import DockerNode
 from .utils import tmp_iface, privileged_cmd
@@ -41,7 +41,7 @@ class DockerPlatform(BasePlatform):
     """
     Plugin to build a topology using Docker.
 
-    See :class:`topology.platforms.base.BasePlatform` for more information.
+    See :class:`topology.platforms.platform.BasePlatform` for more information.
     """
 
     def __init__(self, timestamp, nmlmanager):
