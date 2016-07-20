@@ -11,3 +11,4 @@ Objectives
 #. Provide better logging features
 #. Separate the ``SZN`` parser
 #. Add support for attribute injection in ports and links also.
+#. Add methods to nodes that are analogous to ``pre_build`` and ``post_build``.
