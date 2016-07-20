@@ -48,6 +48,5 @@ warn(
     category=DeprecatedTopologyModule,
 )
 
-
 __all__ = ['BasePlatform', 'BaseNode', 'CommonNode']
 __api__ = []

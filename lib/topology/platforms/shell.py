@@ -174,7 +174,7 @@ class BaseShell(object):
     def send_command(
         self, command,
         matches=None, newline=True,
-        timeout=None, connection=None
+        timeout=None, connection=None, silent=False
     ):
         """
         Send a command to the shell.
@@ -188,10 +188,12 @@ class BaseShell(object):
          found in the command response.
         :param str connection: Name of the connection to be used to send the
          command. If not defined, the default connection will be used.
+        :param bool silent: True to call the command logger function, False
+         otherwise.
         """
 
     @abstractmethod
-    def get_response(self, connection=None):
+    def get_response(self, connection=None, silent=False):
         """
         Get a response from the shell connection.
 
@@ -200,6 +202,8 @@ class BaseShell(object):
 
         :param str connection: Name of the connection to be used to get the
          response from. If not defined, the default connection will be used.
+        :param bool silent: True to call the response logger function, False
+         otherwise.
         :rtype: str
         :return: Shell response to the previously sent command.
         """
@@ -272,6 +276,33 @@ class BaseShell(object):
          defined, the default connection will be set up.
         """
 
+    def _register_loggers(
+        self, node, shell, command_logger=None, response_logger=None
+    ):
+        """
+        Register logger functions for command executions and responses.
+
+        :param :class:`topology.base.BaseNode` node: Node that holds this
+         shell.
+        :param str shell: Name of the shell to show in the sent command log.
+        :param function command_logger: Function that logs the command being
+         sent. If set to None, the node's _log_command will be used.
+        :param function response_logger: Function that logs the command
+         response. If set to None, the node's _log_response will be used.
+        """
+
+        self._shell = shell
+
+        if command_logger is None:
+            self._command_logger = node._log_command
+        else:
+            self._command_logger = command_logger
+
+        if response_logger is None:
+            self._response_logger = node._log_response
+        else:
+            self._response_logger = response_logger
+
 
 @add_metaclass(ABCMeta)
 class PExpectShell(BaseShell):
@@ -335,6 +366,8 @@ class PExpectShell(BaseShell):
         self._encoding = encoding
         self._try_filter_echo = try_filter_echo
         self._auto_connect = auto_connect
+        self._command_logger = None
+        self._response_logger = None
 
         # Doing this to avoid having a mutable object as default value in the
         # arguments.
@@ -394,7 +427,7 @@ class PExpectShell(BaseShell):
     def send_command(
         self, command,
         matches=None, newline=True,
-        timeout=None, connection=None
+        timeout=None, connection=None, silent=False
     ):
         """
         See :meth:`BaseShell.send_command` for more information.
@@ -435,6 +468,9 @@ class PExpectShell(BaseShell):
         else:
             spawn.send(command)
 
+        if not silent and self._command_logger is not None:
+            self._command_logger(command, self._shell)
+
         # Expect matches
         if timeout is None:
             timeout = self._timeout
@@ -444,7 +480,7 @@ class PExpectShell(BaseShell):
         )
         return match_index
 
-    def get_response(self, connection=None):
+    def get_response(self, connection=None, silent=False):
         """
         See :meth:`BaseShell.get_response` for more information.
         """
@@ -472,7 +508,12 @@ class PExpectShell(BaseShell):
                 and lines[0].strip() == self._last_command.strip():
             lines.pop(0)
 
-        return '\n'.join(lines)
+        response = '\n'.join(lines)
+
+        if not silent and self._response_logger is not None:
+            self._response_logger(response)
+
+        return response
 
     def is_connected(self, connection=None):
         """
