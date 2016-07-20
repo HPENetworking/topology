@@ -296,5 +296,26 @@ class CommonNode(BaseNode):
         """
         self._enabled = False
 
+    def _log_command(self, command, shell):
+        """
+        Command logging function for low-level shell API usage.
+
+        :param str command: Sent command to be logged.
+        :param str shell: Name of the shell that sends the command.
+        """
+
+        print(
+            '{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
+                datetime.now().isoformat(), self.identifier, command, shell
+            )
+        )
+
+    def _log_response(self, response):
+        """
+        Response logging function for low-level shell API usage.
+
+        :param str response: Command response to be logged.
+        """
+        print(response)
 
 __all__ = ['BaseNode', 'CommonNode']
