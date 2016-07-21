@@ -17,8 +17,8 @@
 """
 Base platform engine module for topology.
 
-This module defines the functionality that a topology platform plugin must
-provide to be able to create a network using specific hardware.
+This module defines the functionality that a Topology Engine Node must
+implement to be able to create a network using a specific environment.
 """
 
 from __future__ import unicode_literals, absolute_import
@@ -31,34 +31,21 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass, iterkeys
 
-from .shell import ShellContext
+from .service import BaseService
 from ..libraries.manager import LibsProxy
+from .shell import ShellContext, BaseShell
 
 
 log = logging.getLogger(__name__)
 
 
 @add_metaclass(ABCMeta)
-class BaseNode(object):
+class HighLevelShellAPI(object):
     """
-    Base engine node class.
+    API used to interact with node shells.
 
-    This class represent the base interface that engine nodes require to
-    implement.
-
-    See the :doc:`Plugins Development Guide </plugins>` for reference.
-
-    :param str identifier: Unique identifier of the engine node.
-    :var metadata: Additional metadata (kwargs leftovers).
-    :var ports: Mapping between node ports and engine ports. This variable
-     is populated by the :class:`topology.manager.TopologyManager`.
+    :var str default_shell: Engine node default shell.
     """
-
-    @abstractmethod
-    def __init__(self, identifier, **kwargs):
-        self.identifier = identifier
-        self.metadata = kwargs
-        self.ports = OrderedDict()
 
     @property
     def default_shell(self):
@@ -68,13 +55,57 @@ class BaseNode(object):
     def default_shell(self, value):
         raise NotImplementedError('default_shell.setter')
 
-    def __call__(self, cmd, shell=None, silent=False):
-        return self.send_command(cmd, shell=shell, silent=silent)
+    @abstractmethod
+    def available_shells(self):
+        """
+        Get the list of available shells.
 
+        :return: The list of all available shells. The first element is the
+         default (if any).
+        :rtype: List of str.
+        """
+
+    @abstractmethod
+    def send_command(self, cmd, shell=None, silent=False):
+        """
+        Send a command to this engine node.
+
+        :param str cmd: Command to send.
+        :param str shell: Shell that must interpret the command.
+         ``None`` for the default shell. Is up to the engine node to
+         determine what its default shell is.
+        :param bool silent: If ``False``, print input command and response to
+         stdout.
+
+        :return: The response of the command.
+        :rtype: str
+        """
+
+    def __call__(self, *args, **kwargs):
+        return self.send_command(*args, **kwargs)
+
+    @abstractmethod
+    def _register_shell(self, name, shellobj):
+        """
+        Allow plugin developers to register a shell when initializing a node.
+
+        :param str name: Unique name of the shell to register.
+        :param shellobj: The shell object to register.
+        :type shellobj: BaseShell
+        """
+
+
+@add_metaclass(ABCMeta)
+class LowLevelShellAPI(object):
+    """
+    API used to interact with low level shell objects.
+    """
+
+    @abstractmethod
     def use_shell(self, shell):
         """
         Create a context manager that allows to use a different default shell
-        in a context.
+        in a context, including access to it's low-level shell object.
 
         :param str shell: The default shell to use in the context.
 
@@ -92,7 +123,6 @@ class BaseNode(object):
                 python.send_command('foo = (', matches=['... '])
                 ...
         """
-        return ShellContext(self, shell)
 
     @abstractmethod
     def get_shell(self, shell):
@@ -102,59 +132,123 @@ class BaseNode(object):
         The shell object allows to access the low-level shell API.
 
         :param str shell: Name of the shell.
+
         :return: The associated shell object.
-        :rtype: :class:`BaseShell`.
+        :rtype: BaseShell
         """
+
+
+@add_metaclass(ABCMeta)
+class ServicesAPI(object):
+    """
+    API to gather information and connection parameters to a node services.
+    """
 
     @abstractmethod
-    def send_command(self, cmd, shell=None, silent=False):
+    def available_services(self):
         """
-        Send a command to this engine node.
+        Get the list of all available services.
 
-        :param str cmd: Command to send.
-        :param str shell: Shell that must interpret the command.
-         ``None`` for the default shell. Is up to the engine node to
-         determine what its default shell is.
-        :param bool silent: If ``False``, print input command and response to
-         stdout.
-        :rtype: str
-        :return: The response of the command.
-        """
-
-    @abstractmethod
-    def available_shells(self):
-        """
-        Get the list of available shells.
-
+        :return: The list of all available services.
         :rtype: List of str.
-        :return: The list of all available shells. The first one is the
-         default (if any).
         """
+
+    @abstractmethod
+    def get_service(self, service):
+        """
+        Get the service object associated with the given name.
+
+        The service object holds all connection parameters.
+
+        :param str service: Name of the service.
+
+        :return: The associated service object.
+        :rtype: BaseService
+        """
+
+    @abstractmethod
+    def _register_service(self, name, serviceobj):
+        """
+        Allow plugin developers to register a service when initializing a node.
+
+        :param str name: Unique name of the service to register.
+        :param serviceobj: The service object to register with all connection
+         related parameters.
+        :type serviceobj: BaseService
+        """
+
+    @abstractmethod
+    def _get_services_address(self):
+        """
+        Returns the IP or FQDN of the node so users can connect to the
+        registered services.
+
+        .. note::
+
+           This method should be implemented by the platform engine base node.
+
+        :returns: The IP or FQDM of the node.
+        :rtype: str
+        """
+
+
+@add_metaclass(ABCMeta)
+class StateAPI(object):
+    """
+    API to control the enable/disabled state of a node.
+    """
 
     @abstractmethod
     def is_enabled(self):
         """
-        Query if the device is enabled.
+        Query if the node is enabled.
 
+        :return: True if the node is enabled, False otherwise.
         :rtype: bool
-        :return: True if the device is enabled, False otherwise.
         """
 
     @abstractmethod
     def enable(self):
         """
-        Enable this device.
+        Enable this node.
 
-        An enabled device allows communication with.
+        An enabled node allows communication.
         """
 
     @abstractmethod
     def disable(self):
         """
-        Disable this device.
+        Disable this node.
 
-        A disabled device doesn't allow communication with.
+        A disabled node doesn't allow communication.
         """
+
+
+@add_metaclass(ABCMeta)
+class BaseNode(HighLevelShellAPI, LowLevelShellAPI, ServicesAPI, StateAPI):
+    """
+    Base engine node class.
+
+    This class represent the base interface that engine nodes require to
+    implement.
+
+    See the :doc:`Plugins Development Guide </plugins>` for reference.
+
+    :param str identifier: User identifier of the engine node.
+
+    :var identifier: User identifier of the engine node. Please note that
+     this identifier is unique in the topology being built, but is not unique
+     in the execution system.
+    :var metadata: Additional metadata (kwargs leftovers).
+    :var ports: Mapping between node ports and engine ports. This variable
+     is populated by the :class:`topology.manager.TopologyManager`.
+    """
+
+    @abstractmethod
+    def __init__(self, identifier, **kwargs):
+        self.identifier = identifier
+        self.metadata = kwargs
+        self.ports = OrderedDict()
 
 
 @add_metaclass(ABCMeta)
@@ -163,28 +257,42 @@ class CommonNode(BaseNode):
     Base engine node class with a common base implementation.
 
     This class provides a basic common implementation for managing shells and
-    functions, where an internal ordered dictionary handles the keys for
-    functions that implements the logic for those shells or functions.
+    services. Internal ordered dictionaries handles the keys for
+    shells and services objects that implements the logic for those shells or
+    services.
 
-    Child classes will then only require to populate the internal dictionaries
-    with those handling functions to delegate the process of the call.
+    Child classes will then only require to call registration methods
+    :meth:`_register_shell` and :meth:`_register_service`.
 
-    In particular, this class implements support for topology communication
-    libraries and will ad-hoc to the internal functions dictionary all
-    libraries available.
+    In particular, this class implements support for Communication Libraries
+    using class :class:`LibsProxy` that will hook with all available libraries.
 
     See :class:`BaseNode`.
+
+    .. note::
+
+       The method :meth: ``_get_services_address`` should be provided by the
+       Platform Engine base node.
     """
 
     @abstractmethod
     def __init__(self, identifier, **kwargs):
         super(CommonNode, self).__init__(identifier, **kwargs)
-        self._shells = OrderedDict()
-        self._enabled = True
-        self._default_shell = None
 
-        # Add support for communication libraries
+        # Shell(s) API
+        self._default_shell = None
+        self._shells = OrderedDict()
+
+        # Services API
+        self._services = OrderedDict()
+
+        # State API
+        self._enabled = True
+
+        # Communication Libraries support
         self.libs = LibsProxy(self)
+
+    # HighLevelShellAPI
 
     @property
     def default_shell(self):
@@ -193,35 +301,31 @@ class CommonNode(BaseNode):
     @default_shell.setter
     def default_shell(self, value):
         if value not in self._shells:
-            raise Exception(
+            raise KeyError(
                 'Cannot set default shell. Unknown shell "{}"'.format(value)
             )
         self._default_shell = value
 
-    def get_shell(self, shell):
+    def available_shells(self):
         """
-        Implementation of the ``get_shell`` interface.
+        Implementation of the public ``available_shells`` interface.
 
-        This method will return the shell object associated with the given
-        shell name.
+        This method will just list the available keys in the internal ordered
+        dictionary.
 
-        See :meth:`BaseNode.get_shell` for more information.
+        See :meth:`HighLevelShellAPI.available_shells` for more information.
         """
-        if shell not in self._shells:
-            raise Exception(
-                'Unknown shell "{}"'.format(shell)
-            )
-        return self._shells[shell]
+        return list(iterkeys(self._shells))
 
     def send_command(self, cmd, shell=None, silent=False):
         """
-        Implementation of the ``send_command`` interface.
+        Implementation of the public ``send_command`` interface.
 
         This method will lookup for the shell argument in an internal ordered
-        dictionary to fetch a function to delegate the command to. If None is
-        provided, the first key of the dictionary will be used.
+        dictionary to fetch a shell object to delegate the command to.
+        If None is provided, the default shell of the node will be used.
 
-        See :meth:`BaseNode.send_command` for more information.
+        See :meth:`HighLevelShellAPI.send_command` for more information.
         """
 
         # Check at least one shell is available
@@ -254,16 +358,107 @@ class CommonNode(BaseNode):
 
         return response
 
-    def available_shells(self):
+    def _register_shell(self, name, shellobj):
         """
-        Implementation of the ``available_shells`` interface.
+        Implementation of the private ``_register_shell`` interface.
+
+        This method will lookup for the shell name argument in an internal
+        ordered dictionary and, if inexistent, it will register the given
+        shell object.
+
+        See :meth:`HighLevelShellAPI._register_shell` for more information.
+        """
+        assert isinstance(shellobj, BaseShell)
+
+        if name in self._shells:
+            raise KeyError('Shell "{}" already registered'.format(name))
+        if not name:
+            raise KeyError('Invalid name for shell "{}"'.format(name))
+
+        self._shells[name] = shellobj
+
+    # LowLevelShellAPI
+
+    def get_shell(self, shell):
+        """
+        Implementation of the public ``get_shell`` interface.
+
+        This method will return the shell object associated with the given
+        shell name.
+
+        See :meth:`LowLevelShellAPI.get_shell` for more information.
+        """
+        if shell not in self._shells:
+            raise KeyError(
+                'Unknown shell "{}"'.format(shell)
+            )
+        return self._shells[shell]
+
+    def use_shell(self, shell):
+        """
+        Implementation of the public ``use_shell`` interface.
+
+        This method allows to create contexts (using a Python Context Manager)
+        that allows the user, by the means of a ``with`` statement, to create
+        a context to use a specific shell in it.
+
+        See :meth:`LowLevelShellAPI.use_shell` for more information.
+        """
+        return ShellContext(self, shell)
+
+    # ServicesAPI
+
+    def available_services(self):
+        """
+        Implementation of the public ``available_services`` interface.
 
         This method will just list the available keys in the internal ordered
         dictionary.
 
-        See :meth:`BaseNode.available_shells` for more information.
+        See :meth:`ServicesAPI.available_services` for more information.
         """
-        return list(iterkeys(self._shells))
+        return list(iterkeys(self._services))
+
+    def get_service(self, service):
+        """
+        Implementation of the public ``get_service`` interface.
+
+        This method will return the service object associated with the given
+        service name.
+
+        See :meth:`ServicesAPI.get_service` for more information.
+        """
+        if service not in self._services:
+            raise KeyError(
+                'Unknown service "{}"'.format(service)
+            )
+
+        # Set the node address
+        serviceobj = self._services[service]
+        serviceobj.address = self._get_services_address()
+
+        return serviceobj
+
+    def _register_service(self, name, serviceobj):
+        """
+        Implementation of the private ``_register_service`` interface.
+
+        This method will lookup for the service name argument in an internal
+        ordered dictionary and, if inexistent, it will register the given
+        service object.
+
+        See :meth:`ServicesAPI._register_service` for more information.
+        """
+        assert isinstance(serviceobj, BaseService)
+
+        if name in self._services:
+            raise KeyError('Service "{}" already registered'.format(name))
+        if not name:
+            raise KeyError('Invalid name for service "{}"'.format(name))
+
+        self._services[name] = serviceobj
+
+    # StateAPI
 
     def is_enabled(self):
         """
@@ -272,7 +467,7 @@ class CommonNode(BaseNode):
         This method will just return the internal value of the ``_enabled``
         flag.
 
-        See :meth:`BaseNode.is_enabled` for more information.
+        See :meth:`StateAPI.is_enabled` for more information.
         """
         return self._enabled
 
@@ -282,7 +477,7 @@ class CommonNode(BaseNode):
 
         This method will just set the value of the ``_enabled`` flag to True.
 
-        See :meth:`BaseNode.enable` for more information.
+        See :meth:`StateAPI.enable` for more information.
         """
         self._enabled = True
 
@@ -292,7 +487,7 @@ class CommonNode(BaseNode):
 
         This method will just set the value of the ``_enabled`` flag to False.
 
-        See :meth:`BaseNode.disable` for more information.
+        See :meth:`StateAPI.disable` for more information.
         """
         self._enabled = False
 
@@ -318,4 +513,11 @@ class CommonNode(BaseNode):
         """
         print(response)
 
-__all__ = ['BaseNode', 'CommonNode']
+__all__ = [
+    'HighLevelShellAPI',
+    'LowLevelShellAPI',
+    'ServicesAPI',
+    'StateAPI',
+    'BaseNode',
+    'CommonNode'
+]
