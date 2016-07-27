@@ -123,13 +123,20 @@ class DockerPlatform(BasePlatform):
 
         # Get network configuration of given port
         network_config = enode._get_network_config()
-        category_config = network_config['mapping'][
+
+        category = biport.metadata.get(
+            'category',
             network_config['default_category']
-        ]
+        )
+        category_config = network_config['mapping'][category]
+
+        # If this port is from a docker-managed network, then it will be
+        # created when this node was connected to the network
+        created = True if category_config['managed_by'] == 'docker' else False
 
         # Register this port for later creation
         self.nmlbiport_iface_map[biport.identifier] = {
-            'created': False,
+            'created': created,
             'iface_base': eport,
             'prefix': category_config['prefix'],
             'iface': '{}{}'.format(category_config['prefix'], eport),
@@ -161,6 +168,13 @@ class DockerPlatform(BasePlatform):
         # Get port spec dictionary
         port_spec_a = self.nmlbiport_iface_map[port_a.identifier]
         port_spec_b = self.nmlbiport_iface_map[port_b.identifier]
+
+        # If any of the ports is already created then don't do anything here
+        # FIXME: We should probably let the user know if one of the ports is
+        # created and the other is not, as this case is undefined and
+        # unsupported
+        if port_spec_a['created'] or port_spec_b['created']:
+            return
 
         # Determine final interface names
         iface_a = port_spec_a['iface']
