@@ -26,6 +26,8 @@ The topology framework was built with the following design principles in mind:
    and how.
 #. The *Engine Nodes* implement a base communication interface for *shells*.
    A shell is a command line driven textual interface.
+#. FIXME: Put this definition in its proper place: A *topology element* is
+   either a *node*, *port* or *link*.
 #. Optionally, a *Platform Engine* can support *Communication Libraries* for
    their *Engine Nodes*, which is a
    :ref:`extensible <provide-a-new-communication-library>` way to provide the
