@@ -346,15 +346,11 @@ class CommonNode(BaseNode):
                 'Shell {} is not supported.'.format(shell)
             )
 
-        if not silent:
-            print('{} [{}].send_command(\'{}\', shell=\'{}\') ::'.format(
-                datetime.now().isoformat(), self.identifier, cmd, shell
-            ))
+        active_shell = self.get_shell(shell)
 
-        response = self._shells[shell](cmd)
+        active_shell.send_command(cmd, silent=silent)
 
-        if not silent:
-            print(response)
+        response = active_shell.get_response(silent=silent)
 
         return response
 
