@@ -217,9 +217,47 @@ class StateAPI(object):
         """
 
 
+@add_metaclass(ABCMeta)
+class CommonStateAPI(StateAPI):
+    """
+    Implementation of the StateAPI methods.
+    """
+
+    def is_enabled(self):
+        """
+        Implementation of the ``is_enabled`` interface.
+
+        This method will just return the internal value of the ``_enabled``
+        flag.
+
+        See :meth:`StateAPI.is_enabled` for more information.
+        """
+        return self._enabled
+
+    def enable(self):
+        """
+        Implementation of the ``enable`` interface.
+
+        This method will just set the value of the ``_enabled`` flag to True.
+
+        See :meth:`StateAPI.enable` for more information.
+        """
+        self._enabled = True
+
+    def disable(self):
+        """
+        Implementation of the ``disable`` interface.
+
+        This method will just set the value of the ``_enabled`` flag to False.
+
+        See :meth:`StateAPI.disable` for more information.
+        """
+        self._enabled = False
+
 __all__ = [
     'HighLevelShellAPI',
     'LowLevelShellAPI',
     'ServicesAPI',
     'StateAPI',
+    'CommonStateAPI'
 ]
