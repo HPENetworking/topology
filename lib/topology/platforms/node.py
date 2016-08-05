@@ -501,13 +501,14 @@ class CommonNode(BaseNode):
             )
         )
 
-    def _log_response(self, response):
+    def _log_response(self, response, shell):
         """
         Response logging function for low-level shell API usage.
 
         :param str response: Command response to be logged.
+        :param str shell: Name of the shell that receives the command response.
         """
-        print(response)
+        print(response.encode(self._shells[shell]._encoding))
 
 __all__ = [
     'HighLevelShellAPI',

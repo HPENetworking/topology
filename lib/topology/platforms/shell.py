@@ -511,7 +511,7 @@ class PExpectShell(BaseShell):
         response = '\n'.join(lines)
 
         if not silent and self._response_logger is not None:
-            self._response_logger(response)
+            self._response_logger(response, self._shell)
 
         return response
 
