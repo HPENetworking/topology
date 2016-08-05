@@ -2,7 +2,7 @@
 Docker Platform Engine for Topology
 ===================================
 
-Docker based Platform Engine plugin for the Network Topology Framework.
+Docker based Platform Engine plugin for the Topology Modular Framework.
 
 
 Documentation

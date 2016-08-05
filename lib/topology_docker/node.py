@@ -34,7 +34,7 @@ from abc import ABCMeta, abstractmethod
 from docker import Client
 from six import add_metaclass
 
-from topology.platforms.base import CommonNode
+from topology.platforms.node import CommonNode
 from topology_docker.utils import ensure_dir
 
 
@@ -256,6 +256,39 @@ class DockerNode(CommonNode):
                 )
             )
 
+    def _docker_exec(self, command):
+        """
+        Execute a command inside the docker.
+
+        :param str command: The command to execute.
+        """
+        log.debug(
+            '[{}]._docker_exec(\'{}\') ::'.format(self._container_id, command)
+        )
+
+        response = check_output(shsplit(
+            'docker exec {container_id} {command}'.format(
+                container_id=self._container_id, command=command.strip()
+            )
+        )).decode('utf8')
+
+        log.debug(response)
+        return response
+
+    def _get_services_address(self):
+        """
+        Get the service address of the node using Docker's inspect mechanism
+        to grab OOBM interface address.
+
+        :return: The address (IP or FQDN) of the services interface (oobm).
+        :rtype: str
+        """
+        network_name = self._container_name + '_oobm'
+        address = self._client.inspect_container(
+            self.container_id
+        )['NetworkSettings']['Networks'][network_name]['IPAddress']
+        return address
+
     def notify_add_biport(self, node, biport):
         """
         Get notified that a new biport was added to this engine node.
@@ -358,25 +391,6 @@ class DockerNode(CommonNode):
             'ip link set dev {iface} {state}'.format(**locals())
         )
         self._docker_exec(command)
-
-    def _docker_exec(self, command):
-        """
-        Execute a command inside the docker.
-
-        :param str command: The command to execute.
-        """
-        log.debug(
-            '[{}]._docker_exec(\'{}\') ::'.format(self._container_id, command)
-        )
-
-        response = check_output(shsplit(
-            'docker exec {container_id} {command}'.format(
-                container_id=self._container_id, command=command.strip()
-            )
-        )).decode('utf8')
-
-        log.debug(response)
-        return response
 
 
 __all__ = ['DockerNode']
