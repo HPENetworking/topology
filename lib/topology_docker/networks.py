@@ -23,6 +23,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from topology_docker.utils import get_iface_name
 
 
 log = logging.getLogger(__name__)
@@ -95,31 +96,8 @@ def create_docker_network(enode, category, config):
     # lo should always be up
     enode._docker_exec('{} ip link set dev lo up'.format(netns_exec))
 
-    # Figure out the interface name inside the container
-    # for this network
-    # FIXME: there must be a better way to do this
-    # https://github.com/docker/docker/issues/17064
-    docker_netconf = enode._client.inspect_container(
-        enode.container_id
-    )['NetworkSettings']['Networks'][netname]
-
-    ifaces_conf = enode._docker_exec(
-        'ip -o link list'
-    ).strip().split('\n')
-
-    for iface_conf in ifaces_conf:
-        if docker_netconf['MacAddress'] in iface_conf:
-            iface = iface_conf.split(': ')[1].split('@')[0]
-            break
-    else:
-        raise RuntimeError(
-            'Unable to find interface with MAC address '
-            '{docker_netconf[MacAddress]} in netns {netns} in container '
-            '{enode._container_id} with name '
-            '{enode._container_name}'.format(
-                **locals()
-            )
-        )
+    # Find out the name Docker gave to this interface name
+    iface = get_iface_name(enode, netname)
 
     # Prefix interface
     prefixed_iface = '{}{}'.format(config['prefix'], iface)
