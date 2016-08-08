@@ -71,15 +71,15 @@ class SshMixin(object):
      authentication will not be used.
     """
     def __init__(self, *args, **kwargs):
-        self._user = kwargs.pop('user', None)
+        self._username = kwargs.pop('user', None)
         self._hostname = kwargs.pop('hostname', '127.0.0.1')
         self._port = kwargs.pop('port', 22)
         self._options = kwargs.pop('options', ('BatchMode=yes', ))
         self._identity_file = kwargs.pop('identity_file', 'id_rsa')
 
         # Use current user if not specified
-        if self._user is None:
-            self._user = SshMixin.get_username()
+        if self._username is None:
+            self._username = SshMixin.get_username()
 
         # Provide a sensible default for the identity file
         if self._identity_file is not None and not isabs(self._identity_file):
@@ -116,7 +116,7 @@ class SshMixin(object):
             options = ' -i {}{}'.format(self._identity_file, options)
 
         connect_command = (
-            'ssh {self._user}@{self._hostname} '
+            'ssh {self._username}@{self._hostname} '
             '-p {self._port}{options}'.format(
                 **locals()
             )
