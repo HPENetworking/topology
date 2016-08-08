@@ -35,7 +35,7 @@ from docker import Client
 from six import add_metaclass
 
 from topology.platforms.node import CommonNode
-from topology_docker.utils import ensure_dir
+from topology_docker.utils import ensure_dir, get_iface_name
 
 
 log = getLogger(__name__)
@@ -300,7 +300,23 @@ class DockerNode(CommonNode):
         :rtype: str
         :return: The assigned interface name of the port.
         """
-        return biport.metadata.get('label', biport.identifier)
+
+        network_config = self._get_network_config()
+
+        category = biport.metadata.get(
+            'category',
+            network_config['default_category']
+        )
+        category_config = network_config['mapping'][category]
+
+        if category_config['managed_by'] is 'docker':
+            netname = category_config.get(
+                'connect_to',
+                '{}_{}'.format(self._container_name, category)
+            )
+            return get_iface_name(self, netname)
+        else:
+            return biport.metadata.get('label', biport.identifier)
 
     def notify_add_bilink(self, nodeport, bilink):
         """
