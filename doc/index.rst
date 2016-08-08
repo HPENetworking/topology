@@ -81,6 +81,46 @@ This methods allow to pause and resume a node in the topology to test failover,
 replication, balancing or for simple management.
 
 
+Node types provided by default
+==============================
+
+This Platform Engine provides two types of nodes by default: *host* and
+*switch*.
+
+Host Node Type
+++++++++++++++
+
+This is a very simple host that can be used in topologies where there is a need
+to simulate a Linux-based host system. This node is based on an Ubuntu 14.04
+image (by default) and uses bash for its shell.
+
+It provides the two default network categories (as inherited from DockerNode):
+`front_panel` and `oobm`. The first one is used for ports that are going to be
+connected to other nodes and the second one is used to connect the node to a
+bridge network managed by docker itself (which means it's not explicitly part
+of the topology).
+
+Switch Node Type
+++++++++++++++++
+
+This is a very simple switch that can be used in topologies where there is a
+need to simulate a switch that will just forward packets to the correct port
+based on the mac address that's connected to it. This node is based on an
+Ubuntu 14.04 image (by default) and uses bash for its shell.
+
+It provides the two default network categories (as inherited from DockerNode):
+`front_panel` and `oobm`. The first one is used for ports that are going to be
+connected to other nodes and the second one is used to connect the switch to a
+bridge network managed by docker itself (which means it's not explicitly part
+of the topology).
+
+All the ports in this node type (except the implicit one in the `oobm`
+category) are added to a kernel-level bridge named `bridge0` which provides
+the switching functionality. Because of the way this type of bridges work, all
+interfaces added to it must be set to UP state, which means ports in nodes of
+this type will ignore the UP element attribute referenced above (all ports will
+be brought UP regardless of it).
+
 Development
 ===========
 
