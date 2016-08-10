@@ -56,9 +56,14 @@ def test_ping(topology, step):
     assert ping_hs2_to_hs1['transmitted'] == ping_hs2_to_hs1['received'] == 1
 
     # Should not work, host 3 is not in the same subnet as the other 2 hosts
-    no_ping = hs3.libs.ping.ping(1, '192.168.15.1')
-    assert no_ping['transmitted'] == 1
-    assert no_ping['received'] == 0
+    # We should implement this with ping's communication library once the
+    # "network unreachable" scenario is supported by uncommenting the following
+    # three lines
+    # no_ping = hs3.libs.ping.ping(1, '192.168.15.1', shell=shell)
+    # assert no_ping['transmitted'] == 1
+    # assert no_ping['received'] == 0
+    no_ping = hs3('ping -c 1 192.168.15.1', shell=shell)
+    assert 'Network is unreachable' in no_ping
 
     # Should not work, not node exists with that ip
     no_ping = hs2.libs.ping.ping(1, '192.168.15.3')
