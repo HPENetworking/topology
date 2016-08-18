@@ -96,6 +96,7 @@ setup(
         ],
         'topology_docker_node_10': [
             'host = topology_docker.nodes.host:HostNode',
+            'switch = topology_docker.nodes.switch:SwitchNode',
         ]
     }
 )
