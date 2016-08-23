@@ -52,7 +52,7 @@ def parse_attribute_injection(injection_file, search_paths=None):
     injection specifications. Each specification allows to list the files to
     modify and the modifiers to apply. Each modifier specify what entities
     (devices, ports or links) will be modified and which attributes will be
-    injected. The file support willcards and attributes matching.
+    injected. The file supports wildcards and attributes matching.
 
     The file format is as follows:
 
@@ -70,9 +70,21 @@ def parse_attribute_injection(injection_file, search_paths=None):
                         }
                     },
                     {
+                        "links": ["sw1:4 -- sw3:9", "rate=fast"],
+                        "attributes": {
+                            "rate": "slow",
+                        }
+                    },
+                    {
                         "nodes": ["sw4"],
                         "attributes": {
                             "image": "image_for_sw4"
+                        }
+                    },
+                    {
+                        "ports": ["sw1:4"],
+                        "attributes": {
+                            "state": "down"
                         }
                     },
                     ... # More modifiers
@@ -90,7 +102,7 @@ def parse_attribute_injection(injection_file, search_paths=None):
      ::
 
         {
-            '/abs/path/to/suite.py': {
+            '/abs/path/to/test_suite.py': {
                 'sw1': {
                     'image': 'image_for_sw1_sw3_hs1_hs2',
                     'hardware': 'hardware_for_sw1_sw3_hs1_hs2'
@@ -98,6 +110,9 @@ def parse_attribute_injection(injection_file, search_paths=None):
                 'sw3': {
                     'image': 'image_for_sw1_sw3_hs1_hs2',
                     'hardware': 'hardware_for_sw1_sw3_hs1_hs2'
+                }
+                'sw1:4': {
+                    'state': 'down'
                 }
             }
         }
@@ -149,13 +164,17 @@ def parse_attribute_injection(injection_file, search_paths=None):
             # Those modifiers hold the nodes whose attributes are to be
             # modified.
             for modifier in spec['modifiers']:
-                for node in expand_nodes(filename, modifier['nodes']):
+                for element_type in ['nodes', 'ports', 'links']:
+                    if element_type not in modifier.keys():
+                        continue
+                    for element in expand_elements(
+                        filename, element_type, modifier[element_type]
+                    ):
+                        if element not in result[filename]:
+                            result[filename][element] = {}
 
-                    if node not in result[filename]:
-                        result[filename][node] = {}
-
-                    for attribute, value in modifier['attributes'].items():
-                        result[filename][node][attribute] = value
+                        for attribute, value in modifier['attributes'].items():
+                            result[filename][element][attribute] = value
 
     log.debug('Attribute injection interpreted dictionary:')
     log.debug(result)
@@ -215,36 +234,38 @@ def expand_files(files_definitions, search_paths):
     return expanded_files
 
 
-def expand_nodes(filename, nodes_definitions):
+def expand_elements(filename, element_type, elements_definitions):
     """
-    Expands a list of node definitions into the matching node names.
+    Expands a list of element definitions into the matching element names.
 
-    A node definition is a string that can match none, one or more nodes
-    (by using wildcards). It can be an expression for node name matching, or
-    for matching all nodes that have an specific attribute value. For example:
+    A element definition is a string that can match none, one or more elements
+    (by using wildcards). It can be an expression for element name matching, or
+    for matching all elements that have an specific attribute value. For
+    example:
 
     ::
 
-        'nodea'
+        'elementa'
         'hs*'
         'type=host'
 
-    :param str filename: A filename in which to look for matching nodes.
-    :param list nodes_definitions: A list of node definitions.
-    :return: A list of matching nodes.
+    :param str filename: A filename in which to look for matching elements.
+    :param str element_type: The type of element to expand.
+    :param list elements_definitions: A list of element definitions.
+    :return: A list of matching elements.
     """
 
-    expanded_nodes = []
+    expanded_elements = []
 
     # Grab the topology definition from a file that contains one
-    log.debug('Trying to expand nodes in {}'.format(filename))
+    log.debug('Trying to expand elements in {}'.format(filename))
     if filename.endswith('.py'):
         topology = find_topology_in_python(filename)
         if topology is None:
             log.warning((
-                'Skipping node expansion for attribute injection in filename '
-                '{} in the lookup path as it does not contain a TOPOLOGY '
-                'definition.'
+                'Skipping element expansion for attribute injection in'
+                ' filename {} in the lookup path as it does not contain a'
+                ' TOPOLOGY definition.'
             ).format(filename))
             return []
     else:
@@ -257,47 +278,60 @@ def expand_nodes(filename, nodes_definitions):
         parsed_topology = parse_txtmeta(topology)
     except:
         log.error((
-            'Skipping node expansion for attribute injection in filename '
+            'Skipping element expansion for attribute injection in filename '
             '{} in the lookup path as SZN format parsing failed.'
         ).format(filename))
         log.debug(format_exc())
         return []
 
-    for node_definition in nodes_definitions:
+    for element_definition in elements_definitions:
 
         # Check if definition is for attribute matching
-        if match(r'(\w+)=(\w+)', node_definition):
+        if match(r'(\w+)=(\w+)', element_definition):
 
             # Build a dummy statement and parse it
             parsed_dummy = parse_txtmeta(
-                '[{}] dummy1'.format(node_definition)
+                '[{}] dummy1'.format(element_definition)
             )
 
             # Extract the attribute name and value
             attribute, value = list(iteritems(
-                parsed_dummy['nodes'][0]['attributes']
+                parsed_dummy[element_type][0]['attributes']
             ))[0]
 
             # Look for attribute name matching
-            for nodes_group in parsed_topology['nodes']:
-                attributes = nodes_group['attributes']
+            for elements_group in parsed_topology[element_type]:
+                attributes = elements_group['attributes']
                 if attribute in attributes and value == attributes[attribute]:
 
-                    # Retain order, and avoid adding repeated nodes
-                    for node in nodes_group['nodes']:
-                        if node not in expanded_nodes:
-                            expanded_nodes.append(node)
+                    # Retain order, and avoid adding repeated elements
+                    for element in elements_group[element_type]:
+                        if element not in expanded_elements:
+                            expanded_elements.append(element)
             continue
 
         # The definition is not attribute matching, but name matching
-        for nodes_group in parsed_topology['nodes']:
-            for node in nodes_group['nodes']:
-                if fnmatch(node, node_definition) and \
-                        node not in expanded_nodes:
-                    expanded_nodes.append(node)
+        for elements_group in parsed_topology[element_type]:
+            for element in elements_group[element_type]:
+                # FIXME: Make this prettier.
+                if element_type == 'nodes':
+                    pass
+                elif element_type == 'ports':
+                    element = '{}:{}'.format(element[0], element[1])
+                elif element_type == 'links':
+                    element = '{}:{} -- {}:{}'.format(
+                        element[0][0], element[0][1],
+                        element[1][0], element[1][1]
+                    )
+                else:
+                    raise Exception(
+                        'Unknown element type: {}'.format(element_type)
+                    )
+                if fnmatch(element, element_definition) and \
+                        element not in expanded_elements:
+                    expanded_elements.append(element)
 
-    return expanded_nodes
-
+    return expanded_elements
 
 __all__ = [
     'parse_attribute_injection'

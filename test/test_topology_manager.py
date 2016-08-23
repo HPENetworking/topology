@@ -76,15 +76,15 @@ def test_txtmeta_parse():
         'links': [
             {
                 'attributes': OrderedDict(),
-                'endpoints': (('sw1', '1'), ('hs1', '1'))
+                'links': [(('sw1', '1'), ('hs1', '1'))]
             },
             {
                 'attributes': OrderedDict(),
-                'endpoints': (('sw1', 'a'), ('hs1', 'a'))
+                'links': [(('sw1', 'a'), ('hs1', 'a'))]
             },
             {
                 'attributes': OrderedDict([('attr1', 1)]),
-                'endpoints': (('sw1', '4'), ('hs2', 'a'))
+                'links': [(('sw1', '4'), ('hs2', 'a'))]
             }
         ]
     }

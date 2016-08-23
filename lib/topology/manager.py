@@ -38,7 +38,7 @@ from six import string_types
 from pynml.manager import ExtendedNMLManager
 
 from .parser import parse_txtmeta
-from .platforms.base import BaseNode
+from .platforms.node import BaseNode
 from .platforms.manager import platforms, load_platform, DEFAULT_PLATFORM
 
 
@@ -152,36 +152,54 @@ class TopologyManager(object):
                 attrs = deepcopy(ports_spec['attributes'])
                 attrs['identifier'] = '{}-{}'.format(node_id, port)
                 attrs['label'] = port
+
+                port_identifier = '{}:{}'.format(node_id, port)
+
+                if inject is not None and port_identifier in inject:
+                    for key, value in inject[node_id].items():
+                        attrs[key] = value
+
                 self.nml.create_biport(node, **attrs)
 
         # Load links
-        for link_spec in dictmeta.get('links', []):
+        for links_spec in dictmeta.get('links', []):
+            for endpoint_a, endpoint_b in links_spec['links']:
+                bilink_endpoints = [None, None]
 
-            # Get endpoints
-            endpoints = [None, None]
-            for idx, (node_id, port) in enumerate(link_spec['endpoints']):
+                # Get endpoints
+                for idx, (node_id, port) in enumerate(
+                    [endpoint_a, endpoint_b]
+                ):
+                    # Auto-create node
+                    node = self.nml.get_object(node_id)
+                    if node is None:
+                        node = self.nml.create_node(identifier=node_id)
 
-                # Auto-create node
-                node = self.nml.get_object(node_id)
-                if node is None:
-                    node = self.nml.create_node(identifier=node_id)
+                    # Auto-create biport
+                    port_id = '{}-{}'.format(node_id, port)
+                    biport = self.nml.get_object(port_id)
+                    if biport is None:
+                        attrs = {
+                            'identifier': port_id,
+                            'label': port
+                        }
+                        biport = self.nml.create_biport(node, **attrs)
 
-                # Auto-create biport
-                port_id = '{}-{}'.format(node_id, port)
-                biport = self.nml.get_object(port_id)
-                if biport is None:
-                    attrs = {
-                        'identifier': port_id,
-                        'label': port
-                    }
-                    biport = self.nml.create_biport(node, **attrs)
+                    # Register endpoint
+                    bilink_endpoints[idx] = biport
 
-                # Register endpoint
-                endpoints[idx] = biport
+                # Explicit-create links
+                attrs = deepcopy(links_spec['attributes'])
 
-            # Explicit-create links
-            attrs = deepcopy(link_spec['attributes'])
-            self.nml.create_bilink(*endpoints, **attrs)
+                link_identifier = '{} -- {}'.format(
+                    bilink_endpoints[0].identifier.replace('-', ':'),
+                    bilink_endpoints[1].identifier.replace('-', ':')
+                )
+                if inject is not None and link_identifier in inject:
+                    for key, value in inject[link_identifier].items():
+                        attrs[key] = value
+
+                self.nml.create_bilink(*bilink_endpoints, **attrs)
 
     def parse(self, txtmeta, load=True, inject=None):
         """
