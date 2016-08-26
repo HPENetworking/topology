@@ -7,10 +7,6 @@ __pycache__
 dist/*
 build/*
 
-# Sphinx
-doc/_build/*
-doc/topology_connect/*
-
 # Tox
 .tox/*
 .cache/*

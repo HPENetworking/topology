@@ -1,15 +1,23 @@
-======================================================
-SSH/Telnet/etc connection Platform Engine for Topology
-======================================================
+================
+Topology Connect
+================
 
-SSH/Telnet/etc connection Platform Engine plugin for the Network Topology
-Framework.
+Topology Connect its a plugin (called a Platform Engine) for the Topology
+Modular Framework that allows to connect to and interact with an existing
+physical topology using SSH or Telnet.
+
+This is particularly useful to perform tests on small, hardwired, already-built
+topologies inside a lab.
+
+The main use case is to specify IPs of the devices using a Attribute Injection
+File (AIF) or by specifying the IPs to connect to in the topology description
+file itself (SZN file).
 
 
 Documentation
 =============
 
-    http://topology-connect.rtfd.org/
+    http://topology.readthedocs.io/
 
 
 License
