@@ -7,5 +7,5 @@
     "repo_name": "topology_connect",
     "short_description": "SSH/Telnet/etc connection Platform Engine plugin for the Network Topology Framework.",
     "year": "2015-2016",
-    "version": "0.2.0"
+    "version": "0.3.0"
 }

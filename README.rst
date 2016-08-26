@@ -20,6 +20,29 @@ Documentation
     http://topology.readthedocs.io/
 
 
+Changelog
+=========
+
+0.3.0
+-----
+
+**Fixes**
+
+- Fixed issue #4 where the SshMixin created an attribute name collision with
+  parent classes.
+
+**Changes**
+
+- Removed placeholder documentation as the new Topology Modular Framework
+  website will hold all documentation for the project and official plugins.
+
+
+0.2.0
+-----
+
+- First beta version.
+
+
 License
 =======
 
