@@ -26,8 +26,8 @@ from logging import getLogger
 from traceback import format_exc
 from collections import OrderedDict
 
-from topology.platforms.base import BasePlatform
 from topology.platforms.utils import NodeLoader
+from topology.platforms.platform import BasePlatform
 
 from .node import ConnectNode
 

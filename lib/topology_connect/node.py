@@ -27,7 +27,7 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
 
-from topology.platforms.base import CommonNode
+from topology.platforms.node import CommonNode
 
 
 log = getLogger(__name__)
