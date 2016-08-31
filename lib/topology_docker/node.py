@@ -81,6 +81,7 @@ class DockerNode(CommonNode):
         {'environment_variable': 'value'}
 
     :type environment: list or dict
+    :param bool tty: Whether to allocate a TTY or not to the process.
 
     Read only public attributes:
 
@@ -103,7 +104,7 @@ class DockerNode(CommonNode):
             binds=None, network_mode='none', hostname=None,
             shared_dir_base='/tmp/topology/docker/',
             shared_dir_mount='/var/topology', environment=None,
-            **kwargs):
+            tty=True, **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
 
@@ -157,7 +158,7 @@ class DockerNode(CommonNode):
             command=self._command,
             name=self._container_name,
             detach=True,
-            tty=True,
+            tty=tty,
             hostname=self._hostname,
             host_config=self._host_config,
             environment=self._environment
