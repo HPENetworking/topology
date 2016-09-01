@@ -38,7 +38,7 @@ from six import string_types
 from pynml.manager import ExtendedNMLManager
 
 from .parser import parse_txtmeta
-from .platforms.base import BaseNode
+from .platforms.node import BaseNode
 from .platforms.manager import platforms, load_platform, DEFAULT_PLATFORM
 
 
