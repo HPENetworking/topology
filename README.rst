@@ -23,6 +23,19 @@ Documentation
 Changelog
 =========
 
+0.4.0
+-----
+
+**Changes**
+
+- Updated the base CommonConnectNode to support the Services API introduced in
+  Topology Modular Framework 1.8.
+- Removed the ``hostname`` attribute in the base ConnectNode so it doesn't
+  clash with topology_docker ``hostname`` attribute. Same name, but different
+  purpose. To connect to a node specify the ``fqdn`` attribute in the SZN or
+  using attribute injection.
+
+
 0.3.0
 -----
 
