@@ -70,8 +70,9 @@ class CommonConnectNode(ConnectNode):
     """
 
     @abstractmethod
-    def __init__(self, identifier, **kwargs):
+    def __init__(self, identifier, fqdn='127.0.0.1', **kwargs):
         super(CommonConnectNode, self).__init__(identifier, **kwargs)
+        self._fqdn = fqdn
 
     def start(self):
         """
@@ -86,6 +87,9 @@ class CommonConnectNode(ConnectNode):
         """
         for shell in self._shells.values():
             shell.disconnect()
+
+    def _get_services_address(self):
+        return self._fqdn
 
 
 __all__ = ['ConnectNode', 'CommonConnectNode']

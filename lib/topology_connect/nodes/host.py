@@ -37,13 +37,16 @@ class HostNode(CommonConnectNode):
     """
     def __init__(
             self, identifier,
-            hostname='127.0.0.1', identity_file='id_rsa',
+            identity_file='id_rsa',
             **kwargs):
 
         super(HostNode, self).__init__(identifier, **kwargs)
-        self._shells['bash'] = SshBashShell(
-            hostname=hostname,
-            identity_file=identity_file
+        self._register_shell(
+            'bash',
+            SshBashShell(
+                hostname=self._fqdn,
+                identity_file=identity_file
+            )
         )
 
 
@@ -53,14 +56,17 @@ class UncheckedHostNode(CommonConnectNode):
     """
     def __init__(
             self, identifier,
-            hostname='127.0.0.1', identity_file='id_rsa',
+            identity_file='id_rsa',
             **kwargs):
 
         super(UncheckedHostNode, self).__init__(identifier, **kwargs)
-        self._shells['bash'] = SshBashShell(
-            hostname=hostname,
-            identity_file=identity_file,
-            options=('BatchMode=yes', 'StrictHostKeyChecking=no')
+        self._register_shell(
+            'bash',
+            SshBashShell(
+                hostname=self._fqdn,
+                identity_file=identity_file,
+                options=('BatchMode=yes', 'StrictHostKeyChecking=no')
+            )
         )
 
 

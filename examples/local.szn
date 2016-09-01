@@ -1,0 +1,6 @@
+# Execute me with:
+#     topology --platform=connect examples/local.szn
+
+[type=host fqdn="127.0.0.1" identity_file="id_rsa_loopback"] node1
+[type=host fqdn="127.0.0.1" identity_file="id_rsa_loopback"] node2
+[type=host fqdn="127.0.0.1" identity_file="id_rsa_loopback"] node3
