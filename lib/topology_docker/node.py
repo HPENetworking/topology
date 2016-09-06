@@ -213,7 +213,8 @@ class DockerNode(CommonNode):
         """
         # Search for image in available images
         for tags in [img['RepoTags'] for img in self._client.images()]:
-            if self._image in tags:
+            # Docker py can return repo tags as None
+            if tags and self._image in tags:
                 return
 
         # Determine image parts
