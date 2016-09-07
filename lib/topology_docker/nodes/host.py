@@ -45,14 +45,14 @@ class HostNode(DockerNode):
             'bash',
             DockerBashShell(
                 self.container_id,
-                'bash'
+                'ip netns exec front_panel bash'
             )
         )
         self._register_shell(
-            'bash_front_panel',
+            'bash_oobm',
             DockerBashShell(
                 self.container_id,
-                'ip netns exec front_panel bash'
+                'bash'
             )
         )
 
