@@ -35,7 +35,7 @@ from docker import Client
 from six import add_metaclass
 
 from topology.platforms.node import CommonNode
-from topology_docker.utils import ensure_dir
+from topology_docker.utils import ensure_dir, get_iface_name
 
 
 log = getLogger(__name__)
@@ -95,6 +95,8 @@ class DockerNode(CommonNode):
      ``/tmp/topology/{container_name}``.
     :var str shared_dir_mount: Directory inside the container where the
      ``shared_dir`` is mounted. Same as the ``shared_dir_mount`` keyword
+
+    .. automethod:: _get_network_config
     """
 
     @abstractmethod
@@ -186,7 +188,83 @@ class DockerNode(CommonNode):
 
     def _get_network_config(self):
         """
-        Defines the network configuration for this node.
+        Defines the network configuration for nodes of this type.
+
+        This method should be overriden when implementing a new node type to
+        return a dictionary with its network configuration by setting the
+        following components:
+
+        'mapping'
+            This is a dictionary of dictionaries, each parent-level key defines
+            one network category, and each category *must* have these three
+            keys: **netns**, **managed_by**, and **prefix**, and *can*
+            (optionally) have a **connect_to** key).
+
+            'netns'
+                Specifies the network namespace (inside the docker container)
+                where all the ports belonging to this category will be moved
+                after their creation. If set to None, then the ports will
+                remain in the container's default network namespace.
+
+            'managed_by'
+                Specifies who will manage different aspects of this network
+                category depending on its value (which can be either **docker**
+                or **platform**).
+
+                'docker'
+                    This network category will represent a network created by
+                    docker (identical to using the docker network create
+                    command) and will be visible to docker (right now all
+                    docker-managed networks are created using docker's 'bridge'
+                    built-in network plugin, this will likely change in the
+                    near future).
+
+                'platform'
+                    This network category will represent ports created by the
+                    Docker Platform Engine and is invisible to docker.
+
+            'prefix'
+                Defines a prefix that will be used when a port/interface is
+                moved into a namespace, its value can be set to '' (empty
+                string) if no prefix is needed. In cases where the parent
+                network category doesn't have a netns (i.e. 'netns' is set to
+                None) this value will be ignored.
+
+            'connect_to'
+                Specifies a Docker network this category will be connected to,
+                if this network doesn't exists it will be created. If set to
+                None, this category will be connected to a uniquely named
+                Docker network that will be created by the platform.
+
+        'default_category'
+            Every port that didn't explicitly set its category (using the
+            "category" attribute in the SZN definition) will be set to this
+            category.
+
+        This is an example of a network configuration dictionary as expected to
+        be returned by this funcition::
+
+            {
+                'default_category': 'front_panel',
+                'mapping': {
+                    'oobm': {
+                        'netns': 'oobmns',
+                        'managed_by': 'docker',
+                        'connect_to': 'oobm'
+                        'prefix': ''
+                    },
+                    'back_panel': {
+                        'netns': None,
+                        'managed_by': 'docker',
+                        'prefix': ''
+                    },
+                    'front_panel': {
+                        'netns': 'front',
+                        'managed_by': 'platform',
+                        'prefix': 'f_'
+                    }
+                }
+            }
 
         :returns: The dictionary defining the network configuration.
         :rtype: dict
@@ -302,7 +380,23 @@ class DockerNode(CommonNode):
         :rtype: str
         :return: The assigned interface name of the port.
         """
-        return biport.metadata.get('label', biport.identifier)
+
+        network_config = self._get_network_config()
+
+        category = biport.metadata.get(
+            'category',
+            network_config['default_category']
+        )
+        category_config = network_config['mapping'][category]
+
+        if category_config['managed_by'] is 'docker':
+            netname = category_config.get(
+                'connect_to',
+                '{}_{}'.format(self._container_name, category)
+            )
+            return get_iface_name(self, netname)
+        else:
+            return biport.metadata.get('label', biport.identifier)
 
     def notify_add_bilink(self, nodeport, bilink):
         """

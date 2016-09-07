@@ -25,6 +25,7 @@ from __future__ import print_function, division
 import logging
 from traceback import format_exc
 from collections import OrderedDict
+from docker import Client
 
 from topology.platforms.utils import NodeLoader
 from topology.platforms.platform import BasePlatform
@@ -122,13 +123,20 @@ class DockerPlatform(BasePlatform):
 
         # Get network configuration of given port
         network_config = enode._get_network_config()
-        category_config = network_config['mapping'][
+
+        category = biport.metadata.get(
+            'category',
             network_config['default_category']
-        ]
+        )
+        category_config = network_config['mapping'][category]
+
+        # If this port is from a docker-managed network, then it will be
+        # created when this node was connected to the network
+        created = True if category_config['managed_by'] == 'docker' else False
 
         # Register this port for later creation
         self.nmlbiport_iface_map[biport.identifier] = {
-            'created': False,
+            'created': created,
             'iface_base': eport,
             'prefix': category_config['prefix'],
             'iface': '{}{}'.format(category_config['prefix'], eport),
@@ -160,6 +168,13 @@ class DockerPlatform(BasePlatform):
         # Get port spec dictionary
         port_spec_a = self.nmlbiport_iface_map[port_a.identifier]
         port_spec_b = self.nmlbiport_iface_map[port_b.identifier]
+
+        # If any of the ports is already created then don't do anything here
+        # FIXME: We should probably let the user know if one of the ports is
+        # created and the other is not, as this case is undefined and
+        # unsupported
+        if port_spec_a['created'] or port_spec_b['created']:
+            return
 
         # Determine final interface names
         iface_a = port_spec_a['iface']
@@ -288,22 +303,31 @@ class DockerPlatform(BasePlatform):
             except:
                 log.error(format_exc())
 
-        # Remove all docker-managed networks
+        # Save the names of all docker-managed networks
+        networks_to_remove = set()
         for enode in self.nmlnode_node_map.values():
             try:
                 network_config = enode._get_network_config()['mapping']
 
                 for category, config in network_config.items():
                     if config['managed_by'] == 'docker':
+                        netname = config.get('connect_to', None)
+                        if netname is None:
 
-                        netname = '{}_{}'.format(
-                            enode._container_name,
-                            category
-                        )
+                            netname = '{}_{}'.format(
+                                enode._container_name,
+                                category
+                            )
 
-                        enode._client.remove_network(net_id=netname)
+                        networks_to_remove.add(netname)
+
             except:
                 log.error(format_exc())
+
+        # Remove all docker-managed networks
+        dockerclient = Client(version='auto')
+        for netname in networks_to_remove:
+            dockerclient.remove_network(net_id=netname)
 
     def rollback(self, stage, enodes, exception):
         """

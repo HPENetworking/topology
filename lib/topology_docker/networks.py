@@ -23,6 +23,7 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
+from topology_docker.utils import get_iface_name
 
 
 log = logging.getLogger(__name__)
@@ -42,17 +43,27 @@ def create_docker_network(enode, category, config):
         {
             'netns': 'mynetns',
             'managed_by': 'docker',
+            'connect_to': 'somedockernetwork',
             'prefix': ''
         }
 
      This dictionary is taken from the ``node._get_network_config()`` result.
     """
-    # Create docker network first
-    netname = '{}_{}'.format(enode._container_name, category)
-    enode._client.create_network(
-        name=netname,
-        driver='bridge'
+    # Let's find out which networks exist already
+    dockernets = enode._client.networks()
+
+    # Let's figure out what docker network we should connect to
+    netname = config.get(
+        'connect_to',
+        '{}_{}'.format(enode._container_name, category)
     )
+
+    # Create docker network if it doesn't exist already
+    if not any(d['Name'] == netname for d in dockernets):
+        enode._client.create_network(
+            name=netname,
+            driver='bridge'
+        )
 
     # Disconnect from 'none' to be able to connect to other
     # networks (https://github.com/docker/docker/issues/21132)
@@ -65,7 +76,7 @@ def create_docker_network(enode, category, config):
             net_id='none'
         )
 
-    # Connect container to this newly-created docker network
+    # Connect container to the docker network
     enode._client.connect_container_to_network(
         container=enode._container_id,
         net_id=netname
@@ -85,31 +96,8 @@ def create_docker_network(enode, category, config):
     # lo should always be up
     enode._docker_exec('{} ip link set dev lo up'.format(netns_exec))
 
-    # Figure out the interface name inside the container
-    # for this network
-    # FIXME: there must be a better way to do this
-    # https://github.com/docker/docker/issues/17064
-    docker_netconf = enode._client.inspect_container(
-        enode.container_id
-    )['NetworkSettings']['Networks'][netname]
-
-    ifaces_conf = enode._docker_exec(
-        'ip -o link list'
-    ).strip().split('\n')
-
-    for iface_conf in ifaces_conf:
-        if docker_netconf['MacAddress'] in iface_conf:
-            iface = iface_conf.split(': ')[1].split('@')[0]
-            break
-    else:
-        raise RuntimeError(
-            'Unable to find interface with MAC address '
-            '{docker_netconf[MacAddress]} in netns {netns} in container '
-            '{enode._container_id} with name '
-            '{enode._container_name}'.format(
-                **locals()
-            )
-        )
+    # Find out the name Docker gave to this interface name
+    iface = get_iface_name(enode, netname)
 
     # Prefix interface
     prefixed_iface = '{}{}'.format(config['prefix'], iface)

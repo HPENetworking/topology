@@ -123,4 +123,42 @@ def privileged_cmd(commands_tpl, **kwargs):
             check_call(shsplit(prefix + command))
 
 
-__all__ = ['ensure_dir', 'tmp_iface', 'cmd_prefix', 'privileged_cmd']
+def get_iface_name(enode, netname):
+    """
+    Get interface name inside a container
+
+    This function will figure out the interface name inside the container for
+    a given docker network.
+
+    :param enode: The platform ("engine") node to get the iface name from.
+    :param str netname: The name of the docker network to which the interface
+                        we're looking for is connected.
+    """
+    # FIXME: there must be a better way to do this, and we're not the only ones
+    # that think so, (see: https://github.com/docker/docker/issues/17064)
+    docker_netconf = enode._client.inspect_container(
+        enode.container_id
+    )['NetworkSettings']['Networks'][netname]
+
+    ifaces_conf = enode._docker_exec(
+        'ip -o link list'
+    ).strip().split('\n')
+
+    for iface_conf in ifaces_conf:
+        if docker_netconf['MacAddress'] in iface_conf:
+            iface = iface_conf.split(': ')[1].split('@')[0]
+            break
+    else:
+        raise RuntimeError(
+            'Unable to find interface with MAC address '
+            '{docker_netconf[MacAddress]} in netns {netns} in container '
+            '{enode._container_id} with name '
+            '{enode._container_name}'.format(
+                **locals()
+            )
+        )
+
+    return iface
+
+__all__ = ['ensure_dir', 'tmp_iface', 'cmd_prefix', 'privileged_cmd',
+           'get_iface_name']

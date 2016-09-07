@@ -30,6 +30,7 @@ account in this Platform Engine.
    [type=host image="ubuntu:latest"] host1 host2
    [ipv4="192.168.20.20/24"] host1:veth0
    [ipv4="192.168.20.21/24"] host2:veth0
+   [category="oobm"] host1:veth1
    [identifier="mainlink" up=False] host1:veth0 -- host2:veth0
 
 Nodes
@@ -56,6 +57,9 @@ Ports
 :ipv4: IPv4 address to set to this port in the form ``192.168.50.5/24``.
 :ipv6: IPv6 address to set to this port in the form ``2001:0db8:0:f101::1/64``.
 :up: Bring up (the default) or down this port.
+:category: The category this port belongs to. See
+           :meth:`topology_docker.node.DockerNode._get_network_config` for more
+           information about network categories in a node.
 
 Links
 -----
