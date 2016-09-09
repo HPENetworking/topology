@@ -35,7 +35,7 @@ def test_add_port():
     """
 
     # Setup which shell to use
-    shell = 'bash_front_panel'
+    shell = 'bash'
 
     platform = DockerPlatform(None, None)
     platform.pre_build()
@@ -96,7 +96,7 @@ def test_shell():
     platform.post_build()
 
     reply = host1('echo "var"')
-    reply_front_panel = host1('echo "var"', shell='bash_front_panel')
+    reply_front_panel = host1('echo "var"', shell='bash')
 
     platform.destroy()
 
@@ -110,7 +110,7 @@ def test_build_topology():
     host
     """
     # Setup which shell to use
-    shell = 'bash_front_panel'
+    shell = 'bash'
 
     platform = DockerPlatform(None, None)
     platform.pre_build()
@@ -166,7 +166,7 @@ def test_ping():
        +------+                               +------+
     """
     # Setup which shell to use
-    shell = 'bash_front_panel'
+    shell = 'bash'
 
     # Build topology
     platform = DockerPlatform(None, None)
@@ -182,13 +182,13 @@ def test_ping():
     sw1 = platform.add_node(s1)
     sw2 = platform.add_node(s2)
 
-    s1p1 = BidirectionalPort(identifier='3')
-    s1p2 = BidirectionalPort(identifier='4')
+    s1p1 = BidirectionalPort(identifier='sw1-3')
+    s1p2 = BidirectionalPort(identifier='sw1-4')
     platform.add_biport(s1, s1p1)
     platform.add_biport(s1, s1p2)
 
-    s2p1 = BidirectionalPort(identifier='3')
-    s2p2 = BidirectionalPort(identifier='4')
+    s2p1 = BidirectionalPort(identifier='sw2-3')
+    s2p2 = BidirectionalPort(identifier='sw2-4')
     platform.add_biport(s2, s2p1)
     platform.add_biport(s2, s2p2)
 
@@ -218,18 +218,18 @@ def test_ping():
     hs2('ip addr add 10.0.30.1/24 dev hs2-1', shell=shell)
 
     # Configure IP and bring UP switch 1 interfaces
-    sw1('ip link set dev 3 up', shell=shell)
-    sw1('ip link set dev 4 up', shell=shell)
+    sw1('ip link set dev sw1-3 up', shell=shell)
+    sw1('ip link set dev sw1-4 up', shell=shell)
 
-    sw1('ip addr add 10.0.10.2/24 dev 3', shell=shell)
-    sw1('ip addr add 10.0.20.1/24 dev 4', shell=shell)
+    sw1('ip addr add 10.0.10.2/24 dev sw1-3', shell=shell)
+    sw1('ip addr add 10.0.20.1/24 dev sw1-4', shell=shell)
 
     # Configure IP and bring UP switch 2 interfaces
-    sw2('ip link set dev 3 up', shell=shell)
-    sw2('ip addr add 10.0.20.2/24 dev 3', shell=shell)
+    sw2('ip link set dev sw2-3 up', shell=shell)
+    sw2('ip addr add 10.0.20.2/24 dev sw2-3', shell=shell)
 
-    sw2('ip link set dev 4 up', shell=shell)
-    sw2('ip addr add 10.0.30.2/24 dev 4', shell=shell)
+    sw2('ip link set dev sw2-4 up', shell=shell)
+    sw2('ip addr add 10.0.30.2/24 dev sw2-4', shell=shell)
 
     # Set static routes in switches
     sw1('ip route add 10.0.30.0/24 via 10.0.20.2', shell=shell)
@@ -254,7 +254,7 @@ def test_unlink_relink():
     """
 
     # Setup which shell to use
-    shell = 'bash_front_panel'
+    shell = 'bash'
 
     topology = '[identifier=thelink] hs1:a -- hs2:b'
 
@@ -370,7 +370,7 @@ def test_lo_up():
     hs1 = platform.add_node(h1)
 
     result = hs1('ip link list lo', shell='bash')
-    result_front_panel = hs1('ip link list lo', shell='bash_front_panel')
+    result_front_panel = hs1('ip link list lo', shell='bash')
 
     platform.destroy()
 
