@@ -2,6 +2,9 @@
 Topology Modular Framework
 ==========================
 
+.. image:: https://travis-ci.org/ocelotl/ocelotl_topology.svg?branch=master
+   :target: https://travis-ci.org/ocelotl/ocelotl_topology
+
 Advanced modular framework for building and testing network topologies and
 Software.
 
