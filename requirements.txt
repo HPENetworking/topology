@@ -1,5 +1,5 @@
 six
-docker-py
+docker-py==1.9.0
 
 # Uncomment when topology 1.8 is released
 # topology>=1.8.0
