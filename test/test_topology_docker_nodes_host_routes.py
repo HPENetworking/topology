@@ -54,7 +54,7 @@ def test_route(topology):
     """
 
     # Setup which shell to use
-    shell = 'bash_front_panel'
+    shell = 'bash'
 
     hs1 = topology.get('hs1')
     hs2 = topology.get('hs2')

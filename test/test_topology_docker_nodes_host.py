@@ -54,7 +54,7 @@ def test_ping(topology, step):
     Test that two nodes can ping each other.
     """
     # Setup which shell to use
-    shell = 'bash_front_panel'
+    shell = 'bash'
 
     hs1 = topology.get('hs1')  # noqa
     hs2 = topology.get('hs2')
