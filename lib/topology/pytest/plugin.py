@@ -67,12 +67,14 @@ class TopologyPlugin(object):
     """
 
     def __init__(
-            self, platform, plot_dir, plot_format, nml_dir, injected_attr):
+            self, platform, plot_dir, plot_format,
+            nml_dir, injected_attr, log_dir):
         self.platform = platform
         self.plot_dir = plot_dir
         self.plot_format = plot_format
         self.nml_dir = nml_dir
         self.injected_attr = injected_attr
+        self.log_dir = log_dir
 
     def pytest_report_header(self, config):
         """
@@ -86,6 +88,10 @@ class TopologyPlugin(object):
         if self.nml_dir:
             header.append("          nml_dir='{}'".format(
                 self.nml_dir
+            ))
+        if self.log_dir:
+            header.append("          log_dir='{}'".format(
+                self.log_dir
             ))
 
         return '\n'.join(header)
@@ -102,10 +108,16 @@ def topology(request):
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
     from ..manager import TopologyManager
+    from ..logging import manager as logmanager
 
     plugin = request.config._topology_plugin
     module = request.module
     topomgr = TopologyManager(plugin.platform)
+
+    # Setup framework logging
+    logmanager.logging_context = module.__name__
+    if plugin.log_dir:
+        logmanager.logging_directory = plugin.log_dir
 
     # Finalizer unbuild the topology and plot it
     def finalizer():
@@ -182,12 +194,12 @@ class StepLogger(object):
         self.step += 1
         frame, filename, line_number, function_name, lines, index = \
             stack()[1]
-        print(
+        log.debug(
             '>>> [{:03d}] :: {}:{}'.format(
                 self.step, function_name, line_number
             )
         )
-        print(
+        log.debug(
             '\n'.join(
                 ['... {}'.format(l) for l in msg.strip().splitlines()]
             )
@@ -242,6 +254,11 @@ def pytest_addoption(parser):
         default=None,
         help='Path to an attributes injection file'
     )
+    group.addoption(
+        '--topology-log-dir',
+        default=None,
+        help='Path to a directory where logs are to be stored'
+    )
 
 
 def pytest_configure(config):
@@ -254,20 +271,19 @@ def pytest_configure(config):
     plot_dir = config.getoption('--topology-plot-dir')
     nml_dir = config.getoption('--topology-nml-dir')
     injection_file = config.getoption('--topology-inject')
+    log_dir = config.getoption('--topology-log-dir')
 
-    # Determine plot directory and create it if required
-    if plot_dir:
-        if not isabs(plot_dir):
-            plot_dir = join(abspath(getcwd()), plot_dir)
-        if not exists(plot_dir):
-            makedirs(plot_dir)
+    def create_dir(path):
+        if path:
+            if not isabs(path):
+                path = join(abspath(getcwd()), path)
+            if not exists(path):
+                makedirs(path)
 
-    # Determine NML export directory and create it if required
-    if nml_dir:
-        if not isabs(nml_dir):
-            nml_dir = join(abspath(getcwd()), nml_dir)
-        if not exists(nml_dir):
-            makedirs(nml_dir)
+    # Determine plot, NML and log directory paths and create them if required
+    create_dir(plot_dir)
+    create_dir(nml_dir)
+    create_dir(log_dir)
 
     # Parse attributes injection file
     from ..injection import parse_attribute_injection
@@ -286,7 +302,8 @@ def pytest_configure(config):
 
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(
-        platform, plot_dir, plot_format.lstrip('.'), nml_dir, injected_attr
+        platform, plot_dir, plot_format.lstrip('.'),
+        nml_dir, injected_attr, log_dir
     )
     config.pluginmanager.register(config._topology_plugin)
 
