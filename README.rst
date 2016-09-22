@@ -18,6 +18,13 @@ Documentation
 Changelog
 =========
 
+1.8.1
+-----
+
+**Fixes**
+
+- Removed internal imports of deprecated modules.
+
 1.8.0
 -----
 

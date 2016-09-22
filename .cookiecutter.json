@@ -7,5 +7,5 @@
     "repo_name": "topology",
     "short_description": "Network Topology Framework using NML, with support for pytest.",
     "year": "2015-2016",
-    "version": "1.8.0"
+    "version": "1.8.1"
 }
