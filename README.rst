@@ -2,6 +2,9 @@
 Topology Modular Framework
 ==========================
 
+.. image:: https://travis-ci.org/HPENetworking/topology.svg?branch=master
+   :target: https://travis-ci.org/HPENetworking/topology
+
 Advanced modular framework for building and testing network topologies and
 Software.
 
@@ -14,6 +17,29 @@ Documentation
 
 Changelog
 =========
+
+1.8.0
+-----
+
+**New**
+
+- A new ServicesAPI for the nodes is now available. This new API allows to
+  register and later on fetch information about the services a node provides.
+- Greatly improved documentation for the Shell Low Level API introduced in
+  1.4.0. Check "The low-level shell API" in User Guide.
+- The Low Level Shell API will now be able to log user commands. This new
+  feature is backward compatible.
+
+**Changes**
+
+- Module ``topology.platforms.base`` is now deprecated. Please change your
+  imports to:
+
+  ::
+
+      topology.platforms.base.BasePlatform => topology.platforms.platform.BasePlatform
+      topology.platforms.base.BaseNode     => topology.platforms.node.BaseNode
+      topology.platforms.base.CommonNode   => topology.platforms.node.CommonNode
 
 1.7.2
 -----
