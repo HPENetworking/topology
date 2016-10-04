@@ -34,6 +34,7 @@ from .manager import TopologyManager
 from .interact import interact
 from .parser import find_topology_in_python
 from .injection import parse_attribute_injection
+from .logging import manager as logmanager
 
 
 log = logging.getLogger(__name__)
@@ -49,6 +50,11 @@ def main(args):
     :rtype: int
     """
     print('Starting Network Topology Framework v{}'.format(__version__))
+
+    # Setup framework logging
+    logmanager.logging_context = None
+    if args.log_dir:
+        logmanager.logging_directory = args.log_dir
 
     # Parse attributes injection file
     injected_attr = None

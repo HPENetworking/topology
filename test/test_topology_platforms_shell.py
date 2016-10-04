@@ -25,9 +25,9 @@ from __future__ import print_function, division
 # mock is located in unittest from Python 3.3 onwards, but as an external
 # package in Python 2.7, that is why the following is done:
 try:
-    from unittest.mock import patch, Mock, call
+    from unittest.mock import patch, Mock, call, ANY
 except ImportError:
-    from mock import patch, Mock, call
+    from mock import patch, Mock, call, ANY
 
 from pytest import fixture, raises
 
@@ -38,6 +38,12 @@ from topology.platforms.shell import (
 
 
 class Shell(PExpectBashShell):
+    def __init__(self, prompt, **kwargs):
+        super(Shell, self).__init__(prompt, **kwargs)
+        self._node = Mock()
+        self._node.identifier = 'node'
+        self._name = 'shell'
+
     def _get_connect_command(self):
         return 'test connection command '
 
@@ -93,7 +99,8 @@ def test_spawn_args(spawn, shell):
     shell.connect()
 
     spawn.assert_called_with(
-        'test connection command', echo=False, env={'TERM': 'dumb'}
+        'test connection command', echo=False, env={'TERM': 'dumb'},
+        logfile=ANY
     )
 
     shell = Shell(
@@ -103,7 +110,8 @@ def test_spawn_args(spawn, shell):
     shell.connect()
 
     spawn.assert_called_with(
-        'test connection command', env={'TERM': 'smart'}, echo=True
+        'test connection command', env={'TERM': 'smart'}, echo=True,
+        logfile=ANY
     )
 
 

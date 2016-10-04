@@ -23,8 +23,9 @@ from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
 import logging
-from os import getcwd, makedirs
-from os.path import join, isabs, abspath, exists, isfile
+from os import getcwd
+from distutils.dir_util import mkpath
+from os.path import join, isabs, abspath, isfile
 
 from . import __version__
 from .platforms.manager import platforms, DEFAULT_PLATFORM
@@ -66,15 +67,13 @@ def validate_args(args):
     if args.plot_dir:
         if not isabs(args.plot_dir):
             args.plot_dir = join(abspath(getcwd()), args.plot_dir)
-        if not exists(args.plot_dir):
-            makedirs(args.plot_dir)
+        mkpath(args.nml_dir)
 
     # Determine NML export directory and create it if required
     if args.nml_dir:
         if not isabs(args.nml_dir):
             args.nml_dir = join(abspath(getcwd()), args.nml_dir)
-        if not exists(args.nml_dir):
-            makedirs(args.nml_dir)
+        mkpath(args.nml_dir)
 
     # Verify inject file exists
     if args.inject:
@@ -82,6 +81,12 @@ def validate_args(args):
             log.error('No such file : {}'.format(args.inject))
             exit(1)
         args.inject = abspath(args.inject)
+
+    # Determine log directory and create it if required
+    if args.log_dir:
+        if not isabs(args.log_dir):
+            args.log_dir = join(abspath(getcwd()), args.log_dir)
+        mkpath(args.log_dir)
 
     return args
 
@@ -150,6 +155,11 @@ def parse_args(argv=None):
         '--inject',
         default=None,
         help='Path to an attributes injection file'
+    )
+    parser.add_argument(
+        '--log-dir',
+        default=None,
+        help='Directory to create log files'
     )
 
     parser.add_argument(

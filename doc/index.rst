@@ -6,6 +6,7 @@
    developer
    architecture
    reference
+   logging
 
 ==========================
 Topology Modular Framework

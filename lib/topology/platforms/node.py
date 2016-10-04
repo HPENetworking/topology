@@ -74,8 +74,8 @@ class HighLevelShellAPI(object):
         :param str shell: Shell that must interpret the command.
          ``None`` for the default shell. Is up to the engine node to
          determine what its default shell is.
-        :param bool silent: If ``False``, print input command and response to
-         stdout.
+        :param bool silent: True to call the shell logger, False
+         otherwise.
 
         :return: The response of the command.
         :rtype: str
@@ -372,6 +372,10 @@ class CommonNode(BaseNode):
             raise KeyError('Invalid name for shell "{}"'.format(name))
 
         self._shells[name] = shellobj
+
+        # Add the node identifier and the shell name to the shell object to
+        # enable logging in the shell object itself
+        shellobj._register_node(self.identifier, name)
 
     # LowLevelShellAPI
 
