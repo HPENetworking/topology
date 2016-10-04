@@ -466,7 +466,7 @@ __all__ = [
 ]
 
 __api__ = [
-    'Levels',
+    'LEVELS',
     'BaseLogger',
     'FileLogger',
     'PexpectLogger',
