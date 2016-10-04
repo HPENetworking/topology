@@ -169,7 +169,7 @@ class FileLogger(BaseLogger):
 
             # Create file handler
             fh = logging.FileHandler(
-                join(self._log_dir, '{}.{}'.format(self._name, 'log'))
+                join(log_dir, '{}.{}'.format(self._name, 'log'))
             )
 
             # Create formatter
@@ -183,22 +183,24 @@ class FileLogger(BaseLogger):
         elif self._file_handler:
             reset_file_handler()
 
+        self._log_dir = log_dir
+
 
 class PexpectLogger(FileLogger):
     """
-    Special subclass that implements a logger to be used with PExpect
+    Special subclass that implements a logger to be used with Pexpect
     ``logfile`` keyword argument.
 
     **Purpose:** to log every character in the pexpect session.
 
-    PExpect ``logfile`` is expected to be an open file-like object, so this
+    Pexpect ``logfile`` is expected to be an open file-like object, so this
     class implements the ``write()`` and ``flush()`` operations for effective
     duck-typing.
 
     To implement one logging per ``flush()`` this class implements a local
     buffer.
 
-    PExpect loggers can be located with the name::
+    Pexpect loggers can be located with the name::
 
         <context>.pexpect.<node_identifier>.<shell_name>.<connection>
 
@@ -216,7 +218,7 @@ class PexpectLogger(FileLogger):
         self._buffer = []
 
         if 'file_formatter' not in kwargs:
-            kwargs['file_formatter'] = '%(message)s',
+            kwargs['file_formatter'] = '%(message)s'
 
         super(PexpectLogger, self).__init__(*args, **kwargs)
 
