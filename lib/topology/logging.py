@@ -208,13 +208,19 @@ class PexpectLogger(FileLogger):
     in the LoggerManager has not been set.
 
     :param str encoding: Encoding to log into. The ``write()`` interface expect
-     bytes, so in order to log in plain text it is required to perform an
-     encoding. Defaults to ``utf-8``.
+     bytes, so in order to log in plain text it is required to perform a
+     decoding. Defaults to ``utf-8``.
+    :param str errors: Handling of decoding errors. The ``write()`` interface
+     may find undecodeable characters when decoding with the selected encoding,
+     so the handling of errors needs to be defined. The values available are
+     the same ones that the ``decode`` method of a bytes object expects in its
+     ``error`` keyword argument. Defaults to ``ignore``.
     """
     def __init__(
             self,
             *args, **kwargs):
         self._encoding = kwargs.pop('encoding', 'utf-8')
+        self._errors = kwargs.pop('errors', 'ignore')
         self._buffer = []
 
         if 'file_formatter' not in kwargs:
@@ -223,7 +229,9 @@ class PexpectLogger(FileLogger):
         super(PexpectLogger, self).__init__(*args, **kwargs)
 
     def write(self, data):
-        self._buffer.append(data.decode(self._encoding))
+        self._buffer.append(
+            data.decode(encoding=self._encoding, errors=self._errors)
+        )
 
     def flush(self):
         data = ''.join(self._buffer)
