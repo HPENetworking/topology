@@ -280,7 +280,16 @@ class BaseShell(object):
     def __call__(self, command, connection=None):
         return self.execute(command, connection=connection)
 
-    def _setup_shell(self, connection=None):
+    def _pre_setup_shell(self, connection=None):
+        """
+        Method called by subclasses that will be triggered before matching the
+        initial prompt.
+
+        :param str connection: Name of the connection to be set up. If not
+         defined, the default connection will be set up.
+        """
+
+    def _post_setup_shell(self, connection=None):
         """
         Method called by subclasses that will be triggered after matching the
         initial prompt.
@@ -334,7 +343,7 @@ class PExpectShell(BaseShell):
      the connection.
     :param str initial_prompt: Regular expression that matches the initial
      prompt. This value will be used to match the prompt before calling private
-     method ``_setup_shell()``.
+     method ``_post_setup_shell()``.
     :param str password: Password to be sent at the beginning of the
      connection.
     :param str password_match: Regular expression that matches a password
@@ -506,32 +515,37 @@ class PExpectShell(BaseShell):
         # Get connection
         spawn = self._get_connection(connection)
 
-        # Convert binary representation to unicode using encoding
-        text = spawn.before.decode(self._encoding)
+        response = ''
+        try:
+            # Convert binary representation to unicode using encoding
+            text = spawn.before.decode(self._encoding)
 
-        # Remove leading and trailing whitespaces and normalize newlines
-        text = text.strip().replace('\r', '')
+            # Remove leading and trailing whitespaces and normalize newlines
+            text = text.strip().replace('\r', '')
 
-        # Remove control codes
-        text = regex_sub(TERM_CODES_REGEX, '', text)
+            # Remove control codes
+            text = regex_sub(TERM_CODES_REGEX, '', text)
 
-        # Split text into lines
-        lines = text.splitlines()
+            # Split text into lines
+            lines = text.splitlines()
 
-        # Delete buffer with output right now, as it can be very large
-        del text
+            # Delete buffer with output right now, as it can be very large
+            del text
 
-        # Remove echo command if it exists
-        if self._try_filter_echo and \
-                lines and self._last_command is not None \
-                and lines[0].strip() == self._last_command.strip():
-            lines.pop(0)
+            # Remove echo command if it exists
+            if self._try_filter_echo and \
+                    lines and self._last_command is not None \
+                    and lines[0].strip() == self._last_command.strip():
+                lines.pop(0)
 
-        response = '\n'.join(lines)
+            response = '\n'.join(lines)
 
-        # Log response
-        if not silent:
-            spawn._connection_logger.log_get_response(response)
+            if not silent and self._response_logger is not None:
+                self._response_logger(response, self._shell)
+
+        # if couldn't decode then return raw data
+        except:
+            response = spawn.before
 
         return response
 
@@ -585,29 +599,54 @@ class PExpectShell(BaseShell):
         )
 
         self._connections[connection] = spawn
+        index = None
 
         try:
+            # Setup shell before using it
+            self._pre_setup_shell(connection)
+
             # If connection is via user
             if self._user is not None:
-                spawn.expect(
-                    [self._user_match], timeout=self._timeout
+                index = spawn.expect(
+                    [self._user_match,
+                     self._initial_prompt,
+                     self._password_match],
+                    timeout=self._timeout
                 )
-                spawn.sendline(self._user)
+                if 0 == index:
+                    # Entering user name
+                    spawn.sendline(self._user)
+                elif 1 == index:
+                    # We already made authentication by passing user as
+                    # part of connect command: 'user@server'
+                    spawn.send('\n\r')
+                elif 2 == index:
+                    # User name was specified as part of part of connect
+                    # command 'user@server'. So, need to provide password
+                    spawn.sendline(self._password)
+                else:
+                    # We should not go here as timeout exception in this case
+                    # will be raised
+                    pass
 
             # If connection is via password
             if self._password is not None:
-                spawn.expect(
-                    [self._password_match], timeout=self._timeout
+                index = spawn.expect(
+                    [self._password_match, self._initial_prompt],
+                    timeout=self._timeout
                 )
-                spawn.sendline(self._password)
+                if 0 == index:
+                    spawn.sendline(self._password)
+                else:
+                    spawn.send('\n\r')
 
             # Setup shell before using it
-            self._setup_shell(connection)
+            self._post_setup_shell(connection)
 
             # Execute initial command if required
             if self._initial_command is not None:
                 spawn.expect(
-                    self._prompt, timeout=self._timeout
+                    self._initial_prompt, timeout=self._timeout
                 )
                 spawn.sendline(self._initial_command)
 
@@ -670,13 +709,13 @@ class PExpectBashShell(PExpectShell):
     This custom base class will setup the prompt ``PS1`` to the
     ``FORCED_PROMPT`` value of the class and will disable the echo of the
     device by issuing the ``stty -echo`` command. All this is done in the
-    ``_setup_shell()`` call, which is overriden by this class.
+    ``_post_setup_shell()`` call, which is overriden by this class.
     """
     FORCED_PROMPT = '@~~==::BASH_PROMPT::==~~@'
 
     def __init__(
             self,
-            initial_prompt='\w+@.+:.+[#$] ', try_filter_echo=False,
+            initial_prompt='\w+@.+[#$] ', try_filter_echo=False,
             **kwargs):
 
         super(PExpectBashShell, self).__init__(
@@ -686,7 +725,7 @@ class PExpectBashShell(PExpectShell):
             **kwargs
         )
 
-    def _setup_shell(self, connection=None):
+    def _post_setup_shell(self, connection=None):
         """
         Overriden setup function that will disable the echo on the device on
         the shell and set a pexpect-safe prompt.
