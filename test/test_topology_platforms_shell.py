@@ -329,7 +329,7 @@ def test_connect(spawn, shell):
     def _setup_shell(self, connection=None):
         raise SetupShellError
 
-    shell._post_setup_shell = _setup_shell
+    shell._setup_shell = _setup_shell
 
     with raises(SetupShellError):
         shell.connect()
