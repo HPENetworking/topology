@@ -155,7 +155,13 @@ def parse_attribute_injection(injection_file, search_paths=None):
                         result[filename][node] = {}
 
                     for attribute, value in modifier['attributes'].items():
-                        result[filename][node][attribute] = value
+                        if isinstance(value, dict):
+                            if attribute in result[filename][node]:
+                                result[filename][node][attribute].update(value)
+                            else:
+                                result[filename][node][attribute] = value
+                        else:
+                            result[filename][node][attribute] = value
 
     log.debug('Attribute injection interpreted dictionary:')
     log.debug(result)

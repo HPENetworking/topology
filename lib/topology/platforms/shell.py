@@ -280,6 +280,15 @@ class BaseShell(object):
     def __call__(self, command, connection=None):
         return self.execute(command, connection=connection)
 
+    def _pre_setup_shell(self, connection=None):
+        """
+        Method called by subclasses that will be triggered before matching the
+        initial prompt.
+
+        :param str connection: Name of the connection to be set up. If not
+         defined, the default connection will be set up.
+        """
+
     def _setup_shell(self, connection=None):
         """
         Method called by subclasses that will be triggered after matching the
@@ -585,21 +594,46 @@ class PExpectShell(BaseShell):
         )
 
         self._connections[connection] = spawn
+        index = None
 
         try:
+            # Setup shell before using it
+            self._pre_setup_shell(connection)
+
             # If connection is via user
             if self._user is not None:
-                spawn.expect(
-                    [self._user_match], timeout=self._timeout
+                index = spawn.expect(
+                    [self._user_match,
+                     self._initial_prompt,
+                     self._password_match],
+                    timeout=self._timeout
                 )
-                spawn.sendline(self._user)
+                if 0 == index:
+                    # Entering user name
+                    spawn.sendline(self._user)
+                elif 1 == index:
+                    # We already made authentication by passing user as
+                    # part of connect command: 'user@server'
+                    spawn.send('\n\r')
+                elif 2 == index:
+                    # User name was specified as part of part of connect
+                    # command 'user@server'. So, need to provide password
+                    spawn.sendline(self._password)
+                else:
+                    # We should not go here as timeout exception in this case
+                    # will be raised
+                    pass
 
             # If connection is via password
             if self._password is not None:
-                spawn.expect(
-                    [self._password_match], timeout=self._timeout
+                index = spawn.expect(
+                    [self._password_match, self._initial_prompt],
+                    timeout=self._timeout
                 )
-                spawn.sendline(self._password)
+                if 0 == index:
+                    spawn.sendline(self._password)
+                else:
+                    spawn.send('\n\r')
 
             # Setup shell before using it
             self._setup_shell(connection)
@@ -607,7 +641,7 @@ class PExpectShell(BaseShell):
             # Execute initial command if required
             if self._initial_command is not None:
                 spawn.expect(
-                    self._prompt, timeout=self._timeout
+                    self._initial_prompt, timeout=self._timeout
                 )
                 spawn.sendline(self._initial_command)
 
@@ -676,7 +710,7 @@ class PExpectBashShell(PExpectShell):
 
     def __init__(
             self,
-            initial_prompt='\w+@.+:.+[#$] ', try_filter_echo=False,
+            initial_prompt='\w+@.+[#$] ', try_filter_echo=False,
             **kwargs):
 
         super(PExpectBashShell, self).__init__(
