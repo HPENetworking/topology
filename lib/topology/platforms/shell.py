@@ -285,6 +285,10 @@ class BaseShell(object):
         Method called by subclasses that will be triggered after matching the
         initial prompt.
 
+        This method must do a call to expect before it does one to any sending
+        call (like send or sendline) and it must do a sending call after the
+        last call to expect.
+
         :param str connection: Name of the connection to be set up. If not
          defined, the default connection will be set up.
         """
@@ -587,29 +591,24 @@ class PExpectShell(BaseShell):
         self._connections[connection] = spawn
 
         try:
+            def expect_sendline(prompt, command):
+                if command is not None:
+                    spawn.expect(
+                        prompt, timeout=self._timeout
+                    )
+                    spawn.sendline(command)
+
             # If connection is via user
-            if self._user is not None:
-                spawn.expect(
-                    [self._user_match], timeout=self._timeout
-                )
-                spawn.sendline(self._user)
+            expect_sendline(self._user_match, self._user)
 
             # If connection is via password
-            if self._password is not None:
-                spawn.expect(
-                    [self._password_match], timeout=self._timeout
-                )
-                spawn.sendline(self._password)
+            expect_sendline(self._password_match, self._password)
+
+            # If connection is via initial command
+            expect_sendline(self._initial_prompt, self._initial_command)
 
             # Setup shell before using it
             self._setup_shell(connection)
-
-            # Execute initial command if required
-            if self._initial_command is not None:
-                spawn.expect(
-                    self._prompt, timeout=self._timeout
-                )
-                spawn.sendline(self._initial_command)
 
             # Wait for command response to match the prompt
             spawn.expect(
@@ -617,7 +616,7 @@ class PExpectShell(BaseShell):
             )
 
         except:
-            # Always remove bad connections if it failed
+            # Always remove a bad connection if it failed
             del self._connections[connection]
             raise
 
