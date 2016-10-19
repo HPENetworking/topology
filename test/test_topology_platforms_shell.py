@@ -231,7 +231,9 @@ def test_get_response(spawn, shell):
 
     shell._connections[
         shell._default_connection
-    ].before.decode.assert_called_with(shell._encoding)
+    ].before.decode.assert_called_with(
+        encoding=shell._encoding, errors=shell._errors
+    )
 
 
 def test_non_existing_connection(spawn, shell):

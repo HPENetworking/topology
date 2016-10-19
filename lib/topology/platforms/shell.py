@@ -358,6 +358,9 @@ class PExpectShell(BaseShell):
      constructor. If this is left as ``None``, then
      ``env={'TERM': 'dumb'}, echo=False`` will be passed as keyword
      arguments to the spawn constructor.
+    :param str errors: Handling of decoding errors in ``get_response``. The
+     values available are the same ones that the ``decode`` method of a bytes
+     object expects in its ``error`` keyword argument. Defaults to ``ignore``.
     """
 
     def __init__(
@@ -367,7 +370,7 @@ class PExpectShell(BaseShell):
             password=None, password_match='[pP]assword:',
             prefix=None, timeout=None, encoding='utf-8',
             try_filter_echo=True, auto_connect=True,
-            spawn_args=None, **kwargs):
+            spawn_args=None, errors='ignore', **kwargs):
 
         self._connections = OrderedDict()
         self._default_connection = None
@@ -388,6 +391,7 @@ class PExpectShell(BaseShell):
         self._response_logger = None
         self._node_identifier = None
         self._shell_name = None
+        self._errors = errors
 
         # Doing this to avoid having a mutable object as default value in the
         # arguments.
@@ -511,7 +515,9 @@ class PExpectShell(BaseShell):
         spawn = self._get_connection(connection)
 
         # Convert binary representation to unicode using encoding
-        text = spawn.before.decode(self._encoding)
+        text = spawn.before.decode(
+            encoding=self._encoding, errors=self._errors
+        )
 
         # Remove leading and trailing whitespaces and normalize newlines
         text = text.strip().replace('\r', '')
