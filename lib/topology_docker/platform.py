@@ -134,6 +134,13 @@ class DockerPlatform(BasePlatform):
         # created when this node was connected to the network
         created = True if category_config['managed_by'] == 'docker' else False
 
+        # Sanity check to make sure that this biport identifier is not
+        # a duplicate
+        if biport.identifier in self.nmlbiport_iface_map:
+            raise ValueError(
+                'Biport identifier already used: {}'.format(biport.identifier)
+            )
+
         # Register this port for later creation
         self.nmlbiport_iface_map[biport.identifier] = {
             'created': created,

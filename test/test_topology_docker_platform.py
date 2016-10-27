@@ -22,6 +22,8 @@ Test suite for module topology_docker.platform.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
+import pytest
+
 from re import search
 from pynml import Node, BidirectionalPort, BidirectionalLink
 
@@ -151,6 +153,28 @@ def test_build_topology():
     platform.destroy()
 
     assert '1 packets transmitted, 1 received' in ping_result
+
+
+def test_no_duplicate_biport_ids():
+    with pytest.raises(ValueError):
+        """
+        Builds a topology with a repeated biport identifier and checks that the
+        correct exception (ValueError) is raised
+        """
+        # Build topology
+        platform = DockerPlatform(None, None)
+        platform.pre_build()
+
+        h1 = Node(identifier='hs1', type='host')
+        h2 = Node(identifier='hs2', type='host')
+
+        hs1 = platform.add_node(h1)
+        hs2 = platform.add_node(h2)
+
+        s1p1 = BidirectionalPort(identifier='1')
+        s1p2 = BidirectionalPort(identifier='1')
+        platform.add_biport(hs1, s1p1)
+        platform.add_biport(hs2, s1p2)
 
 
 def test_ping():
