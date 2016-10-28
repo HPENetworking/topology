@@ -285,6 +285,10 @@ class BaseShell(object):
         Method called by subclasses that will be triggered after matching the
         initial prompt.
 
+        This method must do a call to expect before it does one to any sending
+        call (like send or sendline) and it must do a sending call after the
+        last call to expect.
+
         :param str connection: Name of the connection to be set up. If not
          defined, the default connection will be set up.
         """
@@ -354,6 +358,9 @@ class PExpectShell(BaseShell):
      constructor. If this is left as ``None``, then
      ``env={'TERM': 'dumb'}, echo=False`` will be passed as keyword
      arguments to the spawn constructor.
+    :param str errors: Handling of decoding errors in ``get_response``. The
+     values available are the same ones that the ``decode`` method of a bytes
+     object expects in its ``error`` keyword argument. Defaults to ``ignore``.
     """
 
     def __init__(
@@ -363,7 +370,7 @@ class PExpectShell(BaseShell):
             password=None, password_match='[pP]assword:',
             prefix=None, timeout=None, encoding='utf-8',
             try_filter_echo=True, auto_connect=True,
-            spawn_args=None, **kwargs):
+            spawn_args=None, errors='ignore', **kwargs):
 
         self._connections = OrderedDict()
         self._default_connection = None
@@ -384,6 +391,7 @@ class PExpectShell(BaseShell):
         self._response_logger = None
         self._node_identifier = None
         self._shell_name = None
+        self._errors = errors
 
         # Doing this to avoid having a mutable object as default value in the
         # arguments.
@@ -507,7 +515,9 @@ class PExpectShell(BaseShell):
         spawn = self._get_connection(connection)
 
         # Convert binary representation to unicode using encoding
-        text = spawn.before.decode(self._encoding)
+        text = spawn.before.decode(
+            encoding=self._encoding, errors=self._errors
+        )
 
         # Remove leading and trailing whitespaces and normalize newlines
         text = text.strip().replace('\r', '')
@@ -587,29 +597,24 @@ class PExpectShell(BaseShell):
         self._connections[connection] = spawn
 
         try:
+            def expect_sendline(prompt, command):
+                if command is not None:
+                    spawn.expect(
+                        prompt, timeout=self._timeout
+                    )
+                    spawn.sendline(command)
+
             # If connection is via user
-            if self._user is not None:
-                spawn.expect(
-                    [self._user_match], timeout=self._timeout
-                )
-                spawn.sendline(self._user)
+            expect_sendline(self._user_match, self._user)
 
             # If connection is via password
-            if self._password is not None:
-                spawn.expect(
-                    [self._password_match], timeout=self._timeout
-                )
-                spawn.sendline(self._password)
+            expect_sendline(self._password_match, self._password)
+
+            # If connection is via initial command
+            expect_sendline(self._initial_prompt, self._initial_command)
 
             # Setup shell before using it
             self._setup_shell(connection)
-
-            # Execute initial command if required
-            if self._initial_command is not None:
-                spawn.expect(
-                    self._prompt, timeout=self._timeout
-                )
-                spawn.sendline(self._initial_command)
 
             # Wait for command response to match the prompt
             spawn.expect(
@@ -617,7 +622,7 @@ class PExpectShell(BaseShell):
             )
 
         except:
-            # Always remove bad connections if it failed
+            # Always remove a bad connection if it failed
             del self._connections[connection]
             raise
 
