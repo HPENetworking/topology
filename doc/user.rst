@@ -73,6 +73,14 @@ For a more programmatic format consider the ``metadict`` format or using the
 
 .. _attribute-injection:
 
+Logging
+=======
+
+Topology provides the ``--topology-log-dir`` ``pytest`` option that allows the
+user to specify where the logging output will be stored. The shells that
+extend ``PExpectShell`` will log their complete shell output there in files
+whose name identifies the node producing the output along with the shell.
+
 Injecting attributes
 ====================
 
