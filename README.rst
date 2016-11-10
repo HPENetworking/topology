@@ -18,6 +18,18 @@ Documentation
 Changelog
 =========
 
+1.9.0
+-----
+
+**New**
+
+- Adding logging functionality.
+
+**Fixes**
+
+- Fixing the shells connect process.
+- Handling calls to ``decode`` safely.
+
 1.8.1
 -----
 
