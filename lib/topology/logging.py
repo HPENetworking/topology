@@ -131,6 +131,27 @@ class BaseLogger(object):
 
 
 @add_metaclass(ABCMeta)
+class StdOutLogger(BaseLogger):
+    """
+    Logger that logs to the standard output.
+    """
+
+    def __init__(
+        self, nameparts, propagate=False, level=logging.NOTSET, log_dir=None,
+        *args, **kwargs
+    ):
+        super(StdOutLogger, self).__init__(
+            nameparts, propagate=propagate, level=level, log_dir=log_dir,
+            *args, **kwargs
+        )
+
+        self.logger.addHandler(logging.StreamHandler())
+
+    def log(self, message):
+        self.logger.info(message)
+
+
+@add_metaclass(ABCMeta)
 class FileLogger(BaseLogger):
     """
     Subclass of BaseLogger that adds a FileHandler.
@@ -308,6 +329,7 @@ class LoggingManager(object):
     #. connection
     #. pexpect
     #. service
+    #. step
 
     Read-only properties:
 
@@ -345,6 +367,8 @@ class LoggingManager(object):
             ('pexpect', PexpectLogger),
             # node identifier, service name, port
             ('service', None),
+            # step
+            ('step', StdOutLogger)
         ])
         self._loggers = {
             key: [] for key in self._categories.keys()

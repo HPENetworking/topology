@@ -42,7 +42,8 @@ For reference see:
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-import logging
+from collections import OrderedDict
+
 from inspect import stack
 from os import getcwd, makedirs
 from traceback import format_exc
@@ -50,8 +51,7 @@ from os.path import join, isabs, abspath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
-
-log = logging.getLogger(__name__)
+from topology import logging
 
 
 class TopologyPlugin(object):
@@ -189,17 +189,20 @@ class StepLogger(object):
     """
     def __init__(self):
         self.step = 0
+        self._logger = logging.get_logger(
+            OrderedDict([('step', 'step')]), category='step'
+        )
 
     def __call__(self, msg):
         self.step += 1
         frame, filename, line_number, function_name, lines, index = \
             stack()[1]
-        log.debug(
+        self._logger.log(
             '>>> [{:03d}] :: {}:{}'.format(
                 self.step, function_name, line_number
             )
         )
-        log.debug(
+        self._logger.log(
             '\n'.join(
                 ['... {}'.format(l) for l in msg.strip().splitlines()]
             )
