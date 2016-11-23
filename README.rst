@@ -18,6 +18,13 @@ Documentation
 Changelog
 =========
 
+1.9.1
+-----
+
+**Fix**
+
+- Removing fixed dependencies.
+
 1.9.0
 -----
 
