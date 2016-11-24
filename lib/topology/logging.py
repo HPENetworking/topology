@@ -148,7 +148,12 @@ class StdOutLogger(BaseLogger):
         self.logger.addHandler(logging.StreamHandler())
 
     def log(self, message):
-        self.logger.info(message)
+        """
+        Log a message to standard output.
+
+        :param str message: Message to log.
+        """
+        self.logger.log(self._level, message)
 
 
 @add_metaclass(ABCMeta)

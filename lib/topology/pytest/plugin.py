@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -187,10 +185,13 @@ class StepLogger(object):
     This class will log a message and will show the step number and the caller
     name and line number.
     """
-    def __init__(self):
+    def __init__(self, test_case):
         self.step = 0
+        self._test_case = test_case
         self._logger = logging.get_logger(
-            OrderedDict([('step', 'step')]), category='step'
+            OrderedDict(
+                [('step', 'step'), ('test_case', self._test_case)]
+            ), category='step'
         )
 
     def __call__(self, msg):
@@ -215,7 +216,7 @@ def step(request):
     Fixture to log a step in a test.
     """
     if not hasattr(step, 'STEPPER'):
-        step.STEPPER = StepLogger()
+        step.STEPPER = StepLogger(request.function.__name__)
 
     def finalizer():
         step.STEPPER.step = 0
