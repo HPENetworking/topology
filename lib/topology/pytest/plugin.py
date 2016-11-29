@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,7 +40,8 @@ For reference see:
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-import logging
+from collections import OrderedDict
+
 from inspect import stack
 from os import getcwd, makedirs
 from traceback import format_exc
@@ -50,8 +49,7 @@ from os.path import join, isabs, abspath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
-
-log = logging.getLogger(__name__)
+from topology import logging
 
 
 class TopologyPlugin(object):
@@ -187,19 +185,25 @@ class StepLogger(object):
     This class will log a message and will show the step number and the caller
     name and line number.
     """
-    def __init__(self):
+    def __init__(self, test_case):
         self.step = 0
+        self._test_case = test_case
+        self._logger = logging.get_logger(
+            OrderedDict(
+                [('step', 'step'), ('test_case', self._test_case)]
+            ), category='step'
+        )
 
     def __call__(self, msg):
         self.step += 1
         frame, filename, line_number, function_name, lines, index = \
             stack()[1]
-        log.debug(
+        self._logger.log(
             '>>> [{:03d}] :: {}:{}'.format(
                 self.step, function_name, line_number
             )
         )
-        log.debug(
+        self._logger.log(
             '\n'.join(
                 ['... {}'.format(l) for l in msg.strip().splitlines()]
             )
@@ -212,7 +216,7 @@ def step(request):
     Fixture to log a step in a test.
     """
     if not hasattr(step, 'STEPPER'):
-        step.STEPPER = StepLogger()
+        step.STEPPER = StepLogger(request.function.__name__)
 
     def finalizer():
         step.STEPPER.step = 0
