@@ -28,6 +28,7 @@ from os.path import join
 from inspect import stack
 from collections import OrderedDict
 from distutils.dir_util import mkpath
+from weakref import WeakValueDictionary
 
 from six import add_metaclass
 
@@ -422,7 +423,7 @@ class LoggingManager(object):
             ('step', StepLogger)
         ])
         self._loggers = {
-            key: [] for key in self._categories.keys()
+            key: WeakValueDictionary() for key in self._categories.keys()
         }
 
         self._default_level = default_level
@@ -449,8 +450,8 @@ class LoggingManager(object):
         self._log_dir = log_dir
 
         # Notify all categories of a log directory change
-        for loggers in self._loggers.values():
-            for logger in loggers:
+        for category in self._loggers.values():
+            for logger in category.values():
                 logger.log_dir = log_dir
 
     @property
@@ -477,7 +478,7 @@ class LoggingManager(object):
                 'Unknown category "{}"'.format(category)
             )
         self._levels[category] = level
-        for logger in self._loggers[category]:
+        for logger in self._loggers[category].values():
             logger.level = level
 
     def set_category_propagate(self, category, propagate):
@@ -492,7 +493,7 @@ class LoggingManager(object):
                 'Unknown category "{}"'.format(category)
             )
         self._propagate[category] = propagate
-        for logger in self._loggers[category]:
+        for logger in self._loggers[category].values():
             logger.propagate = propagate
 
     def get_logger(self, name, category='core'):
@@ -524,12 +525,18 @@ class LoggingManager(object):
 
         clss = self._categories[category]
         if clss is not None:
-            return clss(
+
+            # Instance logger
+            instance = clss(
                 nameparts,
                 propagate=self._propagate[category],
                 level=self._levels[category],
                 log_dir=self._log_dir
             )
+
+            # Append logger to category registry
+            self._loggers[category][id(instance)] = instance
+            return instance
 
         raise NotImplementedError(
             'Category "{}" not implemented'.format(category)
