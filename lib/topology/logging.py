@@ -327,7 +327,7 @@ class StepLogger(StdOutLogger):
                 )
             setattr(self, '_{}'.format(part), nameparts[part])
 
-        super(StdOutLogger, self).__init__(nameparts, *args, **kwargs)
+        super(StepLogger, self).__init__(nameparts, *args, **kwargs)
 
     def __call__(self, msg):
         # Update step count
@@ -541,6 +541,7 @@ class LoggingManager(object):
         raise NotImplementedError(
             'Category "{}" not implemented'.format(category)
         )
+
 
 manager = LoggingManager()
 """
