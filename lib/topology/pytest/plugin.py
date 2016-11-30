@@ -313,7 +313,9 @@ def pytest_runtest_setup(item):
     # If marked and xml logging enabled
     if test_id_marker is not None and hasattr(item.config, '_xml'):
         test_id = test_id_marker.args[0]
-        item.config._xml.add_custom_property('test_id', test_id)
+        item.config._xml.node_reporter(item.nodeid).add_property(
+            'test_id', test_id
+        )
 
     if incompatible_marker:
         platform = item.config._topology_plugin.platform
