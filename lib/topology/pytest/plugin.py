@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -40,16 +42,14 @@ For reference see:
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from collections import OrderedDict
-
-from inspect import stack
 from os import getcwd, makedirs
 from traceback import format_exc
+from collections import OrderedDict
 from os.path import join, isabs, abspath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
-from topology import logging
+from topology.logging import get_logger
 
 
 class TopologyPlugin(object):
@@ -178,51 +178,18 @@ def topology(request):
     return topomgr
 
 
-class StepLogger(object):
-    """
-    Stepper logging class.
-
-    This class will log a message and will show the step number and the caller
-    name and line number.
-    """
-    def __init__(self, test_case):
-        self.step = 0
-        self._test_case = test_case
-        self._logger = logging.get_logger(
-            OrderedDict(
-                [('step', 'step'), ('test_case', self._test_case)]
-            ), category='step'
-        )
-
-    def __call__(self, msg):
-        self.step += 1
-        frame, filename, line_number, function_name, lines, index = \
-            stack()[1]
-        self._logger.log(
-            '>>> [{:03d}] :: {}:{}'.format(
-                self.step, function_name, line_number
-            )
-        )
-        self._logger.log(
-            '\n'.join(
-                ['... {}'.format(l) for l in msg.strip().splitlines()]
-            )
-        )
-
-
 @fixture(scope='function')
 def step(request):
     """
     Fixture to log a step in a test.
     """
-    if not hasattr(step, 'STEPPER'):
-        step.STEPPER = StepLogger(request.function.__name__)
-
-    def finalizer():
-        step.STEPPER.step = 0
-    request.addfinalizer(finalizer)
-
-    return step.STEPPER
+    return get_logger(
+        OrderedDict([
+            ('test_suite', request.module.__name__),
+            ('test_case', request.function.__name__)
+        ]),
+        category='step'
+    )
 
 
 def pytest_addoption(parser):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
 #
@@ -24,8 +25,10 @@ from __future__ import print_function, division
 import logging
 from abc import ABCMeta
 from os.path import join
+from inspect import stack
 from collections import OrderedDict
 from distutils.dir_util import mkpath
+from weakref import WeakValueDictionary
 
 from six import add_metaclass
 
@@ -135,15 +138,8 @@ class StdOutLogger(BaseLogger):
     """
     Logger that logs to the standard output.
     """
-
-    def __init__(
-        self, nameparts, propagate=False, level=logging.NOTSET, log_dir=None,
-        *args, **kwargs
-    ):
-        super(StdOutLogger, self).__init__(
-            nameparts, propagate=propagate, level=level, log_dir=log_dir,
-            *args, **kwargs
-        )
+    def __init__(self, *args, **kwargs):
+        super(StdOutLogger, self).__init__(*args, **kwargs)
 
         self.logger.addHandler(logging.StreamHandler())
 
@@ -242,9 +238,7 @@ class PexpectLogger(FileLogger):
      the same ones that the ``decode`` method of a bytes object expects in its
      ``error`` keyword argument. Defaults to ``ignore``.
     """
-    def __init__(
-            self,
-            *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._encoding = kwargs.pop('encoding', 'utf-8')
         self._errors = kwargs.pop('errors', 'ignore')
         self._buffer = []
@@ -314,6 +308,59 @@ class ConnectionLogger(BaseLogger):
         self.logger.info(log_entry)
 
 
+class StepLogger(StdOutLogger):
+    """
+    Stepper logging class.
+
+    This class will log a message and will show the step number and the caller
+    name and line number.
+    """
+    def __init__(self, nameparts, *args, **kwargs):
+
+        self.step = 0
+
+        for part in ['test_suite', 'test_case']:
+            if part not in nameparts:
+                raise RuntimeError(
+                    'Badly named StepLogger. Missing the {} '
+                    'name part: {}'.format(part, nameparts)
+                )
+            setattr(self, '_{}'.format(part), nameparts[part])
+
+        super(StepLogger, self).__init__(nameparts, *args, **kwargs)
+
+    def __call__(self, msg):
+        # Update step count
+        self.step += 1
+
+        # Fetch information of the caller
+        (
+            frame, filename, line_number,
+            function_name, lines, index
+        ) = stack()[1]
+
+        # Determine execution context
+        execution_context = self._test_case
+        if function_name != self._test_case:
+            execution_context = '{}->{}'.format(
+                execution_context,
+                function_name
+            )
+        execution_context = '{}.{}'.format(
+            self._test_suite, execution_context
+        )
+
+        # Log message
+        self.log(
+            '>>> [{:03d}] :: {}:{}\n{}'.format(
+                self.step, execution_context, line_number,
+                '\n'.join(
+                    ['... {}'.format(l) for l in msg.strip().splitlines()]
+                )
+            )
+        )
+
+
 class LoggingManager(object):
     """
     Defines an object that manage and create loggers for Topology components.
@@ -373,10 +420,10 @@ class LoggingManager(object):
             # node identifier, service name, port
             ('service', None),
             # step
-            ('step', StdOutLogger)
+            ('step', StepLogger)
         ])
         self._loggers = {
-            key: [] for key in self._categories.keys()
+            key: WeakValueDictionary() for key in self._categories.keys()
         }
 
         self._default_level = default_level
@@ -403,8 +450,8 @@ class LoggingManager(object):
         self._log_dir = log_dir
 
         # Notify all categories of a log directory change
-        for loggers in self._loggers.values():
-            for logger in loggers:
+        for category in self._loggers.values():
+            for logger in category.values():
                 logger.log_dir = log_dir
 
     @property
@@ -431,7 +478,7 @@ class LoggingManager(object):
                 'Unknown category "{}"'.format(category)
             )
         self._levels[category] = level
-        for logger in self._loggers[category]:
+        for logger in self._loggers[category].values():
             logger.level = level
 
     def set_category_propagate(self, category, propagate):
@@ -446,7 +493,7 @@ class LoggingManager(object):
                 'Unknown category "{}"'.format(category)
             )
         self._propagate[category] = propagate
-        for logger in self._loggers[category]:
+        for logger in self._loggers[category].values():
             logger.propagate = propagate
 
     def get_logger(self, name, category='core'):
@@ -478,16 +525,23 @@ class LoggingManager(object):
 
         clss = self._categories[category]
         if clss is not None:
-            return clss(
+
+            # Instance logger
+            instance = clss(
                 nameparts,
                 propagate=self._propagate[category],
                 level=self._levels[category],
                 log_dir=self._log_dir
             )
 
+            # Append logger to category registry
+            self._loggers[category][id(instance)] = instance
+            return instance
+
         raise NotImplementedError(
             'Category "{}" not implemented'.format(category)
         )
+
 
 manager = LoggingManager()
 """
