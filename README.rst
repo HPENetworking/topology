@@ -18,6 +18,14 @@ Documentation
 Changelog
 =========
 
+1.9.2
+-----
+
+**Fix**
+
+- Fixing broken ``step`` logger.
+- Fixing the ``ŧest_id`` marker to make it work with Pytest > 3.0.0.
+
 1.9.1
 -----
 
