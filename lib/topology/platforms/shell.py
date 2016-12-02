@@ -452,10 +452,15 @@ class PExpectShell(BaseShell):
     def send_command(
         self, command,
         matches=None, newline=True,
-        timeout=None, connection=None, silent=False
+        timeout=None, connection=None, silent=False, control=False
     ):
         """
         See :meth:`BaseShell.send_command` for more information.
+
+        :param bool control: This is to be used with single character commands
+         only. If enabled, the character sent will be interpreted as a control
+         character. Enabling this option makes ``newline`` irrelevant. Defaults
+         to ``False``.
         """
         # If auto connect is false, fail if:
         # 1. Connection is missing
@@ -488,7 +493,9 @@ class PExpectShell(BaseShell):
         self._last_command = command
 
         # Send line and expect matches
-        if newline:
+        if control:
+            spawn.sendcontrol(command)
+        elif newline:
             spawn.sendline(command)
         else:
             spawn.send(command)
