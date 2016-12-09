@@ -315,7 +315,11 @@ class StepLogger(StdOutLogger):
     This class will log a message and will show the step number and the caller
     name and line number.
     """
-    def __init__(self, nameparts, *args, **kwargs):
+    def __init__(
+        self, nameparts=OrderedDict(
+            [('test_suite', ''), ('test_case', '')]
+        ), *args, **kwargs
+    ):
 
         self.step = 0
 

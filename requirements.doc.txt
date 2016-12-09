@@ -1,17 +1,33 @@
-# Sphinx
-sphinx==1.4.1
-guzzle_sphinx_theme==0.7.11
-sphinxcontrib-plantuml==0.8.1
+alabaster==0.7.9
 autoapi==1.3.1
-
-# AutoAPI imports dependencies
+Babel==2.3.4
+backports.ssl-match-hostname==3.5.0.1
+docker-py==1.10.4
+docker-pycreds==0.2.1
+docutils==0.12
+guzzle-sphinx-theme==0.7.11
+imagesize==0.7.1
+ipaddress==1.0.17
+Jinja2==2.8
+MarkupSafe==0.23
+pexpect==4.2.1
+ptyprocess==0.5.1
+py==1.4.31
+Pygments==2.1.3
+pynml==1.0.0
+pyparsing==2.1.10
 pytest==2.8.4
-
-# Platform engines
--e git+https://github.com/HPENetworking/topology_docker.git@master#egg=topology_docker
--e git+https://github.com/HPENetworking/topology_connect.git@master#egg=topology_connect
-
-# Communication libraries
--e git+https://github.com/HPENetworking/topology_lib_ping.git@master#egg=topology_lib_ping
--e git+https://github.com/HPENetworking/topology_lib_ip.git@master#egg=topology_lib_ip
--e git+https://git.openswitch.net/openswitch/ops-topology-lib-vtysh@master#egg=topology_lib_vtysh
+pytz==2016.10
+requests==2.12.3
+rfc3986==0.4.1
+six==1.10.0
+snowballstemmer==1.2.1
+Sphinx==1.4.1
+sphinxcontrib-plantuml==0.8.1
+topology==1.9.2
+-e git+https://github.com/HPENetworking/topology_connect.git@a85f69ba235d19d7471667b8105b47496976987c#egg=topology_connect
+-e git+https://github.com/HPENetworking/topology_docker.git@27b0fbde433e4fa2655451bd90f191f2a0c43853#egg=topology_docker
+-e git+https://github.com/HPENetworking/topology_lib_ip.git@20a7352c4516dc84eff73df51705497c20ed591e#egg=topology_lib_ip
+-e git+https://github.com/HPENetworking/topology_lib_ping.git@e0f602e9c339ccde8262537d7e920bccc7afcb42#egg=topology_lib_ping
+-e git+https://git.openswitch.net/openswitch/ops-topology-lib-vtysh@0dc7a477a9fbce4a5084d9bf93c51f0d1ee74d24#egg=topology_lib_vtysh
+websocket-client==0.40.0

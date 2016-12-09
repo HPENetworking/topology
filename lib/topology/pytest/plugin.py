@@ -49,7 +49,7 @@ from os.path import join, isabs, abspath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
-from topology.logging import get_logger
+from topology.logging import get_logger, StepLogger
 
 
 class TopologyPlugin(object):
@@ -327,5 +327,6 @@ __all__ = [
     'TopologyPlugin',
     'topology',
     'pytest_addoption',
-    'pytest_configure'
+    'pytest_configure',
+    'StepLogger'
 ]
