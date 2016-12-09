@@ -18,6 +18,13 @@ Documentation
 Changelog
 =========
 
+1.9.3
+-----
+
+**Fix**
+
+- Making ``StepLogger`` backwards compatible.
+
 1.9.2
 -----
 
