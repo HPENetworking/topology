@@ -2,3 +2,4 @@ six
 pexpect
 pyparsing
 pynml
+-e git+git://github.com:HPENetworking/pyszn@1.0.0#egg=pyszn

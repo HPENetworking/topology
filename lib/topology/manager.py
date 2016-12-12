@@ -37,7 +37,7 @@ from six import string_types
 
 from pynml.manager import ExtendedNMLManager
 
-from .parser import parse_txtmeta
+from pyszn.parser import parse_txtmeta
 from .platforms.node import BaseNode
 from .platforms.manager import platforms, load_platform, DEFAULT_PLATFORM
 
@@ -83,6 +83,7 @@ class TopologyManager(object):
             raise RuntimeError('Unknown platform engine "{}".'.format(engine))
 
         self.nml = ExtendedNMLManager(**kwargs)
+        self.environment = OrderedDict()
         self.engine = engine
         self.nodes = OrderedDict()
         self.ports = OrderedDict()
@@ -119,12 +120,15 @@ class TopologyManager(object):
                 ]
             }
 
-        See also the module :mod:`topology.parser`.
-
         :param dict dictmeta: The dictionary to load the topology from.
         :param dict inject: An attributes injection sub-dictionary as defined
          by :func:`parse_attribute_injection`.
         """
+        # Load the environment
+        self.environment = dictmeta.get('environment', OrderedDict())
+        if inject is not None and 'environment' in inject:
+            self.environment.update(inject['environment'])
+
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
             for node_id in nodes_spec['nodes']:
@@ -134,9 +138,8 @@ class TopologyManager(object):
                 attrs['identifier'] = node_id
 
                 # Inject the run-specific attributes
-                if inject is not None and node_id in inject:
-                    for key, value in inject[node_id].items():
-                        attrs[key] = value
+                if inject is not None and node_id in inject['nodes']:
+                    attrs.update(inject['nodes'][node_id])
 
                 self.nml.create_node(**attrs)
 
@@ -144,15 +147,17 @@ class TopologyManager(object):
         for ports_spec in dictmeta.get('ports', []):
             for node_id, port in ports_spec['ports']:
 
-                # Auto-create node
                 node = self.nml.get_object(node_id)
-                if node is None:
-                    node = self.nml.create_node(identifier=node_id)
 
                 # Explicitly create port
                 attrs = deepcopy(ports_spec['attributes'])
                 attrs['identifier'] = '{}-{}'.format(node_id, port)
                 attrs['label'] = port
+
+                # Inject the run-specific attributes
+                if inject is not None and (node_id, port) in inject['ports']:
+                    attrs.update(inject['ports'][(node_id, port)])
+
                 self.nml.create_biport(node, **attrs)
 
         # Load links
@@ -164,32 +169,30 @@ class TopologyManager(object):
 
                 # Auto-create node
                 node = self.nml.get_object(node_id)
-                if node is None:
-                    node = self.nml.create_node(identifier=node_id)
 
                 # Auto-create biport
                 port_id = '{}-{}'.format(node_id, port)
                 biport = self.nml.get_object(port_id)
-                if biport is None:
-                    attrs = {
-                        'identifier': port_id,
-                        'label': port
-                    }
-                    biport = self.nml.create_biport(node, **attrs)
 
                 # Register endpoint
                 endpoints[idx] = biport
 
             # Explicit-create links
             attrs = deepcopy(link_spec['attributes'])
+
+            # Inject the run-specific attributes
+            if inject is not None and \
+               link_spec['endpoints'] in inject['links']:
+                attrs.update(inject['links'][link_spec['endpoints']])
+
             self.nml.create_bilink(*endpoints, **attrs)
 
     def parse(self, txtmeta, load=True, inject=None):
         """
         Parse a textual topology meta-description.
 
-        For a description of the textual format see the module
-        :mod:`topology.parser`.
+        For a description of the textual format see pyszn package
+        documentation.
 
         :param str txtmeta: The textual meta-description of the topology.
         :param bool load: If ``True`` (the default) call :meth:`load`
