@@ -24,8 +24,6 @@ See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from collections import OrderedDict
-
 import pytest  # noqa
 from deepdiff import DeepDiff
 
@@ -36,61 +34,6 @@ import topology.platforms.manager
 from topology.manager import TopologyManager
 
 reload_module(topology.platforms.manager)
-
-TOPOLOGY = """
-# Nodes
-[shell=vtysh] sw1 sw2
-[type=host] hs1
-hs2
-
-# Links
-sw1:1 -- hs1:1
-sw1:a -- hs1:a
-[attr1=1] sw1:4 -- hs2:a
-"""
-
-
-def test_txtmeta_parse():
-    """
-    Test the txtmeta parsing feature of the TopologyManager object.
-    """
-    topology = TopologyManager(engine='debug')
-    dictmeta = topology.parse(TOPOLOGY, load=False)
-
-    expected = {
-        'nodes': [
-            {
-                'attributes': OrderedDict([('shell', 'vtysh')]),
-                'nodes': ['sw1', 'sw2']
-            },
-            {
-                'attributes': OrderedDict([('type', 'host')]),
-                'nodes': ['hs1']
-            },
-            {
-                'attributes': OrderedDict(),
-                'nodes': ['hs2']
-            }
-        ],
-        'ports': [],
-        'links': [
-            {
-                'attributes': OrderedDict(),
-                'endpoints': (('sw1', '1'), ('hs1', '1'))
-            },
-            {
-                'attributes': OrderedDict(),
-                'endpoints': (('sw1', 'a'), ('hs1', 'a'))
-            },
-            {
-                'attributes': OrderedDict([('attr1', 1)]),
-                'endpoints': (('sw1', '4'), ('hs2', 'a'))
-            }
-        ]
-    }
-
-    ddiff = DeepDiff(dictmeta, expected)
-    assert not ddiff
 
 
 def test_build():

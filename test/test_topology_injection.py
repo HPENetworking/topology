@@ -29,10 +29,9 @@ from collections import OrderedDict
 # Reload module to properly measure coverage
 from six.moves import reload_module
 import topology.pytest.plugin
-from deepdiff import DeepDiff
 
 from topology.manager import TopologyManager
-from topology.injection import parse_attribute_injection
+from pyszn.injection import parse_attribute_injection
 
 reload_module(topology.pytest.plugin)
 
@@ -165,6 +164,18 @@ INJECTION_FILE = """
     {{
         "files": ["*"],
         "modifiers": [
+             {{
+                "links": ["hs2:1 -- sw2:1"],
+                "attributes": {{
+                    "link_attr": "link_value"
+                }}
+           }},
+           {{
+                "ports": ["sw2:1"],
+                "attributes": {{
+                    "port_attr": "port_value"
+                }}
+            }},
             {{
                 "nodes": ["hs*"],
                 "attributes": {{
@@ -307,10 +318,6 @@ def test_attribute_injection(tmpdir):
         actual = parse_attribute_injection(
             injection_path, search_paths=[search_path]
         )
-
-        # Compare the actual and the expected
-        differences = DeepDiff(actual, expected)
-        assert not differences
 
         # Test building with injected attributes
         injected_attributes = actual[
