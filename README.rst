@@ -18,6 +18,13 @@ Documentation
 Changelog
 =========
 
+1.9.4
+-----
+
+**Fix**
+
+- Fixing typo in README.
+
 1.9.3
 -----
 

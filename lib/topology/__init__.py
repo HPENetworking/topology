@@ -24,4 +24,4 @@ from __future__ import print_function, division
 
 __author__ = 'Hewlett Packard Enterprise Development LP'
 __email__ = 'hpe-networking@lists.hp.com'
-__version__ = '1.9.3'
+__version__ = '1.9.4'
