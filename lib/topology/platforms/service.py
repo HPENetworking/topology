@@ -45,6 +45,7 @@ class BaseService(object):
      set by the engine node.
     """
     def __init__(self, name, port, protocol='tcp'):
+        super(BaseService, self).__init__()
         self.name = name
         self.port = port
         self.protocol = protocol

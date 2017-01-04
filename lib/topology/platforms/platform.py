@@ -50,7 +50,7 @@ class BasePlatform(object):
 
     @abstractmethod
     def __init__(self, timestamp, nmlmanager):
-        pass
+        super(BasePlatform, self).__init__()
 
     @abstractmethod
     def pre_build(self):

@@ -49,6 +49,7 @@ class NodeLoader(object):
     """
 
     def __init__(self, engine_name, api_version='1.0', base_class=None):
+        super(NodeLoader, self).__init__()
 
         self.entrypoint = 'topology_{engine_name}_node_{api_version}'.format(
             engine_name=engine_name, api_version=api_version.replace('.', '')

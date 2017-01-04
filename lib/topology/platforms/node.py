@@ -246,6 +246,7 @@ class BaseNode(HighLevelShellAPI, LowLevelShellAPI, ServicesAPI, StateAPI):
 
     @abstractmethod
     def __init__(self, identifier, **kwargs):
+        super(BaseNode, self).__init__()
         self.identifier = identifier
         self.metadata = kwargs
         self.ports = OrderedDict()

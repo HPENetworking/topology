@@ -87,6 +87,7 @@ class BaseLogger(object):
         log_dir=None,
         *args, **kwargs
     ):
+        super(BaseLogger, self).__init__()
         self._nameparts = nameparts
         self._propagate = None
         self._level = None
@@ -398,6 +399,7 @@ class LoggingManager(object):
     :var str logging_context: Current framework wide logging context.
     """
     def __init__(self, default_level=logging.INFO, default_propagate=False):
+        super(LoggingManager, self).__init__()
         """
         Framework logging manager.
         """

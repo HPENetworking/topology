@@ -77,6 +77,7 @@ class TopologyManager(object):
     """
 
     def __init__(self, engine=DEFAULT_PLATFORM, **kwargs):
+        super(TopologyManager, self).__init__()
 
         if engine not in platforms():
             raise RuntimeError('Unknown platform engine "{}".'.format(engine))
