@@ -128,6 +128,7 @@ class LibsProxy(object):
     :type enode: topology.platforms.node.BaseNode
     """
     def __init__(self, enode):
+        super(LibsProxy, self).__init__()
         self._enode = enode
         self._libraries = OrderedDict()
 

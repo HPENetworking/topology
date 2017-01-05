@@ -53,6 +53,7 @@ class NamespaceCompleter(object):
     """
 
     def __init__(self, ns):
+        super(NamespaceCompleter, self).__init__()
         self.matches = []
         self.ns = ns
 

@@ -67,6 +67,7 @@ class TopologyPlugin(object):
     def __init__(
             self, platform, plot_dir, plot_format,
             nml_dir, injected_attr, log_dir):
+        super(TopologyPlugin, self).__init__()
         self.platform = platform
         self.plot_dir = plot_dir
         self.plot_format = plot_format

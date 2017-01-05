@@ -728,6 +728,7 @@ class ShellContext(object):
     """
 
     def __init__(self, node, shell_to_use):
+        super(ShellContext, self).__init__()
         self._node = node
         self._shell_to_use = shell_to_use
         self._default_shell = node.default_shell
