@@ -18,6 +18,13 @@ Documentation
 Changelog
 =========
 
+1.9.5
+-----
+
+**Fix**
+
+- Calling missing ``super``.
+
 1.9.4
 -----
 
