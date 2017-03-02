@@ -588,16 +588,16 @@ Added pytest markers
       def test_example(topology):
          ...
 
-:``platform_incompatible(platforms)``:
+:``platform_incompatible(platforms, reason=None)``:
    Mark a test as incompatible with a list of platform engines.
    The test will be skipped automatically if it is attempted to be run with an
-   incompatible platform.
+   incompatible platform. Optionally specify a reason for better reporting.
 
    For example:
 
    .. code-block:: python
 
       from pytest import marl
-      @mark.platform_incompatible(['debug'])
+      @mark.platform_incompatible(['debug'], reason='Not ready yet')
       def test_example(topology):
          ...

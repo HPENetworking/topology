@@ -288,8 +288,9 @@ def pytest_configure(config):
     # Add topology_compatible marker
     config.addinivalue_line(
         'markers',
-        'platform_incompatible(platforms): '
-        'mark a test as incompatible with a list of platform engines'
+        'platform_incompatible(platforms, reason=None): '
+        'mark a test as incompatible with a list of platform engines. '
+        'Optionally specify a reason for better reporting'
     )
 
 
@@ -321,7 +322,12 @@ def pytest_runtest_setup(item):
     if incompatible_marker:
         platform = item.config._topology_plugin.platform
         if platform in incompatible_marker.args[0]:
-            skip('Test is incompatible with {} platform'.format(platform))
+            message = (
+                incompatible_marker.kwargs.get('reason') or (
+                    'Test is incompatible with {} platform'.format(platform)
+                )
+            )
+            skip(message)
 
 
 __all__ = [
