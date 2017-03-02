@@ -90,3 +90,11 @@ def test_incompatible_marker():
     Test that the incompatible marker is interpreted.
     """
     assert False
+
+
+@mark.platform_incompatible(['debug'], reason='Do not question my skips')
+def test_incompatible_marker_with_reason():
+    """
+    Test that the incompatible marker is interpreted.
+    """
+    assert False
