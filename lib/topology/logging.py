@@ -29,6 +29,7 @@ from inspect import stack
 from collections import OrderedDict
 from distutils.dir_util import mkpath
 from weakref import WeakValueDictionary
+from datetime import datetime
 
 from six import add_metaclass
 
@@ -251,7 +252,10 @@ class PexpectLogger(FileLogger):
 
     def write(self, data):
         self._buffer.append(
-            data.decode(encoding=self._encoding, errors=self._errors)
+            "%s\n%s\n"(
+                datetime.utcnow().isoformat(),
+                data.decode(encoding=self._encoding, errors=self._errors)
+            )
         )
 
     def flush(self):
