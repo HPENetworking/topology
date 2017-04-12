@@ -252,13 +252,11 @@ class PexpectLogger(FileLogger):
 
     def write(self, data):
         self._buffer.append(
-            "{}\n{}\n".format(
-                datetime.utcnow().isoformat(),
-                data.decode(encoding=self._encoding, errors=self._errors)
-            )
+            data.decode(encoding=self._encoding, errors=self._errors)
         )
 
     def flush(self):
+        self.logger.log(self._level, datetime.utcnow().isoformat())
         data = ''.join(self._buffer)
         del self._buffer[:]
         self.logger.log(self._level, data)
