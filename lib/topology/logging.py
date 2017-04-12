@@ -252,7 +252,7 @@ class PexpectLogger(FileLogger):
 
     def write(self, data):
         self._buffer.append(
-            "%s\n%s\n"(
+            "{}\n{}\n".format(
                 datetime.utcnow().isoformat(),
                 data.decode(encoding=self._encoding, errors=self._errors)
             )
