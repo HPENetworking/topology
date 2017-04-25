@@ -562,24 +562,27 @@ class PExpectShell(BaseShell):
         if connection in self._connections and self.is_connected(connection):
             raise AlreadyConnectedError(connection)
 
-        # Inject framework logger to the spawn object
-        spawn_args = {
-            'logfile': get_logger(
-                OrderedDict([
-                    ('node_identifier', self._node_identifier),
-                    ('shell_name', self._shell_name),
-                    ('connection', connection)
-                ]),
-                category='pexpect'
-            ),
-        }
-
-        # Create a child process
-        spawn_args.update(self._spawn_args)
-
         spawn = Spawn(
             self._get_connect_command().strip(),
-            **spawn_args
+            **self._spawn_args
+        )
+
+        spawn.logfile_read = get_logger(
+            OrderedDict([
+                ('node_identifier', self._node_identifier),
+                ('shell_name', self._shell_name),
+                ('connection', connection)
+            ]),
+            category='pexpect_read',
+        )
+
+        spawn.logfile_send = get_logger(
+            OrderedDict([
+                ('node_identifier', self._node_identifier),
+                ('shell_name', self._shell_name),
+                ('connection', connection)
+            ]),
+            category='pexpect_send',
         )
 
         # Add a connection logger
