@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-
 """
 Parser attributes injection files.
 
@@ -36,10 +35,8 @@ from traceback import format_exc
 from collections import OrderedDict
 from os.path import isabs, join, abspath, isfile, basename
 
-from six import iteritems
 
 from pyszn.parser import parse_txtmeta, find_topology_in_python
-
 
 log = getLogger(__name__)
 
@@ -110,18 +107,9 @@ def parse_attribute_injection(injection_file, search_paths=None):
     log.debug('Injection search paths: {}'.format(search_paths))
 
     # Expand search paths recursively to include all subfolders
-    def subfolders(search_path):
-        result = []
-        for root, dirs, files in walk(search_path, topdown=True,
-                                      followlinks=True):
-            # Ignore hidden folders
-            dirs[:] = [d for d in dirs if not d.startswith('.')]
-            result.extend([join(root, directory) for directory in dirs])
-        return result
-
     paths_to_expand = list(search_paths)
     for root in paths_to_expand:
-        children = subfolders(root)
+        children = _subfolders(root)
         search_paths.extend(children)
 
     # Make search paths unique
@@ -140,22 +128,60 @@ def parse_attribute_injection(injection_file, search_paths=None):
 
     # Iterate all specifications, expand files and fill return dictionary
     for spec in injection_spec:
-        for filename in expand_files(spec['files'], search_paths):
+        for filename in _expand_files(spec['files'], search_paths):
 
             if filename not in result:
-                result[filename] = OrderedDict()
+                result[filename] = {}
+                result[filename]['enviroment'] = {}
+                result[filename]['nodes'] = OrderedDict()
+                result[filename]['ports'] = OrderedDict()
+                result[filename]['links'] = OrderedDict()
 
+            # Enviroment attributes are parsed from the spec
+            try:
+                for attribute, value in spec['enviroment'].items():
+                    result[filename]['envieroment'][attribute] = value
+            except KeyError:
+                pass
             # Each specification have several "modifiers" associated to it.
             # Those modifiers hold the nodes whose attributes are to be
             # modified.
             for modifier in spec['modifiers']:
-                for node in expand_nodes(filename, modifier['nodes']):
 
-                    if node not in result[filename]:
-                        result[filename][node] = {}
+                # Nodes
+                if 'nodes' in modifier:
+                    for node in _expand_nodes(filename, modifier['nodes']):
+                        if node not in result[filename]['nodes']:
+                            result[filename]['nodes'][node] = {}
 
-                    for attribute, value in modifier['attributes'].items():
-                        result[filename][node][attribute] = value
+                            for attribute, value in modifier[
+                                    'attributes'].items():
+                                result[filename]['nodes'][node][
+                                    attribute] = value
+
+                # Ports
+                if 'ports' in modifier:
+                    for port in _expand_ports(
+                            filename, _port_str_to_tuple(modifier['ports'])):
+                        if port not in result[filename]['ports']:
+                            result[filename]['ports'][port] = {}
+
+                            for attribute, value in modifier[
+                                    'attributes'].items():
+                                result[filename]['port'][port][
+                                    attribute] = value
+
+                # Links
+                if 'links' in modifier:
+                    for link in _expand_links(
+                            filename, _link_str_to_tuple(modifier['links'])):
+                        if link not in result[filename]['links']:
+                            result[filename]['links'][node] = {}
+
+                            for attribute, value in modifier[
+                                    'attributes'].items():
+                                result[filename]['links'][link][
+                                    attribute] = value
 
     log.debug('Attribute injection interpreted dictionary:')
     log.debug(result)
@@ -163,7 +189,35 @@ def parse_attribute_injection(injection_file, search_paths=None):
     return result
 
 
-def expand_files(files_definitions, search_paths):
+def _subfolders(search_path):
+    result = []
+    for root, dirs, files in walk(search_path, topdown=True, followlinks=True):
+        # Ignore hidden folders
+        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        result.extend([join(root, directory) for directory in dirs])
+    return result
+
+
+def _port_str_to_tuple(port_str_list):
+    result = []
+    for port in port_str_list:
+        port_host, port_num = port.split(':')
+        result.append((port_host, port_num))
+    return result
+
+
+def _link_str_to_tuple(link_str_list):
+    result = []
+    for link in link_str_list:
+        link = link.replace(' ', '')
+        endpoint1, endpoint2 = link.split('--')
+        link1_host, link1_port = endpoint1.split(':')
+        link2_host, link2_port = endpoint2.split(':')
+        result.append(((link1_host, link1_port), (link2_host, link2_port)))
+    return result
+
+
+def _expand_files(files_definitions, search_paths):
     """
     Expands a list of files definitions into the matching files paths.
 
@@ -215,7 +269,7 @@ def expand_files(files_definitions, search_paths):
     return expanded_files
 
 
-def expand_nodes(filename, nodes_definitions):
+def _expand_nodes(filename, nodes_definitions):
     """
     Expands a list of node definitions into the matching node names.
 
@@ -241,11 +295,10 @@ def expand_nodes(filename, nodes_definitions):
     if filename.endswith('.py'):
         topology = find_topology_in_python(filename)
         if topology is None:
-            log.warning((
-                'Skipping node expansion for attribute injection in filename '
-                '{} in the lookup path as it does not contain a TOPOLOGY '
-                'definition.'
-            ).format(filename))
+            log.warning(
+                ('Skipping node expansion for attribute injection in filename '
+                 '{} in the lookup path as it does not contain a TOPOLOGY '
+                 'definition.').format(filename))
             return []
     else:
         with open(filename, 'r') as fd:
@@ -256,37 +309,19 @@ def expand_nodes(filename, nodes_definitions):
     try:
         parsed_topology = parse_txtmeta(topology)
     except:
-        log.error((
-            'Skipping node expansion for attribute injection in filename '
-            '{} in the lookup path as SZN format parsing failed.'
-        ).format(filename))
+        log.error(
+            ('Skipping node expansion for attribute injection in filename '
+             '{} in the lookup path as SZN format parsing failed.'
+             ).format(filename))
         log.debug(format_exc())
         return []
 
     for node_definition in nodes_definitions:
 
         # Check if definition is for attribute matching
-        if match(r'(\w+)=(\w+)', node_definition):
-
-            # Build a dummy statement and parse it
-            parsed_dummy = parse_txtmeta(
-                '[{}] dummy1'.format(node_definition)
-            )
-
-            # Extract the attribute name and value
-            attribute, value = list(iteritems(
-                parsed_dummy['nodes'][0]['attributes']
-            ))[0]
-
-            # Look for attribute name matching
-            for nodes_group in parsed_topology['nodes']:
-                attributes = nodes_group['attributes']
-                if attribute in attributes and value == attributes[attribute]:
-
-                    # Retain order, and avoid adding repeated nodes
-                    for node in nodes_group['nodes']:
-                        if node not in expanded_nodes:
-                            expanded_nodes.append(node)
+        if match(r'(.*)=(.*)', node_definition):
+            expanded_nodes.extend(
+                _match_by_attr(node_definition, parsed_topology, 'nodes'))
             continue
 
         # The definition is not attribute matching, but name matching
@@ -299,6 +334,170 @@ def expand_nodes(filename, nodes_definitions):
     return expanded_nodes
 
 
-__all__ = [
-    'parse_attribute_injection'
-]
+def _match_by_attr(regex, parsed_topology, kind):
+    ''' Searches a parsed topology for attributes that matcha regex.
+
+
+    :param str regex: The regex to match the attribute, must of
+                      the form (attribute_regex)=(value_regex).
+    :param topology parsed_topology: A topology already parsed to search
+                                   for matches.
+    :param str kind: The kind of object that posses the attribute to search for
+                     can be either 'nodes', 'ports' or 'links'.
+    :return: A list of matching nodes,ports or links containing the attribute.
+
+'''
+
+    matched_objects = []
+    regex_attribute, regex_value = regex.split('=')
+
+    # Look for attribute name matching
+    for group in parsed_topology[kind]:
+        attributes = group['attributes']
+        for key in attributes:
+            if match(regex_attribute, key) and match(regex_value,
+                                                     attributes[key]):
+
+                # Retain order, and avoid adding repeated nodes
+                for found_obj in group[kind]:
+                    if found_obj not in matched_objects:
+                        matched_objects.append(found_obj)
+
+    return matched_objects
+
+
+def _expand_ports(filename, ports_definitions):
+    """
+    Expands a list of port definitions into the matching port names.
+
+    A port definition is a string that can match none, one or more ports
+    (by using wildcards). It can be an expression for port name matching, or
+    for matching all ports that have an specific attribute value. For example:
+
+    ::
+
+        'nodea:1'
+        'hs*:1*'
+        'attr=1'
+
+    :param str filename: A filename in which to look for matching ports.
+    :param list ports_definitions: A list of port definitions.
+    :return: A list of matching ports.
+    """
+
+    expanded_ports = []
+
+    # Grab the topology definition from a file that contains one
+    log.debug('Trying to expand ports in {}'.format(filename))
+    if filename.endswith('.py'):
+        topology = find_topology_in_python(filename)
+        if topology is None:
+            log.warning(
+                ('Skipping port expansion for attribute injection in filename '
+                 '{} in the lookup path as it does not contain a TOPOLOGY '
+                 'definition.').format(filename))
+            return []
+    else:
+        with open(filename, 'r') as fd:
+            topology = fd.read().strip()
+    log.debug('Found:\n{}'.format(topology))
+
+    # Parse content
+    try:
+        parsed_topology = parse_txtmeta(topology)
+    except:
+        log.error(
+            ('Skipping port expansion for attribute injection in filename '
+             '{} in the lookup path as SZN format parsing failed.'
+             ).format(filename))
+        log.debug(format_exc())
+        return []
+
+    for port_definition in ports_definitions:
+
+        # Check if definition is for attribute matching
+        if match(r'(.*)=(.*)', port_definition):
+            expanded_ports.extend(
+                _match_by_attr(port_definition, parsed_topology, 'ports'))
+            continue
+
+        # The definition is not attribute matching, but name matching
+        for port_group in parsed_topology['ports']:
+            for port in port_group['ports']:
+                if fnmatch(port[0], port_definition[0]) and fnmatch(
+                        port[1],
+                        port_definition[1]) and port not in expanded_ports:
+                    expanded_ports.append(port)
+
+    return expanded_ports
+
+
+def _expand_links(filename, links_definitions):
+    """
+    Expands a list of links definitions into the matching link names.
+
+    A link definition is a string that can match none, one or more nodes
+    (by using wildcards). It can be an expression for link name matching, or
+    for matching all links that have an specific attribute value. For example:
+
+    ::
+
+        'nodea:1 -- nodeb:1'
+        'node*:1 -- nodeb:12*'
+        'attr=2'
+
+    :param str filename: A filename in which to look for matching links.
+    :param list link_definitions: A list of link definitions.
+    :return: A list of matching links.
+    """
+
+    expanded_links = []
+
+    # Grab the topology definition from a file that contains one
+    log.debug('Trying to expand links in {}'.format(filename))
+    if filename.endswith('.py'):
+        topology = find_topology_in_python(filename)
+        if topology is None:
+            log.warning(
+                ('Skipping link expansion for attribute injection in filename '
+                 '{} in the lookup path as it does not contain a TOPOLOGY '
+                 'definition.').format(filename))
+            return []
+    else:
+        with open(filename, 'r') as fd:
+            topology = fd.read().strip()
+    log.debug('Found:\n{}'.format(topology))
+
+    # Parse content
+    try:
+        parsed_topology = parse_txtmeta(topology)
+    except:
+        log.error(
+            ('Skipping link expansion for attribute injection in filename '
+             '{} in the lookup path as SZN format parsing failed.'
+             ).format(filename))
+        log.debug(format_exc())
+        return []
+
+    for link_definition in links_definitions:
+
+        # Check if definition is for attribute matching
+        if match(r'(.*)=(.*)', link_definition):
+            expanded_links.extend(
+                _match_by_attr(link_definition, parsed_topology, 'links'))
+            continue
+
+        # The definition is not attribute matching, but name matching
+        for link_group in parsed_topology['link']:
+            for link in link_group['endpoints']:
+                if fnmatch(link[0][0], link_definition[0][0]) and fnmatch(
+                        link[0][1], link_definition[0][1]) and fnmatch(
+                            link[1][0], link_definition[1][0]) and fnmatch(
+                                link[1][1], link_definition[1]
+                                [1]) and link not in expanded_links:
+                    expanded_links.append(link)
+
+    return expanded_links
+
+
+__all__ = ['parse_attribute_injection']
