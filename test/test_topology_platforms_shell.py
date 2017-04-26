@@ -26,6 +26,11 @@ from __future__ import print_function, division
 # package in Python 2.7, that is why the following is done:
 try:
     from unittest.mock import patch, Mock, call, ANY
+
+    # Work around for http://bugs.python.org/issue25532
+    # Prevents infinite memory allocation
+    call.__wrapped__ = None
+
 except ImportError:
     from mock import patch, Mock, call, ANY
 
