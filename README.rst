@@ -18,6 +18,19 @@ Documentation
 Changelog
 =========
 
+1.9.6
+-----
+
+**New**
+
+- Adding reason to ``platform_incompatible`` marker.
+- Adding timestamps to logs.
+
+**Change**
+
+- Adding workaround for bug in mock.
+- Using ``python3`` as base Python.
+
 1.9.5
 -----
 
