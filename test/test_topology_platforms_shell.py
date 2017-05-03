@@ -25,14 +25,14 @@ from __future__ import print_function, division
 # mock is located in unittest from Python 3.3 onwards, but as an external
 # package in Python 2.7, that is why the following is done:
 try:
-    from unittest.mock import patch, Mock, call, ANY
+    from unittest.mock import patch, Mock, call
 
     # Work around for http://bugs.python.org/issue25532
     # Prevents infinite memory allocation
     call.__wrapped__ = None
 
 except ImportError:
-    from mock import patch, Mock, call, ANY
+    from mock import patch, Mock, call
 
 from pytest import fixture, raises
 
@@ -104,8 +104,7 @@ def test_spawn_args(spawn, shell):
     shell.connect()
 
     spawn.assert_called_with(
-        'test connection command', echo=False, env={'TERM': 'dumb'},
-        logfile=ANY
+        'test connection command', echo=False, env={'TERM': 'dumb'}
     )
 
     shell = Shell(
@@ -115,8 +114,7 @@ def test_spawn_args(spawn, shell):
     shell.connect()
 
     spawn.assert_called_with(
-        'test connection command', env={'TERM': 'smart'}, echo=True,
-        logfile=ANY
+        'test connection command', env={'TERM': 'smart'}, echo=True
     )
 
 

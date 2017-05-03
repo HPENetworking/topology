@@ -29,6 +29,7 @@ from inspect import stack
 from collections import OrderedDict
 from distutils.dir_util import mkpath
 from weakref import WeakValueDictionary
+from datetime import datetime
 
 from six import add_metaclass
 
@@ -239,13 +240,36 @@ class PexpectLogger(FileLogger):
      the same ones that the ``decode`` method of a bytes object expects in its
      ``error`` keyword argument. Defaults to ``ignore``.
     """
+
+    _pexpect_loggers = {}
+
+    def __new__(cls, *args, **kwargs):
+        name = ''.join(map(str, args[0].values()))
+
+        if name not in cls._pexpect_loggers.keys():
+            cls._pexpect_loggers[name] = {
+                'logger': object.__new__(cls), 'initialized': False
+            }
+
+        return cls._pexpect_loggers[name]['logger']
+
     def __init__(self, *args, **kwargs):
+        name = ''.join(map(str, args[0].values()))
+
+        # This is done to prevent a second call to getLogger in
+        # BaseLogger.__init__ since a second call will add anothe handle to the
+        # logger object, introducing duplicate records in the log file.
+        if self._pexpect_loggers[name]['initialized']:
+            return
+
         self._encoding = kwargs.pop('encoding', 'utf-8')
         self._errors = kwargs.pop('errors', 'ignore')
         self._buffer = []
 
         if 'file_formatter' not in kwargs:
             kwargs['file_formatter'] = '%(message)s'
+
+        self._pexpect_loggers[name]['initialized'] = True
 
         super(PexpectLogger, self).__init__(*args, **kwargs)
 
@@ -258,6 +282,29 @@ class PexpectLogger(FileLogger):
         data = ''.join(self._buffer)
         del self._buffer[:]
         self.logger.log(self._level, data)
+
+
+class PexpectLoggerGeneric(object):
+    def __init__(self, *args, **kwargs):
+        args[0]['category'] = 'pexpect'
+        self._pexpect_logger = PexpectLogger(*args, **kwargs)
+
+    def __getattr__(self, name):
+        def inner(*args, **kwargs):
+            getattr(self._pexpect_logger, name)(*args, **kwargs)
+        return inner
+
+
+class PexpectLoggerRead(PexpectLoggerGeneric):
+    pass
+
+
+class PexpectLoggerSend(PexpectLoggerGeneric):
+    def write(self, data):
+        self._pexpect_logger._buffer.append(
+            '{} '.format(datetime.now().isoformat())
+        )
+        self._pexpect_logger.write(data)
 
 
 class ConnectionLogger(BaseLogger):
@@ -423,6 +470,10 @@ class LoggingManager(object):
             ('connection', ConnectionLogger),
             # node identifier, shell name, connection
             ('pexpect', PexpectLogger),
+            # node identifier, shell name, connection
+            ('pexpect_read', PexpectLoggerRead),
+            # node identifier, shell name, connection
+            ('pexpect_send', PexpectLoggerSend),
             # node identifier, service name, port
             ('service', None),
             # step
@@ -502,7 +553,7 @@ class LoggingManager(object):
         for logger in self._loggers[category].values():
             logger.propagate = propagate
 
-    def get_logger(self, name, category='core'):
+    def get_logger(self, name, category='core', *args, **kwargs):
         """
         Get a logger tailored for the given category.
 
@@ -537,7 +588,8 @@ class LoggingManager(object):
                 nameparts,
                 propagate=self._propagate[category],
                 level=self._levels[category],
-                log_dir=self._log_dir
+                log_dir=self._log_dir,
+                *args, **kwargs
             )
 
             # Append logger to category registry
@@ -567,6 +619,8 @@ __api__ = [
     'BaseLogger',
     'FileLogger',
     'PexpectLogger',
+    'PexpectLoggerRead',
+    'PexpectLoggerSend',
     'ConnectionLogger',
     'LoggingManager'
 ] + __all__
