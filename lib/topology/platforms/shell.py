@@ -25,6 +25,7 @@ from __future__ import print_function, division
 from warnings import warn
 from re import sub as regex_sub
 from collections import OrderedDict
+from time import sleep
 from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
@@ -672,20 +673,27 @@ class PExpectShell(BaseShell):
 
 
 class PExpectBashShell(PExpectShell):
-    """
-    Custom shell class for Bash.
+    """Custom shell class for Bash.
 
     This custom base class will setup the prompt ``PS1`` to the
     ``FORCED_PROMPT`` value of the class and will disable the echo of the
     device by issuing the ``stty -echo`` command. All this is done in the
     ``_setup_shell()`` call, which is overriden by this class.
+
+    See :class:`PExpectShell`.
+
+    :param float delay_after_echo_off: Number of seconds pexpect
+           should wait after setting echo off before sending another command,
+           this allows bash enough time to properly turn echo off.
     """
     FORCED_PROMPT = '@~~==::BASH_PROMPT::==~~@'
 
     def __init__(
             self,
             initial_prompt='\w+@.+:.+[#$] ', try_filter_echo=False,
-            **kwargs):
+            delay_after_echo_off=0.15, **kwargs):
+
+        self._delay_after_echo_off = delay_after_echo_off
 
         super(PExpectBashShell, self).__init__(
             PExpectBashShell.FORCED_PROMPT,
@@ -708,9 +716,16 @@ class PExpectBashShell(PExpectShell):
 
         # Remove echo
         spawn.sendline('stty -echo')
+
+        # Sleep for a bit to give bash time to turn echo off
+        sleep(self._delay_after_echo_off)
+
         spawn.expect(
             self._initial_prompt, timeout=self._timeout
         )
+
+        # Sleep for a bit to give bash time to turn echo off
+        sleep(self._delay_after_echo_off)
 
         # Change prompt to a pexpect secure prompt
         spawn.sendline(
