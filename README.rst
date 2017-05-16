@@ -18,6 +18,13 @@ Documentation
 Changelog
 =========
 
+1.9.7
+-----
+
+**Fix**
+
+- Adding a delay after setting echo off.
+
 1.9.6
 -----
 
