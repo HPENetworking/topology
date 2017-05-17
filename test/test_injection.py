@@ -181,7 +181,11 @@ INJECTION_FILE = """
 EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
     (
         '{search_path}/test_topology_match_0.py',
-        OrderedDict([
+        {'environment': {},
+         'ports': OrderedDict(),
+         'links': OrderedDict(),
+         'nodes':
+         OrderedDict([
             (
                 'sw1', {
                     'image': 'image_for_sw1_sw3_hs1_hs2',
@@ -208,10 +212,14 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
                     'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
                 }
             ),
-        ])
+         ])}
     ), (
         '{search_path}/subfolder/test_topology_match_1.py',
-        OrderedDict([
+        {'environment': {},
+         'ports': OrderedDict(),
+         'links': OrderedDict(),
+         'nodes':
+         OrderedDict([
             (
                 'sw1', {
                     'image': 'image_for_sw1_sw3_hs1_hs2',
@@ -228,10 +236,14 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
                     'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
                 }
             ),
-        ])
+         ])}
     ), (
         '{search_path}/test_topology_match_2.py',
-        OrderedDict([
+        {'environment': {},
+         'ports': OrderedDict(),
+         'links': OrderedDict(),
+         'nodes':
+         OrderedDict([
             (
                 'sw4', {
                     'image': 'image_for_sw4_sw5',
@@ -241,10 +253,14 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
                     'image': 'image_for_sw4_sw5',
                 }
             ),
-        ])
+         ])}
     ), (
         '{search_path}/subfolder/test_topology_match_3.py',
-        OrderedDict([
+        {'environment': {},
+         'ports': OrderedDict(),
+         'links': OrderedDict(),
+         'nodes':
+         OrderedDict([
             (
                 'hs3', {
                     'image': 'image_for_all_hosts',
@@ -262,7 +278,7 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
                     'image': 'image_for_sw6_sw7',
                 }
             ),
-        ])
+         ])}
     )]
 )
 
