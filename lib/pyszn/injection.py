@@ -132,15 +132,15 @@ def parse_attribute_injection(injection_file, search_paths=None):
 
             if filename not in result:
                 result[filename] = {}
-                result[filename]['enviroment'] = {}
+                result[filename]['environment'] = {}
                 result[filename]['nodes'] = OrderedDict()
                 result[filename]['ports'] = OrderedDict()
                 result[filename]['links'] = OrderedDict()
 
-            # Enviroment attributes are parsed from the spec
+            # Environment attributes are parsed from the spec
             try:
-                for attribute, value in spec['enviroment'].items():
-                    result[filename]['envieroment'][attribute] = value
+                for attribute, value in spec['environment'].items():
+                    result[filename]['environment'][attribute] = value
             except KeyError:
                 pass
             # Each specification have several "modifiers" associated to it.
@@ -154,10 +154,10 @@ def parse_attribute_injection(injection_file, search_paths=None):
                         if node not in result[filename]['nodes']:
                             result[filename]['nodes'][node] = {}
 
-                            for attribute, value in modifier[
-                                    'attributes'].items():
-                                result[filename]['nodes'][node][
-                                    attribute] = value
+                        for attribute, value in modifier[
+                                'attributes'].items():
+                            result[filename]['nodes'][node][
+                                attribute] = value
 
                 # Ports
                 if 'ports' in modifier:
@@ -166,10 +166,10 @@ def parse_attribute_injection(injection_file, search_paths=None):
                         if port not in result[filename]['ports']:
                             result[filename]['ports'][port] = {}
 
-                            for attribute, value in modifier[
-                                    'attributes'].items():
-                                result[filename]['port'][port][
-                                    attribute] = value
+                        for attribute, value in modifier[
+                                'attributes'].items():
+                            result[filename]['port'][port][
+                                attribute] = value
 
                 # Links
                 if 'links' in modifier:
@@ -178,10 +178,10 @@ def parse_attribute_injection(injection_file, search_paths=None):
                         if link not in result[filename]['links']:
                             result[filename]['links'][node] = {}
 
-                            for attribute, value in modifier[
-                                    'attributes'].items():
-                                result[filename]['links'][link][
-                                    attribute] = value
+                        for attribute, value in modifier[
+                                'attributes'].items():
+                            result[filename]['links'][link][
+                                attribute] = value
 
     log.debug('Attribute injection interpreted dictionary:')
     log.debug(result)
