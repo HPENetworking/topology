@@ -168,7 +168,7 @@ def parse_attribute_injection(injection_file, search_paths=None):
 
                         for attribute, value in modifier[
                                 'attributes'].items():
-                            result[filename]['port'][port][
+                            result[filename]['ports'][port][
                                 attribute] = value
 
                 # Links
@@ -176,7 +176,7 @@ def parse_attribute_injection(injection_file, search_paths=None):
                     for link in _expand_links(
                             filename, _link_str_to_tuple(modifier['links'])):
                         if link not in result[filename]['links']:
-                            result[filename]['links'][node] = {}
+                            result[filename]['links'][link] = {}
 
                         for attribute, value in modifier[
                                 'attributes'].items():
@@ -201,19 +201,25 @@ def _subfolders(search_path):
 def _port_str_to_tuple(port_str_list):
     result = []
     for port in port_str_list:
-        port_host, port_num = port.split(':')
-        result.append((port_host, port_num))
+        if not match(r'(.*)=(.*)', port):
+            port_host, port_num = port.split(':')
+            result.append((port_host, port_num))
+        else:
+            result.append(port)
     return result
 
 
 def _link_str_to_tuple(link_str_list):
     result = []
     for link in link_str_list:
-        link = link.replace(' ', '')
-        endpoint1, endpoint2 = link.split('--')
-        link1_host, link1_port = endpoint1.split(':')
-        link2_host, link2_port = endpoint2.split(':')
-        result.append(((link1_host, link1_port), (link2_host, link2_port)))
+        if not match(r'(.*)=(.*)', link):
+            link = link.replace(' ', '')
+            endpoint1, endpoint2 = link.split('--')
+            link1_host, link1_port = endpoint1.split(':')
+            link2_host, link2_port = endpoint2.split(':')
+            result.append(((link1_host, link1_port), (link2_host, link2_port)))
+        else:
+            result.append(link)
     return result
 
 
@@ -384,7 +390,6 @@ def _expand_ports(filename, ports_definitions):
     :param list ports_definitions: A list of port definitions.
     :return: A list of matching ports.
     """
-
     expanded_ports = []
 
     # Grab the topology definition from a file that contains one
@@ -416,7 +421,7 @@ def _expand_ports(filename, ports_definitions):
     for port_definition in ports_definitions:
 
         # Check if definition is for attribute matching
-        if match(r'(.*)=(.*)', port_definition):
+        if type(port_definition) is not tuple:
             expanded_ports.extend(
                 _match_by_attr(port_definition, parsed_topology, 'ports'))
             continue
@@ -482,20 +487,20 @@ def _expand_links(filename, links_definitions):
     for link_definition in links_definitions:
 
         # Check if definition is for attribute matching
-        if match(r'(.*)=(.*)', link_definition):
+        if type(link_definition) is not tuple:
             expanded_links.extend(
                 _match_by_attr(link_definition, parsed_topology, 'links'))
             continue
 
         # The definition is not attribute matching, but name matching
-        for link_group in parsed_topology['link']:
-            for link in link_group['endpoints']:
-                if fnmatch(link[0][0], link_definition[0][0]) and fnmatch(
-                        link[0][1], link_definition[0][1]) and fnmatch(
-                            link[1][0], link_definition[1][0]) and fnmatch(
-                                link[1][1], link_definition[1]
-                                [1]) and link not in expanded_links:
-                    expanded_links.append(link)
+        for link_group in parsed_topology['links']:
+            link = link_group['endpoints']
+            if fnmatch(link[0][0], link_definition[0][0]) and fnmatch(
+                    link[0][1], link_definition[0][1]) and fnmatch(
+                        link[1][0], link_definition[1][0]) and fnmatch(
+                            link[1][1], link_definition[1]
+                            [1]) and link not in expanded_links:
+                expanded_links.append(link)
 
     return expanded_links
 
