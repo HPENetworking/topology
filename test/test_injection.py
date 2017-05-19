@@ -103,6 +103,18 @@ INJECTION_FILE = """
     {{
         "files": ["test_topology_match_0.py"],
         "modifiers": [
+             {{
+                "links": ["hs1:1 -- sw1:1", "test_attr=test"],
+                "attributes": {{
+                    "link_attr": "link_value"
+                }}
+           }},
+           {{
+                "ports": ["hs1:1", "test_attr=test"],
+                "attributes": {{
+                    "port_attr": "port_value"
+                }}
+            }},
             {{
                 "nodes": ["sw1"],
                 "attributes": {{
@@ -182,8 +194,11 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
     (
         '{search_path}/test_topology_match_0.py',
         {'environment': {},
-         'ports': OrderedDict(),
-         'links': OrderedDict(),
+         'ports': OrderedDict([(('hs1', '1'), {'port_attr': 'port_value'})]),
+         'links': OrderedDict([((('hs1', '1'), ('sw1', '1')),
+                                {
+                                    'link_attr': 'link_value'
+                                })]),
          'nodes':
          OrderedDict([
             (
@@ -262,6 +277,14 @@ EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
          'nodes':
          OrderedDict([
             (
+                'hs1', {
+                    'image': 'image_for_all_hosts',
+                }
+            ),  (
+                'hs2', {
+                    'image': 'image_for_all_hosts',
+                }
+            ), (
                 'hs3', {
                     'image': 'image_for_all_hosts',
                 }

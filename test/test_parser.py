@@ -69,9 +69,36 @@ def test_txtmeta_parse():
             {
                 'attributes': OrderedDict(),
                 'nodes': ['hs2']
-            }
+            },
+            {
+                'attributes': OrderedDict(),
+                'nodes': ['sw1', 'hs1']
+            },
+            {
+                'nodes': ['sw1', 'hs1'],
+                'attributes': OrderedDict()
+            },
+            {
+                'nodes': ['sw1', 'hs2'],
+                'attributes': OrderedDict()
+            },
+
+
         ],
-        'ports': [],
+        'ports': [
+            {
+                'ports': [('sw1', '1'), ('hs1', '1')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('sw1', 'a'), ('hs1', 'a')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('sw1', '4'), ('hs2', 'a')],
+                'attributes': OrderedDict()
+            },
+        ],
         'links': [
             {
                 'attributes': OrderedDict(),
@@ -87,6 +114,5 @@ def test_txtmeta_parse():
             }
         ]
     }
-
     ddiff = DeepDiff(dictmeta, expected)
     assert not ddiff
