@@ -202,6 +202,18 @@ def parse_txtmeta(txtmeta):
                     ),
                     'attributes': attrs
                 })
+
+                data['nodes'].append({
+                    'nodes': [link.endpoint_a.node, link.endpoint_b.node],
+                    'attributes': OrderedDict()
+                })
+                data['ports'].append({
+                    'ports': [
+                        (link.endpoint_a.node, link.endpoint_a.port),
+                        (link.endpoint_b.node, link.endpoint_b.port)
+                    ],
+                    'attributes': OrderedDict()
+                })
                 continue
 
             # Process port lines
@@ -211,6 +223,10 @@ def parse_txtmeta(txtmeta):
                         (port.node, port.port) for port in parsed.ports
                     ],
                     'attributes': attrs
+                })
+                data['nodes'].append({
+                    'nodes': [port.node for port in parsed.ports],
+                    'attributes': OrderedDict()
                 })
                 continue
 
