@@ -60,7 +60,11 @@ def test_txtmeta_parse():
         'nodes': [
             {
                 'attributes': OrderedDict([('shell', 'vtysh')]),
-                'nodes': ['sw1', 'sw2']
+                'nodes': ['sw1']
+            },
+            {
+                'attributes': OrderedDict([('shell', 'vtysh')]),
+                'nodes': ['sw2']
             },
             {
                 'attributes': OrderedDict([('type', 'host')]),
@@ -70,32 +74,30 @@ def test_txtmeta_parse():
                 'attributes': OrderedDict(),
                 'nodes': ['hs2']
             },
-            {
-                'attributes': OrderedDict(),
-                'nodes': ['sw1', 'hs1']
-            },
-            {
-                'nodes': ['sw1', 'hs1'],
-                'attributes': OrderedDict()
-            },
-            {
-                'nodes': ['sw1', 'hs2'],
-                'attributes': OrderedDict()
-            },
-
-
         ],
         'ports': [
             {
-                'ports': [('sw1', '1'), ('hs1', '1')],
+                'ports': [('sw1', '1')],
                 'attributes': OrderedDict()
             },
             {
-                'ports': [('sw1', 'a'), ('hs1', 'a')],
+                'ports': [('hs1', '1')],
                 'attributes': OrderedDict()
             },
             {
-                'ports': [('sw1', '4'), ('hs2', 'a')],
+                'ports': [('sw1', 'a')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('hs1', 'a')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('sw1', '4')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('hs2', 'a')],
                 'attributes': OrderedDict()
             },
         ],
