@@ -30,6 +30,7 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
 from pexpect import spawn as Spawn  # noqa
+from pexpect import TIMEOUT
 
 from topology.logging import get_logger
 
@@ -501,11 +502,26 @@ class PExpectShell(BaseShell):
 
         # Expect matches
         if timeout is None:
-            timeout = self._timeout
+            timeout = 30
 
-        match_index = spawn.expect(
-            matches, timeout=timeout
-        )
+        attempts = 6
+
+        for i in range(0, attempts):
+            try:
+                match_index = spawn.expect(
+                    matches, timeout=int(timeout/attempts)
+                )
+            except TIMEOUT:
+                spawn.sendline('@-DEBUG_ENTER-@{}'.format(i))
+                continue
+            break
+        else:
+            raise Exception(
+                'Expected match did not show up after {} attempts'.format(
+                    attempts
+                )
+            )
+
         return match_index
 
     def get_response(self, connection=None, silent=False):
