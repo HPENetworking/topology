@@ -506,14 +506,21 @@ class PExpectShell(BaseShell):
 
         attempts = 6
 
+        the_timeout = int(timeout/attempts)
+
         for i in range(0, attempts):
             try:
                 match_index = spawn.expect(
-                    matches, timeout=int(timeout/attempts)
+                    matches, timeout=the_timeout
                 )
             except TIMEOUT:
-                spawn.sendline('@-DEBUG_ENTER-@{}'.format(i))
-                continue
+                if spawn.buffer.decode(
+                    'utf-8', errors=self._errors
+                ).strip() != self._last_command:
+                    spawn.sendline(
+                        '{}@-DEBUG_ENTER-@{}'.format(the_timeout, i)
+                    )
+                    continue
             break
         else:
             raise Exception(
