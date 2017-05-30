@@ -262,7 +262,7 @@ class PexpectLogger(FileLogger):
         if self._pexpect_loggers[name]['initialized']:
             return
 
-        self._encoding = kwargs.pop('encoding', 'utf-8')
+        self._encoding = 'utf-8'
         self._errors = kwargs.pop('errors', 'ignore')
         self._buffer = []
 
