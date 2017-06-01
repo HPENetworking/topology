@@ -29,7 +29,7 @@ from time import sleep
 from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
-from pexpect import spawn as Spawn  # noqa
+from pexpect import TIMEOUT, spawn as Spawn  # noqa
 
 from topology.logging import get_logger
 
@@ -503,9 +503,18 @@ class PExpectShell(BaseShell):
         if timeout is None:
             timeout = self._timeout
 
-        match_index = spawn.expect(
-            matches, timeout=timeout
-        )
+        try:
+            match_index = spawn.expect(
+                matches, timeout=timeout
+            )
+        except TIMEOUT as error:
+            if not spawn.before:
+                raise Exception(
+                    'Frozen Shell detected after running {}'.format(
+                        self._last_command
+                    )
+                ) from error
+
         return match_index
 
     def get_response(self, connection=None, silent=False):
