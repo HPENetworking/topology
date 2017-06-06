@@ -94,8 +94,8 @@ class NodeLoader(object):
 
             try:
                 node = ep.load()
-            except:
-                log.error(
+            except Exception:
+                log.exception(
                     'Unable to load node from plugin {}'.format(name)
                 )
                 log.debug(format_exc())
