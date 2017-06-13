@@ -38,6 +38,15 @@ Changelog
 =========
 
 
+1.9.8 (2017-06-13)
+------------------
+
+Changes
+~~~~~~~
+- Refactoring the changelog. [Diego Antonio Hurtado Pimentel]
+- Log python error when plugin load fails. [Javier Peralta]
+
+
 1.9.7 (2017-05-16)
 ------------------
 
