@@ -122,7 +122,7 @@ def build_parser():
     )
     link_spec = (
         StringStart() + Optional(attributes) +
-        link('link') + StringEnd()
+        OneOrMore(Group(link))('links') + StringEnd()
     )
 
     statement = link_spec | ports_spec | nodes_spec
@@ -186,13 +186,14 @@ def parse_txtmeta(txtmeta):
             log.debug(attrs)
 
             # Process link lines
-            if 'link' in parsed:
-                link = parsed.link
+            if 'links' in parsed:
                 data['links'].append({
-                    'endpoints': (
-                        (link.endpoint_a.node, link.endpoint_a.port),
-                        (link.endpoint_b.node, link.endpoint_b.port),
-                    ),
+                    'links': [
+                        (
+                            (link.endpoint_a.node, link.endpoint_a.port),
+                            (link.endpoint_b.node, link.endpoint_b.port),
+                        ) for link in parsed.links
+                    ],
                     'attributes': attrs
                 })
                 continue
@@ -218,6 +219,7 @@ def parse_txtmeta(txtmeta):
             raise Exception('Unknown line type parsed.')
 
         except Exception:
+            raise
             e = ParseException(lineno, raw_line, format_exc())
             log.error(str(e))
             log.debug(e.exc)
