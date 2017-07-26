@@ -36,6 +36,16 @@ License
 
 Changelog
 =========
+1.9.9 (2017-07-26)
+------------------
+
+New
+~~~
+- Adding support for sending control characters. [Diego Antonio Hurtado Pimentel]
+
+Fix
+~~~
+- Increased delay_after_echo_off a bit. [Javier Peralta]
 
 
 1.9.8 (2017-06-13)
