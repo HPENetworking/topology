@@ -698,7 +698,7 @@ class PExpectBashShell(PExpectShell):
     def __init__(
             self,
             initial_prompt='\w+@.+:.+[#$] ', try_filter_echo=False,
-            delay_after_echo_off=0.15, **kwargs):
+            delay_after_echo_off=0.25, **kwargs):
 
         self._delay_after_echo_off = delay_after_echo_off
 
