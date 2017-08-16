@@ -313,11 +313,17 @@ def pytest_runtest_setup(item):
     incompatible_marker = item.get_marker('platform_incompatible')
 
     # If marked and xml logging enabled
-    if test_id_marker is not None and hasattr(item.config, '_xml'):
+    if test_id_marker is not None:
         test_id = test_id_marker.args[0]
-        item.config._xml.node_reporter(item.nodeid).add_property(
-            'test_id', test_id
-        )
+
+        # pytest >= xxx
+        if hasattr(item, 'user_properties'):
+            item.user_properties.append(('test_id', test_id))
+        # pytest < xxx
+        elif hasattr(item.config, '_xml'):
+            item.config._xml.node_reporter(item.nodeid).add_property(
+                'test_id', test_id
+            )
 
     if incompatible_marker:
         platform = item.config._topology_plugin.platform
