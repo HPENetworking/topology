@@ -698,7 +698,7 @@ class PExpectBashShell(PExpectShell):
     def __init__(
             self,
             initial_prompt='\w+@.+:.+[#$] ', try_filter_echo=False,
-            delay_after_echo_off=0.25, **kwargs):
+            delay_after_echo_off=1, **kwargs):
 
         self._delay_after_echo_off = delay_after_echo_off
 
@@ -730,9 +730,6 @@ class PExpectBashShell(PExpectShell):
         spawn.expect(
             self._initial_prompt, timeout=self._timeout
         )
-
-        # Sleep for a bit to give bash time to turn echo off
-        sleep(self._delay_after_echo_off)
 
         # Change prompt to a pexpect secure prompt
         spawn.sendline(
