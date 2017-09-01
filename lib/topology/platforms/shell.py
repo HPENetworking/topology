@@ -235,7 +235,7 @@ class BaseShell(object):
         """
 
     @abstractmethod
-    def connect(self, connection=None):
+    def connect(self, connection=None, *args, **kwargs):
         """
         Creates a connection to the shell.
 
@@ -248,7 +248,7 @@ class BaseShell(object):
         """
 
     @abstractmethod
-    def disconnect(self, connection=None):
+    def disconnect(self, connection=None, *args, **kwargs):
         """
         Terminates a connection to the shell.
 
@@ -281,7 +281,7 @@ class BaseShell(object):
     def __call__(self, command, connection=None):
         return self.execute(command, connection=connection)
 
-    def _setup_shell(self, connection=None):
+    def _setup_shell(self, connection=None, *args, **kwargs):
         """
         Method called by subclasses that will be triggered after matching the
         initial prompt.
@@ -561,7 +561,7 @@ class PExpectShell(BaseShell):
         spawn = self._get_connection(connection)
         return spawn.isalive()
 
-    def connect(self, connection=None):
+    def connect(self, connection=None, *args, **kwargs):
         """
         See :meth:`BaseShell.connect` for more information.
         """
@@ -641,7 +641,7 @@ class PExpectShell(BaseShell):
         if self.default_connection is None:
             self.default_connection = connection
 
-    def disconnect(self, connection=None):
+    def disconnect(self, connection=None, *args, **kwargs):
         """
         See :meth:`BaseShell.disconnect` for more information.
         """
@@ -709,7 +709,7 @@ class PExpectBashShell(PExpectShell):
             **kwargs
         )
 
-    def _setup_shell(self, connection=None):
+    def _setup_shell(self, connection=None, *args, **kwargs):
         """
         Overriden setup function that will disable the echo on the device on
         the shell and set a pexpect-safe prompt.
