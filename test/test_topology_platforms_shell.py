@@ -22,24 +22,18 @@ Test suite for module topology.platforms.shell.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-# mock is located in unittest from Python 3.3 onwards, but as an external
-# package in Python 2.7, that is why the following is done:
-try:
-    from unittest.mock import patch, Mock, call
-
-    # Work around for http://bugs.python.org/issue25532
-    # Prevents infinite memory allocation
-    call.__wrapped__ = None
-
-except ImportError:
-    from mock import patch, Mock, call
-
 from pytest import fixture, raises
 
 from topology.platforms.shell import (
     PExpectBashShell, NonExistingConnectionError, AlreadyDisconnectedError,
     DisconnectedError
 )
+
+from unittest.mock import patch, Mock, call
+
+# Work around for http://bugs.python.org/issue25532
+# Prevents infinite memory allocation
+call.__wrapped__ = None
 
 
 class Shell(PExpectBashShell):
