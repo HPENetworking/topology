@@ -235,7 +235,7 @@ class BaseShell(object):
         """
 
     @abstractmethod
-    def connect(self, connection=None, *args, **kwargs):
+    def connect(self, *args, connection=None, **kwargs):
         """
         Creates a connection to the shell.
 
@@ -248,7 +248,7 @@ class BaseShell(object):
         """
 
     @abstractmethod
-    def disconnect(self, connection=None, *args, **kwargs):
+    def disconnect(self, *args, connection=None, **kwargs):
         """
         Terminates a connection to the shell.
 
@@ -281,7 +281,7 @@ class BaseShell(object):
     def __call__(self, command, connection=None):
         return self.execute(command, connection=connection)
 
-    def _setup_shell(self, connection=None, *args, **kwargs):
+    def _setup_shell(self, *args, connection=None, **kwargs):
         """
         Method called by subclasses that will be triggered after matching the
         initial prompt.
@@ -365,13 +365,14 @@ class PExpectShell(BaseShell):
     """
 
     def __init__(
-            self, prompt,
-            initial_command=None, initial_prompt=None,
-            user=None, user_match='[uU]ser:',
-            password=None, password_match='[pP]assword:',
-            prefix=None, timeout=None, encoding='utf-8',
-            try_filter_echo=True, auto_connect=True,
-            spawn_args=None, errors='ignore', **kwargs):
+        self, prompt,
+        initial_command=None, initial_prompt=None,
+        user=None, user_match='[uU]ser:',
+        password=None, password_match='[pP]assword:',
+        prefix=None, timeout=None, encoding='utf-8',
+        try_filter_echo=True, auto_connect=True,
+        spawn_args=None, errors='ignore', **kwargs
+    ):
 
         self._connections = OrderedDict()
         self._default_connection = None
@@ -434,7 +435,7 @@ class PExpectShell(BaseShell):
         :return: The command to be used when connecting to the shell.
         """
 
-    def _get_connection(self, connection):
+    def _get_connection(self, connection=None):
         """
         Get the pexpect object for the given connection name.
 
@@ -466,7 +467,7 @@ class PExpectShell(BaseShell):
         # 1. Connection is missing
         # 2. Connection is disconnected
         if not self._auto_connect:
-            if not self.is_connected(connection):
+            if not self.is_connected(connection=connection):
                 raise DisconnectedError(connection)
 
         # If auto connect is true, always reconnect unless:
@@ -474,12 +475,12 @@ class PExpectShell(BaseShell):
         # 2. Connection is connected
         else:
             try:
-                if not self.is_connected(connection):
-                    self.connect(connection)
+                if not self.is_connected(connection=connection):
+                    self.connect(connection=connection)
             except NonExistingConnectionError:
-                self.connect(connection)
+                self.connect(connection=connection)
 
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
 
         # Create possible expect matches
         if matches is None:
@@ -520,7 +521,7 @@ class PExpectShell(BaseShell):
         See :meth:`BaseShell.get_response` for more information.
         """
         # Get connection
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
 
         # Convert binary representation to unicode using encoding
         text = spawn.before.decode(
@@ -558,16 +559,18 @@ class PExpectShell(BaseShell):
         See :meth:`BaseShell.is_connected` for more information.
         """
         # Get connection
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
         return spawn.isalive()
 
-    def connect(self, connection=None, *args, **kwargs):
+    def connect(self, *args, connection=None, **kwargs):
         """
         See :meth:`BaseShell.connect` for more information.
         """
         connection = connection or self._default_connection or '0'
 
-        if connection in self._connections and self.is_connected(connection):
+        connection_is_present = connection in self._connections
+
+        if connection_is_present and self.is_connected(connection=connection):
             raise AlreadyConnectedError(connection)
 
         spawn = Spawn(
@@ -575,35 +578,46 @@ class PExpectShell(BaseShell):
             **self._spawn_args
         )
 
-        spawn.logfile_read = get_logger(
-            OrderedDict([
-                ('node_identifier', self._node_identifier),
-                ('shell_name', self._shell_name),
-                ('connection', connection)
-            ]),
-            category='pexpect_read',
-        )
+        # If the disconnect is called on a connection and then connect is
+        # called again on the same connection, this will be called twice,
+        # making each message from that connection to be logged twice.
+        if connection_is_present:
+            present_connection = self._connections[connection]
 
-        spawn.logfile_send = get_logger(
-            OrderedDict([
-                ('node_identifier', self._node_identifier),
-                ('shell_name', self._shell_name),
-                ('connection', connection)
-            ]),
-            category='pexpect_send',
-        )
+            spawn.logfile_read = present_connection.logfile_read
+            spawn.logfile_send = present_connection.logfile_send
+            spawn._connection_logger = present_connection._connection_logger
 
-        # Add a connection logger
-        # Note: self._node and self._name were added to this shell in the
-        #       node's call to its _register_shell method.
-        spawn._connection_logger = get_logger(
-            OrderedDict([
-                ('node_identifier', self._node_identifier),
-                ('shell_name', self._shell_name),
-                ('connection', connection)
-            ]),
-            category='connection'
-        )
+        else:
+            spawn.logfile_read = get_logger(
+                OrderedDict([
+                    ('node_identifier', self._node_identifier),
+                    ('shell_name', self._shell_name),
+                    ('connection', connection)
+                ]),
+                category='pexpect_read',
+            )
+
+            spawn.logfile_send = get_logger(
+                OrderedDict([
+                    ('node_identifier', self._node_identifier),
+                    ('shell_name', self._shell_name),
+                    ('connection', connection)
+                ]),
+                category='pexpect_send',
+            )
+
+            # Add a connection logger
+            # Note: self._node and self._name were added to this shell in the
+            #       node's call to its _register_shell method.
+            spawn._connection_logger = get_logger(
+                OrderedDict([
+                    ('node_identifier', self._node_identifier),
+                    ('shell_name', self._shell_name),
+                    ('connection', connection)
+                ]),
+                category='connection'
+            )
 
         self._connections[connection] = spawn
 
@@ -625,7 +639,7 @@ class PExpectShell(BaseShell):
             expect_sendline(self._initial_prompt, self._initial_command)
 
             # Setup shell before using it
-            self._setup_shell(connection)
+            self._setup_shell(*args, connection=connection, **kwargs)
 
             # Wait for command response to match the prompt
             spawn.expect(
@@ -641,12 +655,12 @@ class PExpectShell(BaseShell):
         if self.default_connection is None:
             self.default_connection = connection
 
-    def disconnect(self, connection=None, *args, **kwargs):
+    def disconnect(self, *args, connection=None, **kwargs):
         """
         See :meth:`BaseShell.disconnect` for more information.
         """
         # Get connection
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
         if not spawn.isalive():
             raise AlreadyDisconnectedError(connection)
         spawn.close()
@@ -709,12 +723,12 @@ class PExpectBashShell(PExpectShell):
             **kwargs
         )
 
-    def _setup_shell(self, connection=None, *args, **kwargs):
+    def _setup_shell(self, *args, connection=None, **kwargs):
         """
         Overriden setup function that will disable the echo on the device on
         the shell and set a pexpect-safe prompt.
         """
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
 
         # Wait initial prompt
         spawn.expect(

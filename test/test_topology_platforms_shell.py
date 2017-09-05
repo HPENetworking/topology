@@ -22,24 +22,18 @@ Test suite for module topology.platforms.shell.
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-# mock is located in unittest from Python 3.3 onwards, but as an external
-# package in Python 2.7, that is why the following is done:
-try:
-    from unittest.mock import patch, Mock, call
-
-    # Work around for http://bugs.python.org/issue25532
-    # Prevents infinite memory allocation
-    call.__wrapped__ = None
-
-except ImportError:
-    from mock import patch, Mock, call
-
 from pytest import fixture, raises
 
 from topology.platforms.shell import (
     PExpectBashShell, NonExistingConnectionError, AlreadyDisconnectedError,
     DisconnectedError
 )
+
+from unittest.mock import patch, Mock, call
+
+# Work around for http://bugs.python.org/issue25532
+# Prevents infinite memory allocation
+call.__wrapped__ = None
 
 
 class Shell(PExpectBashShell):
@@ -331,7 +325,7 @@ def test_connect(spawn, shell):
     class SetupShellError(Exception):
         pass
 
-    def _setup_shell(self, connection=None):
+    def _setup_shell(*args, connection=None, **kwargs):
         raise SetupShellError
 
     shell._setup_shell = _setup_shell
@@ -344,30 +338,29 @@ def test_connect_disconnect_connect(spawn, shell):
     """
     Test that the connect - disconnect - connect use case works properly.
     """
-    for connection in [None, '1']:
+    for connection in ['0', '1']:
 
-        # Shell not created yet
+        # Connection not created yet
         with raises(NonExistingConnectionError):
             shell.is_connected(connection=connection)
 
         # First shell call and explicit reconnection case
-        for i in [1, 2]:
-            shell.connect(connection=connection)
-            assert shell.is_connected(connection=connection)
+        shell.connect(connection=connection)
 
-            shell.send_command('command'.format(i), connection=connection)
-            shell._connections[connection or '0'].sendline.assert_called_with(
-                'command'.format(i)
-            )
-            assert shell.is_connected(connection=connection)
+        assert shell.is_connected(connection=connection)
 
-            shell.disconnect(connection=connection)
-            assert not shell.is_connected(connection=connection)
+        shell.send_command('command 0', connection=connection)
+
+        shell._connections[connection].sendline.assert_called_with('command 0')
+
+        shell.disconnect(connection=connection)
+
+        assert not shell.is_connected(connection=connection)
 
         # Second case, automatic reconnect
-        assert not shell.is_connected(connection=connection)
-        shell.send_command('a call to'.format(i), connection=connection)
-        shell._connections[connection or '0'].sendline.assert_called_with(
-            'a call to'
-        )
+
+        shell.send_command('command 1', connection=connection)
+
+        shell._connections[connection].sendline.assert_called_with('command 1')
+
         assert shell.is_connected(connection=connection)
