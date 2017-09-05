@@ -435,7 +435,7 @@ class PExpectShell(BaseShell):
         :return: The command to be used when connecting to the shell.
         """
 
-    def _get_connection(self, connection):
+    def _get_connection(self, connection=None):
         """
         Get the pexpect object for the given connection name.
 
@@ -468,7 +468,7 @@ class PExpectShell(BaseShell):
         # 2. Connection is disconnected
         if not self._auto_connect:
             if not self.is_connected(connection=connection):
-                raise DisconnectedError(connection=connection)
+                raise DisconnectedError(connection)
 
         # If auto connect is true, always reconnect unless:
         # 1. Connection already exists, and
@@ -480,7 +480,7 @@ class PExpectShell(BaseShell):
             except NonExistingConnectionError:
                 self.connect(connection=connection)
 
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
 
         # Create possible expect matches
         if matches is None:
@@ -521,7 +521,7 @@ class PExpectShell(BaseShell):
         See :meth:`BaseShell.get_response` for more information.
         """
         # Get connection
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
 
         # Convert binary representation to unicode using encoding
         text = spawn.before.decode(
@@ -559,7 +559,7 @@ class PExpectShell(BaseShell):
         See :meth:`BaseShell.is_connected` for more information.
         """
         # Get connection
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
         return spawn.isalive()
 
     def connect(self, *args, connection=None, **kwargs):
@@ -660,7 +660,7 @@ class PExpectShell(BaseShell):
         See :meth:`BaseShell.disconnect` for more information.
         """
         # Get connection
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
         if not spawn.isalive():
             raise AlreadyDisconnectedError(connection)
         spawn.close()
@@ -728,7 +728,7 @@ class PExpectBashShell(PExpectShell):
         Overriden setup function that will disable the echo on the device on
         the shell and set a pexpect-safe prompt.
         """
-        spawn = self._get_connection(connection)
+        spawn = self._get_connection(connection=connection)
 
         # Wait initial prompt
         spawn.expect(
