@@ -36,12 +36,39 @@ License
 
 Changelog
 =========
+
+
+1.9.10 (2017-09-06)
+-------------------
+
+Changes
+~~~~~~~
+- Extending connection and disconnection arguments. [Diego Antonio
+  Hurtado Pimentel]
+
+Fix
+~~~
+- Refactoring _get_connection. [Diego Antonio Hurtado Pimentel]
+- Removing support for Python 2.7. [Diego Antonio Hurtado Pimentel]
+- Several fixes in the usage of the connection argument. [Diego Antonio
+  Hurtado Pimentel]
+
+  This intentionally breaks compatibility with Python 2.7 since it uses
+  syntax introduced in PEP 3102.
+- Increase echo sleep 1 second. [Javier Peralta]
+
+
 1.9.9 (2017-07-26)
 ------------------
 
 New
 ~~~
-- Adding support for sending control characters. [Diego Antonio Hurtado Pimentel]
+- Adding support for sending control characters. [Diego Antonio Hurtado
+  Pimentel]
+
+Changes
+~~~~~~~
+- Bumping version to 1.9.9. [Javier Peralta]
 
 Fix
 ~~~
