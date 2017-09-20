@@ -62,11 +62,7 @@ class DockerNode(CommonNode):
         '/tmp:/tmp;/dev/log:/dev/log;/sys/fs/cgroup:/sys/fs/cgroup'
 
     :param str network_mode: Network mode for this container.
-    :param str shared_dir_base: Base path in the host where the shared
-     directory will be created. The shared directory will always have the name
-     of the container inside this directory.
-    :param str shared_dir_mount: Mount point of the shared directory in the
-     container.
+    :param str hostname: Container hostname.
     :param environment: Environment variables to pass to the
      container. They can be set as a list of strings in the following format:
 
@@ -81,7 +77,17 @@ class DockerNode(CommonNode):
         {'environment_variable': 'value'}
 
     :type environment: list or dict
+    :param bool privileged: Run container in privileged mode or not.
     :param bool tty: Whether to allocate a TTY or not to the process.
+    :param str shared_dir_base: Base path in the host where the shared
+     directory will be created. The shared directory will always have the name
+     of the container inside this directory.
+    :param str shared_dir_mount: Mount point of the shared directory in the
+     container.
+    :param dict create_host_config_kwargs: Extra kwargs arguments to pass to
+     docker-py's ``create_host_config()`` low-level API call.
+    :param dict create_container_kwargs: Extra kwargs arguments to pass to
+     docker-py's ``create_container()`` low-level API call.
 
     Read only public attributes:
 
@@ -104,9 +110,12 @@ class DockerNode(CommonNode):
             self, identifier,
             image='ubuntu:latest', registry=None, command='bash',
             binds=None, network_mode='none', hostname=None,
+            environment=None, privileged=True, tty=True,
             shared_dir_base='/tmp/topology/docker/',
-            shared_dir_mount='/var/topology', environment=None,
-            tty=True, **kwargs):
+            shared_dir_mount='/var/topology',
+            create_host_config_kwargs=None,
+            create_container_kwargs=None,
+            **kwargs):
 
         super(DockerNode, self).__init__(identifier, **kwargs)
 
@@ -129,6 +138,9 @@ class DockerNode(CommonNode):
             self._container_name
         )
 
+        self._create_host_config_kwargs = create_host_config_kwargs or {}
+        self._create_container_kwargs = create_container_kwargs or {}
+
         # Autopull docker image if necessary
         self._autopull()
 
@@ -146,24 +158,32 @@ class DockerNode(CommonNode):
             container_binds.extend(binds.split(';'))
 
         # Create host config
+        create_host_config_call = {
+            'privileged': privileged,
+            'network_mode': network_mode,
+            'binds': container_binds,
+        }
+        create_host_config_call.update(self._create_host_config_kwargs)
+
         self._host_config = self._client.create_host_config(
-            # Container is given access to all devices
-            privileged=True,
-            # Avoid connecting to host bridge, usually docker0
-            network_mode=network_mode,
-            binds=container_binds
+            **create_host_config_call
         )
 
         # Create container
+        create_container_call = {
+            'image': self._image,
+            'command': self._command,
+            'name': self._container_name,
+            'detach': True,
+            'tty': tty,
+            'hostname': self._hostname,
+            'host_config': self._host_config,
+            'environment': self._environment,
+        }
+        create_container_call.update(self._create_container_kwargs)
+
         self._container_id = self._client.create_container(
-            image=self._image,
-            command=self._command,
-            name=self._container_name,
-            detach=True,
-            tty=tty,
-            hostname=self._hostname,
-            host_config=self._host_config,
-            environment=self._environment
+            **create_container_call
         )['Id']
 
     @property
