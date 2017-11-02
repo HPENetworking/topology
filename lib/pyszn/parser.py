@@ -202,6 +202,18 @@ def parse_txtmeta(txtmeta):
                     ),
                     'attributes': attrs
                 })
+
+                data['nodes'].append({
+                    'nodes': [link.endpoint_a.node, link.endpoint_b.node],
+                    'attributes': OrderedDict()
+                })
+                data['ports'].append({
+                    'ports': [
+                        (link.endpoint_a.node, link.endpoint_a.port),
+                        (link.endpoint_b.node, link.endpoint_b.port)
+                    ],
+                    'attributes': OrderedDict()
+                })
                 continue
 
             # Process port lines
@@ -211,6 +223,10 @@ def parse_txtmeta(txtmeta):
                         (port.node, port.port) for port in parsed.ports
                     ],
                     'attributes': attrs
+                })
+                data['nodes'].append({
+                    'nodes': [port.node for port in parsed.ports],
+                    'attributes': OrderedDict()
                 })
                 continue
 
@@ -241,6 +257,30 @@ def parse_txtmeta(txtmeta):
             log.debug(e.exc)
             raise e
 
+    # Remove duplicate data created implicitly
+    temp_nodes = OrderedDict()
+    for node_list in data['nodes']:
+        for node in node_list['nodes']:
+            if node not in temp_nodes.keys():
+                temp_nodes[node] = node_list['attributes']
+            else:
+                temp_nodes[node].update(node_list['attributes'])
+
+    temp_ports = OrderedDict()
+    for port_list in data['ports']:
+        for port in port_list['ports']:
+            if port not in temp_ports.keys():
+                temp_ports[port] = port_list['attributes']
+            else:
+                temp_ports[port].update(port_list['attributes'])
+
+    data['nodes'] = [
+        {'nodes': [k], 'attributes': v} for k, v in temp_nodes.items()
+        ]
+
+    data['ports'] = [
+        {'ports': [k], 'attributes': v} for k, v in temp_ports.items()
+    ]
     return data
 
 
@@ -267,7 +307,7 @@ def find_topology_in_python(filename):
             if node.targets[0].id == 'TOPOLOGY':
                 return node.value.s
 
-    except:
+    except Exception:
         log.error(format_exc())
     return None
 

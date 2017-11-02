@@ -60,7 +60,11 @@ def test_txtmeta_parse():
         'nodes': [
             {
                 'attributes': OrderedDict([('shell', 'vtysh')]),
-                'nodes': ['sw1', 'sw2']
+                'nodes': ['sw1']
+            },
+            {
+                'attributes': OrderedDict([('shell', 'vtysh')]),
+                'nodes': ['sw2']
             },
             {
                 'attributes': OrderedDict([('type', 'host')]),
@@ -69,9 +73,34 @@ def test_txtmeta_parse():
             {
                 'attributes': OrderedDict(),
                 'nodes': ['hs2']
-            }
+            },
         ],
-        'ports': [],
+        'ports': [
+            {
+                'ports': [('sw1', '1')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('hs1', '1')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('sw1', 'a')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('hs1', 'a')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('sw1', '4')],
+                'attributes': OrderedDict()
+            },
+            {
+                'ports': [('hs2', 'a')],
+                'attributes': OrderedDict()
+            },
+        ],
         'links': [
             {
                 'attributes': OrderedDict(),
@@ -87,6 +116,5 @@ def test_txtmeta_parse():
             }
         ]
     }
-
     ddiff = DeepDiff(dictmeta, expected)
     assert not ddiff
