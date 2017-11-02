@@ -314,7 +314,7 @@ def _expand_nodes(filename, nodes_definitions):
     # Parse content
     try:
         parsed_topology = parse_txtmeta(topology)
-    except:
+    except Exception:
         log.error(
             ('Skipping node expansion for attribute injection in filename '
              '{} in the lookup path as SZN format parsing failed.'
@@ -410,7 +410,7 @@ def _expand_ports(filename, ports_definitions):
     # Parse content
     try:
         parsed_topology = parse_txtmeta(topology)
-    except:
+    except Exception:
         log.error(
             ('Skipping port expansion for attribute injection in filename '
              '{} in the lookup path as SZN format parsing failed.'
@@ -476,7 +476,7 @@ def _expand_links(filename, links_definitions):
     # Parse content
     try:
         parsed_topology = parse_txtmeta(topology)
-    except:
+    except Exception:
         log.error(
             ('Skipping link expansion for attribute injection in filename '
              '{} in the lookup path as SZN format parsing failed.'
