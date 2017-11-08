@@ -208,7 +208,7 @@ class StateAPI(object):
         """
 
     @abstractmethod
-    def enable(self):
+    def enable(self, *args, **kwargs):
         """
         Enable this node.
 
@@ -216,7 +216,7 @@ class StateAPI(object):
         """
 
     @abstractmethod
-    def disable(self):
+    def disable(self, *args, **kwargs):
         """
         Disable this node.
 
