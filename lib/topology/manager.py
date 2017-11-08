@@ -289,7 +289,7 @@ class TopologyManager(object):
 
             self._platform.post_build()
 
-        except:
+        except Exception:
             e = exc_info()[1]
             log.critical(
                 (
