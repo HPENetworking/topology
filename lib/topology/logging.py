@@ -45,6 +45,30 @@ LEVELS = OrderedDict([
 """Simple map with the default logging levels."""
 
 
+class PexpectFileHandler(logging.FileHandler):
+    """
+    A handler class which writes formatted logging records to disk
+    files.  Works like FileHandler from the std, but doesn't emit line
+    changes after records, maintaining a shape that is closer to the actual
+    PTTY's stream pexpect uses.
+    """
+    def emit(self, record):
+        """
+        Emit a record.
+        If the stream was not opened because 'delay' was specified in the
+        constructor, emitting the actual record.
+        """
+        if self.stream is None:
+            self.stream = self._open()
+        try:
+            msg = self.format(record)
+            stream = self.stream
+            stream.write(msg)
+            self.flush()
+        except Exception:
+            self.handleError(record)
+
+
 @add_metaclass(ABCMeta)
 class BaseLogger(object):
     """
@@ -157,14 +181,14 @@ class StdOutLogger(BaseLogger):
 @add_metaclass(ABCMeta)
 class FileLogger(BaseLogger):
     """
-    Subclass of BaseLogger that adds a FileHandler.
+    Subclass of BaseLogger that adds a PexpectFileHandler.
 
     This class implements additional logic for when the ``log_dir`` path is
     changed. It will create a file with the name of the logger under the
     ``log_dir`` with the ``.log`` extension.
 
-    :param str file_formatter: Format to use in the FileHandler, defaulting to
-     ``logging.BASIC_FORMAT``.
+    :param str file_formatter: Format to use in the PexpectFileHandler,
+     defaulting to ``logging.BASIC_FORMAT``.
     """
     def __init__(self, *args, **kwargs):
         self._file_handler = None
@@ -192,7 +216,7 @@ class FileLogger(BaseLogger):
                 reset_file_handler()
 
             # Create file handler
-            fh = logging.FileHandler(
+            fh = PexpectFileHandler(
                 join(log_dir, '{}.{}'.format(self._name, 'log'))
             )
 
@@ -302,9 +326,10 @@ class PexpectLoggerRead(PexpectLoggerGeneric):
 class PexpectLoggerSend(PexpectLoggerGeneric):
     def write(self, data):
         self._pexpect_logger._buffer.append(
-            '{} '.format(datetime.now().isoformat())
+            '\n\n{} '.format(datetime.now().isoformat())
         )
         self._pexpect_logger.write(data)
+        self._pexpect_logger.write(b'\n')
 
 
 class ConnectionLogger(BaseLogger):

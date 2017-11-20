@@ -618,6 +618,9 @@ class PExpectShell(BaseShell):
                 ]),
                 category='connection'
             )
+        # Set larger PTTY so there are less unnecessary line
+        # changes on the stream
+        spawn.setwinsize(30, 150)
 
         self._connections[connection] = spawn
 
