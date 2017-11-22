@@ -76,7 +76,7 @@ def libraries(cache=True):
 
         try:
             library = ep.load()
-        except:
+        except Exception:
             log.error(
                 'Unable to load topology communication '
                 'library plugin {}.'.format(name)
