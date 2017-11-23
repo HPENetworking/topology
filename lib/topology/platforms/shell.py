@@ -649,7 +649,7 @@ class PExpectShell(BaseShell):
                 self._prompt, timeout=self._timeout
             )
 
-        except:
+        except Exception:
             # Always remove a bad connection if it failed
             del self._connections[connection]
             raise
