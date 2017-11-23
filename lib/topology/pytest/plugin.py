@@ -166,7 +166,7 @@ def topology(request):
             else:
                 topomgr.parse(topo, inject=suite_injected_attr)
             topomgr.build()
-        except:
+        except Exception:
             fail(
                 'Error building topology in module {}:\n{}'.format(
                     module.__name__,

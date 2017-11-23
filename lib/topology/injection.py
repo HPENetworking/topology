@@ -255,7 +255,7 @@ def expand_nodes(filename, nodes_definitions):
     # Parse content
     try:
         parsed_topology = parse_txtmeta(topology)
-    except:
+    except Exception:
         log.error((
             'Skipping node expansion for attribute injection in filename '
             '{} in the lookup path as SZN format parsing failed.'

@@ -42,7 +42,7 @@ def catch_exc(func):
     def catcher(*args):
         try:
             return func(*args)
-        except:
+        except Exception:
             log.error(format_exc())
     return catcher
 

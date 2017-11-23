@@ -249,7 +249,7 @@ def find_topology_in_python(filename):
             if node.targets[0].id == 'TOPOLOGY':
                 return node.value.s
 
-    except:
+    except Exception:
         log.error(format_exc())
     return None
 
