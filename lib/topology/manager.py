@@ -83,7 +83,6 @@ class TopologyManager(object):
             raise RuntimeError('Unknown platform engine "{}".'.format(engine))
 
         self.nml = ExtendedNMLManager(**kwargs)
-        self.environment = OrderedDict()
         self.engine = engine
         self.nodes = OrderedDict()
         self.ports = OrderedDict()
@@ -125,9 +124,11 @@ class TopologyManager(object):
          by :func:`parse_attribute_injection`.
         """
         # Load the environment
-        self.environment = dictmeta.get('environment', OrderedDict())
+        environment = dictmeta.get('environment', OrderedDict())
         if inject is not None and 'environment' in inject:
-            self.environment.update(inject['environment'])
+            environment.update(inject['environment'])
+
+        self.nml.create_environment(**environment)
 
         # Load nodes
         for nodes_spec in dictmeta.get('nodes', []):
