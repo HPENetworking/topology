@@ -30,6 +30,7 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
 from pexpect import spawn as Spawn  # noqa
+from pexpect import TIMEOUT
 
 from topology.logging import get_logger
 
@@ -511,10 +512,16 @@ class PExpectShell(BaseShell):
         if timeout is None:
             timeout = self._timeout
 
-        match_index = spawn.expect(
-            matches, timeout=timeout
-        )
-        return match_index
+        buf_length = 0
+        while True:
+            try:
+                return spawn.expect(matches, timeout=timeout)
+            except TIMEOUT as e:
+                if len(spawn.before) > buf_length:
+                    buf_length = len(spawn.before)
+                    timeout = 30
+                else:
+                    raise e
 
     def get_response(self, connection=None, silent=False):
         """
