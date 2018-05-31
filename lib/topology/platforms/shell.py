@@ -30,6 +30,7 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
 from pexpect import spawn as Spawn  # noqa
+from pexpect import TIMEOUT
 
 from topology.logging import get_logger
 
@@ -453,7 +454,8 @@ class PExpectShell(BaseShell):
     def send_command(
         self, command,
         matches=None, newline=True,
-        timeout=None, connection=None, silent=False, control=False
+        timeout=None, connection=None, silent=False, control=False,
+        continuous_timeout=False
     ):
         """
         See :meth:`BaseShell.send_command` for more information.
@@ -462,6 +464,9 @@ class PExpectShell(BaseShell):
          only. If enabled, the character sent will be interpreted as a control
          character. Enabling this option makes ``newline`` irrelevant. Defaults
          to ``False``.
+        :param bool continuous_timeout: if true, we will repeat the expect with
+         the same timeout duration as long as the command is still returning
+         output.
         """
         # If auto connect is false, fail if:
         # 1. Connection is missing
@@ -511,10 +516,24 @@ class PExpectShell(BaseShell):
         if timeout is None:
             timeout = self._timeout
 
-        match_index = spawn.expect(
-            matches, timeout=timeout
-        )
-        return match_index
+        # if continuous_timeout is requested, we will repeat the expect with
+        # the same timeout duration as long as the command is still returning
+        # output.
+        if continuous_timeout:
+            buf_length = 0
+            while True:
+                try:
+                    return spawn.expect(matches, timeout=timeout)
+                except TIMEOUT as e:
+                    if len(spawn.before) > buf_length:
+                        buf_length = len(spawn.before)
+                    else:
+                        raise e
+        else:
+            match_index = spawn.expect(
+                matches, timeout=timeout
+            )
+            return match_index
 
     def get_response(self, connection=None, silent=False):
         """
