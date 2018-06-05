@@ -37,6 +37,32 @@ License
 Changelog
 =========
 
+Changelog
+=========
+
+
+1.9.12 (2018-06-05)
+-------------------
+
+Changes
+~~~~~~~
+- Bumping version to 1.9.12. [Diego Antonio Hurtado Pimentel]
+- Add FORCED_PROMPT to the initial prompt. [Joseph Loaiza]
+
+  The original initial prompt does not match the FORCED_PROMPT, this makes the shell to throw a timeout exception when trying to reconnect to a previously used shell.
+
+Fix
+~~~
+- Adding missing release information. [Diego Antonio Hurtado Pimentel]
+- Updating to new PEP8 requirements. [Diego Antonio Hurtado Pimentel]
+
+Other
+~~~~~
+- Add a dynamic timeout option. [Matthew Hall]
+
+  When this option is used expect will be repeated as long as output is
+  still being returned.
+
 
 1.9.11 (2017-11-20)
 -------------------
