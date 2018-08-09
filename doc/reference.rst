@@ -83,17 +83,3 @@ addresses, routes, etc.
    :includehidden:
 
    reference/topology_lib_ip
-
-
-Vtysh
-+++++
-
-The Vtysh communication library allows to abstract contexts and commands for
-OpenSwitch_'s vtysh interactive shell.
-
-.. _OpenSwitch: http://openswitch.net/
-
-.. toctree::
-   :includehidden:
-
-   reference/topology_lib_vtysh

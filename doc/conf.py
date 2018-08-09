@@ -297,6 +297,7 @@ texinfo_documents = [
 def setup(app):
     app.add_stylesheet('styles/custom.css')
 
+
 # autoapi configuration
 autoapi_common_options = {
     'output': 'reference',
@@ -309,7 +310,6 @@ autoapi_modules = {
     'topology_connect': autoapi_common_options,
     'topology_lib_ping': autoapi_common_options,
     'topology_lib_ip': autoapi_common_options,
-    'topology_lib_vtysh': autoapi_common_options,
 }
 
 # Configure PlantUML

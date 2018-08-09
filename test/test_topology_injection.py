@@ -360,5 +360,5 @@ def test_attribute_injection(tmpdir):
     finally:
         try:
             rmtree(workdir)
-        except:
+        except Exception:
             pass
