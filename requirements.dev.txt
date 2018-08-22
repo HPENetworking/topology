@@ -1,5 +1,5 @@
-flake8==2.5.4
-pep8-naming==0.3.3
+flake8==3.5.0
+pep8-naming==0.4.1
 pytest==3.0.4
 pytest-cov==2.4.0
 deepdiff==1.1.0

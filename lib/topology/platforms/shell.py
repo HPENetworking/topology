@@ -549,9 +549,12 @@ class PExpectShell(BaseShell):
 
         # Remove leading and trailing whitespaces and normalize newlines
         text = text.strip().replace('\r', '')
+        term_codes_regex = getattr(
+            self, 'TERM_CODES_REGEX', TERM_CODES_REGEX
+        )
 
         # Remove control codes
-        text = regex_sub(TERM_CODES_REGEX, '', text)
+        text = regex_sub(term_codes_regex, '', text)
 
         # Split text into lines
         lines = text.splitlines()

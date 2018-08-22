@@ -29,5 +29,4 @@ topology==1.9.2
 -e git+https://github.com/HPENetworking/topology_docker.git@27b0fbde433e4fa2655451bd90f191f2a0c43853#egg=topology_docker
 -e git+https://github.com/HPENetworking/topology_lib_ip.git@20a7352c4516dc84eff73df51705497c20ed591e#egg=topology_lib_ip
 -e git+https://github.com/HPENetworking/topology_lib_ping.git@e0f602e9c339ccde8262537d7e920bccc7afcb42#egg=topology_lib_ping
--e git+https://git.openswitch.net/openswitch/ops-topology-lib-vtysh@0dc7a477a9fbce4a5084d9bf93c51f0d1ee74d24#egg=topology_lib_vtysh
 websocket-client==0.40.0
