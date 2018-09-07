@@ -258,7 +258,7 @@ def pytest_configure(config):
     create_dir(log_dir)
 
     # Parse attributes injection file
-    from ..injection import parse_attribute_injection
+    from pyszn.injection import parse_attribute_injection
     injected_attr = None
     if injection_file is not None:
 

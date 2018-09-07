@@ -2,3 +2,4 @@ six
 pexpect
 pyparsing
 pynml
+pyszn
