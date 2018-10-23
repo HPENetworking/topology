@@ -395,6 +395,7 @@ class PExpectShell(BaseShell):
         self._node_identifier = None
         self._shell_name = None
         self._errors = errors
+        self._testlog = None
 
         # Doing this to avoid having a mutable object as default value in the
         # arguments.
@@ -508,9 +509,14 @@ class PExpectShell(BaseShell):
 
         # Log log_send_command
         if not silent:
-            spawn._connection_logger.log_send_command(
-                command, matches, newline, timeout
-            )
+            if self._testlog:
+                self._testlog.log_send_command(
+                    self._node_identifier, self._shell_name, command,
+                    None if matches == [self._prompt] else matches, timeout)
+            else:
+                spawn._connection_logger.log_send_command(
+                    command, matches, newline, timeout
+                )
 
         # Expect matches
         if timeout is None:
@@ -572,7 +578,11 @@ class PExpectShell(BaseShell):
 
         # Log response
         if not silent:
-            spawn._connection_logger.log_get_response(response)
+            if self._testlog:
+                self._testlog.log_get_response(
+                    self._node_identifier, self._shell_name, response)
+            else:
+                spawn._connection_logger.log_get_response(response)
 
         return response
 
