@@ -515,6 +515,15 @@ class CommonNode(BaseNode):
         """
         print(response.encode(self._shells[shell]._encoding))
 
+    def _set_test_log(self, log):
+        """
+        Set the current test execution log. This log is set by test requiest
+
+        :param log: the logging object requested
+        """
+        for shell in self._shells:
+            self.get_shell(shell)._testlog = log
+
 
 __all__ = [
     'HighLevelShellAPI',
