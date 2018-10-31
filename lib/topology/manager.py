@@ -360,9 +360,9 @@ class TopologyManager(object):
             )
         self._platform.unlink(link_id)
 
-    def set_test_log(self, log):
+    def _set_test_log(self, log):
         """
-        Set the current test execution log. This log is set by test requiest
+        Set the current test execution log. This log is set by testlog library
 
         :param log: the logging object requested
         """
