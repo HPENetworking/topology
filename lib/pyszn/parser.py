@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2018 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 # under the License.
 
 """
-topology parser module.
+SZN parser module.
 
 This module takes care of parsing a topology meta-description written in SZN.
 
@@ -52,9 +52,6 @@ way, a link between endpoints MAY have attributes. An endpoint is a combination
 of a node and a port name.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import logging
 from traceback import format_exc
 from collections import OrderedDict
@@ -72,6 +69,7 @@ class ParseException(Exception):
     :var raw_line: Raw line that failed to be parsed.
     :var exc: Internal failure traceback of the parser.
     """
+
     def __init__(self, lineno, raw_line, exc):
         super(ParseException, self).__init__(
             'Unable to parse line #{}: "{}"'.format(
@@ -87,8 +85,8 @@ def build_parser():
     """
     Build a pyparsing parser for our custom topology description language.
 
-    :rtype: pyparsing.MatchFirst
     :return: A pyparsing parser.
+    :rtype: pyparsing.MatchFirst
     """
     from pyparsing import (
         Word, Literal, QuotedString,
@@ -112,8 +110,8 @@ def build_parser():
     )
 
     node = identifier('node')
-    port = node + Literal(':') + (identifier | number)('port')
-    link = port('endpoint_a') + Literal('--') + port('endpoint_b')
+    port = Group(node + Literal(':') + (identifier | number)('port'))
+    link = Group(port('endpoint_a') + Literal('--') + port('endpoint_b'))
 
     environment_spec = (
         StringStart() + attributes('environment') + StringEnd()
@@ -150,7 +148,7 @@ def parse_txtmeta(txtmeta):
         'environment': OrderedDict(),
         'nodes': [],
         'ports': [],
-        'links': []
+        'links': [],
     }
 
     def process_attributes(parsed):
@@ -194,25 +192,26 @@ def parse_txtmeta(txtmeta):
 
             # Process link lines
             if 'link' in parsed:
+
                 link = parsed.link
                 data['links'].append({
                     'endpoints': (
                         (link.endpoint_a.node, link.endpoint_a.port),
                         (link.endpoint_b.node, link.endpoint_b.port),
                     ),
-                    'attributes': attrs
+                    'attributes': attrs,
                 })
 
                 data['nodes'].append({
                     'nodes': [link.endpoint_a.node, link.endpoint_b.node],
-                    'attributes': OrderedDict()
+                    'attributes': OrderedDict(),
                 })
                 data['ports'].append({
                     'ports': [
                         (link.endpoint_a.node, link.endpoint_a.port),
                         (link.endpoint_b.node, link.endpoint_b.port)
                     ],
-                    'attributes': OrderedDict()
+                    'attributes': OrderedDict(),
                 })
                 continue
 
@@ -222,11 +221,11 @@ def parse_txtmeta(txtmeta):
                     'ports': [
                         (port.node, port.port) for port in parsed.ports
                     ],
-                    'attributes': attrs
+                    'attributes': attrs,
                 })
                 data['nodes'].append({
                     'nodes': [port.node for port in parsed.ports],
-                    'attributes': OrderedDict()
+                    'attributes': OrderedDict(),
                 })
                 continue
 
@@ -234,7 +233,7 @@ def parse_txtmeta(txtmeta):
             if 'nodes' in parsed:
                 data['nodes'].append({
                     'nodes': [node.node for node in parsed.nodes],
-                    'attributes': attrs
+                    'attributes': attrs,
                 })
                 continue
 
@@ -244,18 +243,15 @@ def parse_txtmeta(txtmeta):
                     data['environment'].update(attrs)
                 else:
                     raise Exception(
-                        'Multiple declaration of environment attributes:'
-                        ' {}'.format(attrs)
+                        'Multiple declaration of environment attributes: '
+                        '{}'.format(attrs)
                     )
                 continue
 
             raise Exception('Unknown line type parsed.')
 
-        except Exception:
-            e = ParseException(lineno, raw_line, format_exc())
-            log.error(str(e))
-            log.debug(e.exc)
-            raise e
+        except Exception as e:
+            raise ParseException(lineno, raw_line, format_exc()) from e
 
     # Remove duplicate data created implicitly
     temp_nodes = OrderedDict()
@@ -276,7 +272,7 @@ def parse_txtmeta(txtmeta):
 
     data['nodes'] = [
         {'nodes': [k], 'attributes': v} for k, v in temp_nodes.items()
-        ]
+    ]
 
     data['ports'] = [
         {'ports': [k], 'attributes': v} for k, v in temp_ports.items()
@@ -292,8 +288,9 @@ def find_topology_in_python(filename):
     the Python code isn't executed.
 
     :param str filename: Path to file to search for TOPOLOGY.
-    :rtype: str or None
+
     :return: The value of the TOPOLOGY variable if found, None otherwise.
+    :rtype: str or None
     """
     import ast
 

@@ -16,17 +16,13 @@
 # under the License.
 
 """
-Test suite for module topology.injection.
+Test suite for module pyszn.injection.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 from os.path import join
 from shutil import rmtree
 from collections import OrderedDict
 
-# Reload module to properly measure coverage
 from deepdiff import DeepDiff
 
 from pyszn.injection import parse_attribute_injection
@@ -193,115 +189,122 @@ INJECTION_FILE = """
 EXPECTED_PARSED_INJECTION_FILE = OrderedDict([
     (
         '{search_path}/test_topology_match_0.py',
-        {'environment': {},
-         'ports': OrderedDict([(('hs1', '1'), {'port_attr': 'port_value'})]),
-         'links': OrderedDict([((('hs1', '1'), ('sw1', '1')),
-                                {
-                                    'link_attr': 'link_value'
-                                })]),
-         'nodes':
-         OrderedDict([
-            (
-                'sw1', {
-                    'image': 'image_for_sw1_sw3_hs1_hs2',
-                    'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+        {
+            'environment': {},
+            'ports': OrderedDict([
+                (('hs1', '1'), {'port_attr': 'port_value'})
+            ]),
+            'links': OrderedDict([(
+                (('hs1', '1'), ('sw1', '1')),
+                {
+                    'link_attr': 'link_value',
                 }
-            ), (
-                'sw2', {
-                    'image': 'image_for_sw2',
-                    'shell': 'vtysh',
-                    'name': 'new_name',
-                }
-            ), (
-                'sw8', {
-                    'chassis': 'chassis_for_sw8'
-                }
-            ), (
-                'hs1', {
-                    'image': 'image_for_all_hosts',
-                    'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
-                }
-            ), (
-                'hs2', {
-                    'image': 'image_for_all_hosts',
-                    'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
-                }
-            ),
-         ])}
+            )]),
+            'nodes': OrderedDict([
+                (
+                    'sw1', {
+                        'image': 'image_for_sw1_sw3_hs1_hs2',
+                        'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+                    }
+                ), (
+                    'sw2', {
+                        'image': 'image_for_sw2',
+                        'shell': 'vtysh',
+                        'name': 'new_name',
+                    }
+                ), (
+                    'sw8', {
+                        'chassis': 'chassis_for_sw8'
+                    }
+                ), (
+                    'hs1', {
+                        'image': 'image_for_all_hosts',
+                        'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+                    }
+                ), (
+                    'hs2', {
+                        'image': 'image_for_all_hosts',
+                        'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+                    }
+                ),
+            ])}
     ), (
         '{search_path}/subfolder/test_topology_match_1.py',
-        {'environment': {},
-         'ports': OrderedDict(),
-         'links': OrderedDict(),
-         'nodes':
-         OrderedDict([
-            (
-                'sw1', {
-                    'image': 'image_for_sw1_sw3_hs1_hs2',
-                    'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
-                }
-            ), (
-                'hs1', {
-                    'image': 'image_for_all_hosts',
-                    'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
-                }
-            ), (
-                'hs2', {
-                    'image': 'image_for_all_hosts',
-                    'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
-                }
-            ),
-         ])}
+        {
+            'environment': {},
+            'ports': OrderedDict(),
+            'links': OrderedDict(),
+            'nodes': OrderedDict([
+                (
+                    'sw1', {
+                        'image': 'image_for_sw1_sw3_hs1_hs2',
+                        'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+                    }
+                ), (
+                    'hs1', {
+                        'image': 'image_for_all_hosts',
+                        'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+                    }
+                ), (
+                    'hs2', {
+                        'image': 'image_for_all_hosts',
+                        'hardware': 'hardware_for_sw1_sw3_hs1_hs2',
+                    }
+                ),
+            ])
+        }
     ), (
         '{search_path}/test_topology_match_2.py',
-        {'environment': {},
-         'ports': OrderedDict(),
-         'links': OrderedDict(),
-         'nodes':
-         OrderedDict([
-            (
-                'sw4', {
-                    'image': 'image_for_sw4_sw5',
-                }
-            ), (
-                'sw5', {
-                    'image': 'image_for_sw4_sw5',
-                }
-            ),
-         ])}
+        {
+            'environment': {},
+            'ports': OrderedDict(),
+            'links': OrderedDict(),
+            'nodes': OrderedDict([
+                (
+                    'sw4', {
+                        'image': 'image_for_sw4_sw5',
+                    }
+                ), (
+                    'sw5', {
+                        'image': 'image_for_sw4_sw5',
+                    }
+                ),
+            ])
+        }
     ), (
         '{search_path}/subfolder/test_topology_match_3.py',
-        {'environment': {},
-         'ports': OrderedDict(),
-         'links': OrderedDict(),
-         'nodes':
-         OrderedDict([
-            (
-                'hs1', {
-                    'image': 'image_for_all_hosts',
-                }
-            ),  (
-                'hs2', {
-                    'image': 'image_for_all_hosts',
-                }
-            ), (
-                'hs3', {
-                    'image': 'image_for_all_hosts',
-                }
-            ), (
-                'hs4', {
-                    'image': 'image_for_all_hosts',
-                }
-            ), (
-                'sw6', {
-                    'image': 'image_for_sw6_sw7',
-                }
-            ), (
-                'sw7', {
-                    'image': 'image_for_sw6_sw7',
-                }
-            ),
-         ])}
+        {
+            'environment': {},
+            'ports': OrderedDict(),
+            'links': OrderedDict(),
+            'nodes': OrderedDict([
+                (
+                    'hs1', {
+                        'image': 'image_for_all_hosts',
+                    }
+                ), (
+                    'hs2', {
+                        'image': 'image_for_all_hosts',
+                    }
+                ), (
+                    'hs3', {
+                        'image': 'image_for_all_hosts',
+                    }
+                ), (
+                    'hs4', {
+                        'image': 'image_for_all_hosts',
+                    }
+                ), (
+                    'sw6', {
+                        'image': 'image_for_sw6_sw7',
+                    }
+                ), (
+                    'sw7', {
+                        'image': 'image_for_sw6_sw7',
+                    }
+                ),
+            ])
+        }
     )]
 )
 

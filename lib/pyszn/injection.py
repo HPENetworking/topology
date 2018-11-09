@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2018 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+
 """
 Parser attributes injection files.
 
@@ -21,9 +22,6 @@ This module defines a set of functions that implement logic to parse a
 attributes injection file and extract from it the injection specification that
 allows to modify attributes of entities in different topologies.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 from re import match
 from glob import glob
