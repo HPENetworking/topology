@@ -35,7 +35,7 @@ from pexpect import TIMEOUT
 from topology.logging import get_logger
 
 
-TERM_CODES_REGEX = r'\x1b[E|\[](\?)?([0-9]{1,2}(;[0-9]{1,2})?)?[m|K|h|H|r]?'
+TERM_CODES_REGEX = '\x1b[E\[\(]\??([B\d]{1,2}(;\d{1,3})?)?[mKhHr]?'
 """
 Regular expression to match terminal control codes.
 
@@ -560,7 +560,9 @@ class PExpectShell(BaseShell):
         )
 
         # Remove control codes
+        print('TEXT 1: {} !!!!!!!!'.format(text))
         text = regex_sub(term_codes_regex, '', text)
+        print('TEXT 2: {} !!!!!!!!'.format(text))
 
         # Split text into lines
         lines = text.splitlines()
