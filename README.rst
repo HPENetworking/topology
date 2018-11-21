@@ -38,6 +38,18 @@ Changelog
 =========
 
 
+1.9.14 (2018-11-21)
+-------------------
+
+Changes
+~~~~~~~
+- Bumping version to 1.9.14. [Diego Hurtado]
+
+Other
+~~~~~
+- Make new testlog func private. [Matthew Hall]
+
+
 1.9.13 (2018-11-16)
 -------------------
 
