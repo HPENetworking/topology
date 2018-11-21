@@ -17,8 +17,6 @@
 
 """
 Test suite for module pyszn.parser.
-
-See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 """
 
 from collections import OrderedDict
@@ -28,27 +26,27 @@ from deepdiff import DeepDiff
 from pyszn.parser import parse_txtmeta
 
 
-TOPOLOGY = """
-# Environment
-[virtual=none awesomeness=medium]
-
-# Nodes
-[shell=vtysh] sw1 sw2
-[type=host] hs1
-hs2
-
-# Links
-sw1:1 -- hs1:1
-sw1:a -- hs1:a
-[attr1=1] sw1:4 -- hs2:a
-"""
-
-
-def test_txtmeta_parse():
+def test_parse():
     """
-    Test the txtmeta parsing feature of the TopologyManager object.
+    Tests parsing of a complete SZN
     """
-    dictmeta = parse_txtmeta(TOPOLOGY)
+
+    topology = """
+    # Environment
+    [virtual=none awesomeness=medium]
+
+    # Nodes
+    [shell=vtysh] sw1 sw2
+    [type=host] hs1
+    hs2
+
+    # Links
+    sw1:1 -- hs1:1
+    sw1:a -- hs1:a
+    [attr1=1] sw1:4 -- hs2:a
+    """
+
+    actual = parse_txtmeta(topology)
 
     expected = {
         'environment': OrderedDict(
@@ -60,16 +58,16 @@ def test_txtmeta_parse():
                 'nodes': ['sw1']
             },
             {
-                'attributes': OrderedDict([('shell', 'vtysh')]),
-                'nodes': ['sw2']
-            },
-            {
                 'attributes': OrderedDict([('type', 'host')]),
                 'nodes': ['hs1']
             },
             {
                 'attributes': OrderedDict(),
                 'nodes': ['hs2']
+            },
+            {
+                'attributes': OrderedDict([('shell', 'vtysh')]),
+                'nodes': ['sw2']
             },
         ],
         'ports': [
@@ -113,5 +111,109 @@ def test_txtmeta_parse():
             }
         ]
     }
-    ddiff = DeepDiff(dictmeta, expected)
-    assert not ddiff
+
+    assert not DeepDiff(actual, expected)
+
+
+def test_autonode():
+    """
+    Test the automatic creation of implicit nodes
+    """
+
+    topology = """
+    sw1:port1
+    """
+
+    actual = parse_txtmeta(topology)
+
+    expected = {
+        'environment': OrderedDict(),
+        'nodes': [{'attributes': OrderedDict(), 'nodes': ['sw1']}],
+        'ports': [{'ports': [('sw1', 'port1')], 'attributes': OrderedDict()}],
+        'links': []
+    }
+
+    assert not DeepDiff(actual, expected)
+
+
+def test_multiline():
+    """
+    Test the support for multiline attributes
+    """
+    topology = """
+    # Environment
+    [
+        virtual=none
+        awesomeness=medium
+    ]
+    """
+
+    actual = parse_txtmeta(topology)
+
+    expected = {
+        'environment': OrderedDict(
+            [('virtual', 'none'), ('awesomeness', 'medium')]
+        ),
+        'nodes': [],
+        'ports': [],
+        'links': []
+    }
+
+    assert not DeepDiff(actual, expected)
+
+
+def test_attributes():
+    """
+    Test that attributes should just be added to the nodes on the same line
+    """
+    topology = """
+    [attr=value] hs1 hs3
+    hs2
+    """
+
+    actual = parse_txtmeta(topology)
+
+    expected = {
+        'environment': OrderedDict(),
+        'nodes': [
+            {
+                'attributes': OrderedDict([('attr', 'value')]),
+                'nodes': ['hs1']
+            },
+            {
+                'attributes': OrderedDict([('attr', 'value')]),
+                'nodes': ['hs3']
+            },
+            {
+                'attributes': OrderedDict(),
+                'nodes': ['hs2']
+            },
+        ],
+        'ports': [],
+        'links': []
+    }
+
+    assert not DeepDiff(actual, expected)
+
+
+def test_single():
+    """
+    Test that a single line string (no new lines '\\n') is parsed
+    """
+    topology = """[attr=value] hs1"""
+
+    actual = parse_txtmeta(topology)
+
+    expected = {
+        'environment': OrderedDict(),
+        'nodes': [
+            {
+                'attributes': OrderedDict([('attr', 'value')]),
+                'nodes': ['hs1']
+            },
+        ],
+        'ports': [],
+        'links': []
+    }
+
+    assert not DeepDiff(actual, expected)

@@ -52,10 +52,17 @@ way, a link between endpoints MAY have attributes. An endpoint is a combination
 of a node and a port name.
 """
 
+from copy import deepcopy
 import logging
 from traceback import format_exc
 from collections import OrderedDict
 
+from pyparsing import (
+    Word, Literal, QuotedString,
+    ParserElement, alphas, nums, alphanums,
+    Group, OneOrMore, Optional,
+    LineEnd, Suppress, LineStart, restOfLine, CaselessLiteral
+)
 
 log = logging.getLogger(__name__)
 
@@ -88,50 +95,62 @@ def build_parser():
     :return: A pyparsing parser.
     :rtype: pyparsing.MatchFirst
     """
-    from pyparsing import (
-        Word, Literal, QuotedString,
-        StringStart, StringEnd,
-        alphas, nums, alphanums,
-        Group, OneOrMore, Optional
-    )
-
-    number = Word(nums)
+    ParserElement.setDefaultWhitespaceChars(' \t')
+    nl = Suppress(LineEnd())
+    number = Word(nums).setParseAction(lambda l, s, t: int(t[0]))
+    boolean = (
+        CaselessLiteral('true') | CaselessLiteral('false')
+    ).setParseAction(lambda l, s, t: t[0].casefold() == 'true')
+    comment = Literal('#') + restOfLine + nl
     text = QuotedString('"')
     identifier = Word(alphas, alphanums + '_')
-
-    attribute = (
-        identifier('key') + Literal('=') +
-        (text | number | identifier)('value')
+    empty_line = LineStart()+LineEnd()
+    attribute = Group(
+        identifier('key') + Suppress(Literal('=')) +
+        (text | number | boolean | identifier)('value') + Optional(nl)
     )
     attributes = (
-        Literal('[') +
-        OneOrMore(Group(attribute))('attributes') +
-        Literal(']')
+        Suppress(Literal('[')) + Optional(nl) +
+        OneOrMore(attribute) +
+        Suppress(Literal(']'))
     )
 
     node = identifier('node')
-    port = Group(node + Literal(':') + (identifier | number)('port'))
-    link = Group(port('endpoint_a') + Literal('--') + port('endpoint_b'))
+    port = Group(node + Suppress(Literal(':')) + (identifier | number)('port'))
+    link = Group(
+        port('endpoint_a') + Suppress(Literal('--')) + port('endpoint_b')
+    )
 
     environment_spec = (
-        StringStart() + attributes('environment') + StringEnd()
-    )
+        attributes + nl
+    ).setResultsName('env_spec', listAllMatches=True)
     nodes_spec = (
-        StringStart() + Optional(attributes) +
-        OneOrMore(Group(node))('nodes') + StringEnd()
-    )
+        Group(
+            Optional(attributes)('attributes')
+            + Group(OneOrMore(node))('nodes')
+        ) + nl
+    ).setResultsName('node_spec', listAllMatches=True)
     ports_spec = (
-        StringStart() + Optional(attributes) +
-        OneOrMore(Group(port))('ports') + StringEnd()
-    )
+        Group(
+            Optional(attributes)('attributes')
+            + Group(OneOrMore(port))('ports')
+        ) + nl
+    ).setResultsName('port_spec', listAllMatches=True)
     link_spec = (
-        StringStart() + Optional(attributes) +
-        link('link') + StringEnd()
+        Group(
+            Optional(attributes)('attributes') + link('links')
+        ) + nl
+    ).setResultsName('link_spec', listAllMatches=True)
+
+    statements = OneOrMore(
+        comment
+        | link_spec
+        | ports_spec
+        | nodes_spec
+        | environment_spec
+        | empty_line
     )
-
-    statement = environment_spec | link_spec | ports_spec | nodes_spec
-
-    return statement
+    return statements
 
 
 def parse_txtmeta(txtmeta):
@@ -151,114 +170,85 @@ def parse_txtmeta(txtmeta):
         'links': [],
     }
 
-    def process_attributes(parsed):
-        """
-        Convert a pyparsing object with parsed attributes in a dictionary.
-        """
-        attrs = OrderedDict()
+    parsed_result = statement.parseString(txtmeta)
 
-        if 'attributes' not in parsed:
-            return attrs
+    # Process environment line
+    if 'env_spec' in parsed_result:
+        if len(parsed_result['env_spec']) > 1:
+            raise Exception(
+                'Multiple declaration of environment attributes: '
+                '{}'.format(parsed_result['env_spec'][1])
+            )
+        for attr in parsed_result['env_spec'][0]:
+            data['environment'][attr.key] = attr.value
 
-        for attr in parsed.attributes:
+    # Process the links
+    if 'link_spec' in parsed_result:
+        for parsed in parsed_result['link_spec']:
+            link = parsed[0].links
+            attrs = OrderedDict()
+            if "attributes" in parsed[0]:
+                for attr in parsed[0].attributes:
+                    attrs[attr.key] = attr.value
+            data['links'].append({
+                'endpoints': (
+                    (str(link.endpoint_a.node), str(link.endpoint_a.port)),
+                    (str(link.endpoint_b.node), str(link.endpoint_b.port)),
+                ),
+                'attributes': attrs,
+            })
 
-            value = attr.value
+            data['nodes'].append({
+                'nodes': [
+                    str(link.endpoint_a.node), str(link.endpoint_b.node)
+                ],
+                'attributes': OrderedDict(),
+            })
+            data['ports'].append({
+                'ports': [
+                    (str(link.endpoint_a.node), str(link.endpoint_a.port)),
+                    (str(link.endpoint_b.node), str(link.endpoint_b.port))
+                ],
+                'attributes': OrderedDict(),
+            })
+    # Process the ports
+    if 'port_spec' in parsed_result:
+        for parsed in parsed_result['port_spec']:
+            ports = parsed[0].ports
+            attrs = OrderedDict()
+            if "attributes" in parsed[0]:
+                for attr in parsed[0].attributes:
+                    attrs[attr.key] = attr.value
+            data['ports'].append({
+                'ports': [
+                    (str(port.node), str(port.port)) for port in ports
+                ],
+                'attributes': attrs,
+            })
+            data['nodes'].append({
+                'nodes': [str(port.node) for port in ports],
+                'attributes': OrderedDict(),
+            })
 
-            # Try to convert simple types
-            try:
-                value = int(value)
-            except ValueError:
-                pass
-            if value == 'True':
-                value = True
-            elif value == 'False':
-                value = False
-
-            attrs[attr.key] = value
-        return attrs
-
-    for lineno, raw_line in enumerate(txtmeta.splitlines(), 1):
-        try:
-            # Ignore comments and empty line
-            line = raw_line.strip()
-            if not line or line.startswith('#'):
-                continue
-
-            # Parse line and optional attributes
-            parsed = statement.parseString(line)
-            attrs = process_attributes(parsed)
-            log.debug(parsed.dump())
-            log.debug(attrs)
-
-            # Process link lines
-            if 'link' in parsed:
-
-                link = parsed.link
-                data['links'].append({
-                    'endpoints': (
-                        (link.endpoint_a.node, link.endpoint_a.port),
-                        (link.endpoint_b.node, link.endpoint_b.port),
-                    ),
-                    'attributes': attrs,
-                })
-
-                data['nodes'].append({
-                    'nodes': [link.endpoint_a.node, link.endpoint_b.node],
-                    'attributes': OrderedDict(),
-                })
-                data['ports'].append({
-                    'ports': [
-                        (link.endpoint_a.node, link.endpoint_a.port),
-                        (link.endpoint_b.node, link.endpoint_b.port)
-                    ],
-                    'attributes': OrderedDict(),
-                })
-                continue
-
-            # Process port lines
-            if 'ports' in parsed:
-                data['ports'].append({
-                    'ports': [
-                        (port.node, port.port) for port in parsed.ports
-                    ],
-                    'attributes': attrs,
-                })
-                data['nodes'].append({
-                    'nodes': [port.node for port in parsed.ports],
-                    'attributes': OrderedDict(),
-                })
-                continue
-
-            # Process port lines
-            if 'nodes' in parsed:
-                data['nodes'].append({
-                    'nodes': [node.node for node in parsed.nodes],
-                    'attributes': attrs,
-                })
-                continue
-
-            # Process environment line
-            if 'environment' in parsed:
-                if len(data['environment']) == 0:
-                    data['environment'].update(attrs)
-                else:
-                    raise Exception(
-                        'Multiple declaration of environment attributes: '
-                        '{}'.format(attrs)
-                    )
-                continue
-
-            raise Exception('Unknown line type parsed.')
-
-        except Exception as e:
-            raise ParseException(lineno, raw_line, format_exc()) from e
+    # Process the nodes
+    if 'node_spec' in parsed_result:
+        for parsed in parsed_result['node_spec']:
+            nodes = parsed[0].nodes
+            attrs = OrderedDict()
+            if "attributes" in parsed[0]:
+                for attr in parsed[0].attributes:
+                    attrs[attr.key] = attr.value
+            data['nodes'].append({
+                'nodes': [str(node) for node in nodes],
+                'attributes': attrs,
+            })
 
     # Remove duplicate data created implicitly
     temp_nodes = OrderedDict()
     for node_list in data['nodes']:
         for node in node_list['nodes']:
             if node not in temp_nodes.keys():
-                temp_nodes[node] = node_list['attributes']
+                temp_nodes[node] = deepcopy(node_list['attributes'])
             else:
                 temp_nodes[node].update(node_list['attributes'])
 
@@ -266,7 +256,7 @@ def parse_txtmeta(txtmeta):
     for port_list in data['ports']:
         for port in port_list['ports']:
             if port not in temp_ports.keys():
-                temp_ports[port] = port_list['attributes']
+                temp_ports[port] = deepcopy(port_list['attributes'])
             else:
                 temp_ports[port].update(port_list['attributes'])
 
