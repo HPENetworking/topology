@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2018 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -160,5 +160,11 @@ def get_iface_name(enode, netname):
 
     return iface
 
-__all__ = ['ensure_dir', 'tmp_iface', 'cmd_prefix', 'privileged_cmd',
-           'get_iface_name']
+
+__all__ = [
+    'ensure_dir',
+    'tmp_iface',
+    'cmd_prefix',
+    'privileged_cmd',
+    'get_iface_name'
+]

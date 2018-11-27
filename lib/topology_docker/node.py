@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2018 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ from shlex import split as shsplit
 from subprocess import check_output
 from abc import ABCMeta, abstractmethod
 
-from docker import Client
+from docker import APIClient
 from six import add_metaclass
 
 from topology.platforms.node import CommonNode
@@ -125,7 +125,7 @@ class DockerNode(CommonNode):
         self._command = command
         self._hostname = hostname
         self._environment = environment
-        self._client = Client(version='auto')
+        self._client = APIClient(version='auto')
 
         self._container_name = '{identifier}_{pid}_{timestamp}'.format(
             identifier=identifier, pid=getpid(),

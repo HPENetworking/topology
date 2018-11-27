@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2018 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ from __future__ import print_function, division
 import logging
 from traceback import format_exc
 from collections import OrderedDict
-from docker import Client
+from docker import APIClient
 
 from topology.platforms.utils import NodeLoader
 from topology.platforms.platform import BasePlatform
@@ -293,14 +293,14 @@ class DockerPlatform(BasePlatform):
         for enode in self.nmlnode_node_map.values():
             try:
                 enode.stop()
-            except:
+            except Exception:
                 log.error(format_exc())
 
         # Remove the linked netns
         for enode in self.nmlnode_node_map.values():
             try:
                 privileged_cmd('rm /var/run/netns/{pid}', pid=enode._pid)
-            except:
+            except Exception:
                 log.error(format_exc())
 
         # Save the names of all docker-managed networks
@@ -321,11 +321,11 @@ class DockerPlatform(BasePlatform):
 
                         networks_to_remove.add(netname)
 
-            except:
+            except Exception:
                 log.error(format_exc())
 
         # Remove all docker-managed networks
-        dockerclient = Client(version='auto')
+        dockerclient = APIClient(version='auto')
         for netname in networks_to_remove:
             dockerclient.remove_network(net_id=netname)
 
