@@ -162,6 +162,7 @@ class DockerNode(CommonNode):
             'privileged': privileged,
             'network_mode': network_mode,
             'binds': container_binds,
+            'init': True
         }
         create_host_config_call.update(self._create_host_config_kwargs)
 
