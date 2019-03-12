@@ -261,7 +261,7 @@ class BaseShell(object):
          existing connection as the default one.
         """
 
-    def execute(self, command, connection=None):
+    def execute(self, command, *args, connection=None, **kwargs):
         """
         Executes a command.
 
@@ -276,11 +276,11 @@ class BaseShell(object):
         :rtype: str
         :return: Shell response to the command being sent.
         """
-        self.send_command(command, connection=connection)
+        self.send_command(command, *args, connection=connection, **kwargs)
         return self.get_response(connection=connection)
 
-    def __call__(self, command, connection=None):
-        return self.execute(command, connection=connection)
+    def __call__(self, command, *args, connection=None, **kwargs):
+        return self.execute(command, *args, connection=connection, **kwargs)
 
     def _setup_shell(self, *args, connection=None, **kwargs):
         """
@@ -746,7 +746,7 @@ class PExpectBashShell(PExpectShell):
 
     def __init__(
             self,
-            initial_prompt=['\w+@.+:.+[#$] ', FORCED_PROMPT],
+            initial_prompt=[r'\w+@.+:.+[#$] ', FORCED_PROMPT],
             try_filter_echo=False, delay_after_echo_off=1, **kwargs):
 
         self._delay_after_echo_off = delay_after_echo_off
