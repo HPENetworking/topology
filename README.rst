@@ -10,6 +10,41 @@ Documentation
 
     https://pyszn.readthedocs.org/
 
+
+Changelog
+=========
+
+1.1.0 (2018-11-09)
+------------------
+
+Changes
+~~~~~~~
+
+- Dropped support for Python 2.7. [Carlos Jenkins]
+
+Fix
+~~~
+
+- Fix grammar description for pyparsing > 2.2.2. [Carlos Jenkins]
+
+1.0.0 (2017-11-02)
+------------------
+
+Initial public release.
+
+New
+~~~
+
+- Inject support links ports and env. [Javier Peralta]
+
+Other
+~~~~~
+
+- Merge pull request #1 from HPENetworking/extend_injection. [Diego Hurtado]
+
+  Extend injection
+
+
 License
 =======
 
@@ -29,29 +64,3 @@ License
    KIND, either express or implied.  See the License for the
    specific language governing permissions and limitations
    under the License.
-
-Changelog
-=========
-
-
-1.1.1 (2018-11-21)
-------------------
-
-Changes
-~~~~~~~
-- Parser supports multiline attributes. [Javier Peralta]
-
-
-1.0.0 (2017-11-02)
-------------------
-
-New
-~~~
-- Inject support links ports and env. [Javier Peralta]
-
-Other
-~~~~~
-- Merge pull request #1 from HPENetworking/extend_injection. [Diego
-  Hurtado]
-
-  Extend injection
