@@ -14,6 +14,15 @@ Documentation
 Changelog
 =========
 
+
+1.1.1 (2018-11-21)
+------------------
+
+Changes
+~~~~~~~
+
+- Parser supports multiline attributes. [Javier Peralta]
+
 1.1.0 (2018-11-09)
 ------------------
 
@@ -37,20 +46,13 @@ New
 
 - Inject support links ports and env. [Javier Peralta]
 
-Other
-~~~~~
-
-- Merge pull request #1 from HPENetworking/extend_injection. [Diego Hurtado]
-
-  Extend injection
-
 
 License
 =======
 
 .. code-block:: text
 
-   Copyright (C) 2016-2018 Hewlett Packard Enterprise Development LP
+   Copyright (C) 2016-2019 Hewlett Packard Enterprise Development LP
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
