@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2018 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2019 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ def build_parser():
     comment = Literal('#') + restOfLine + nl
     text = QuotedString('"')
     identifier = Word(alphas, alphanums + '_')
-    empty_line = LineStart()+LineEnd()
+    empty_line = LineStart() + LineEnd()
     attribute = Group(
         identifier('key') + Suppress(Literal('=')) +
         (text | number | boolean | identifier)('value') + Optional(nl)
@@ -126,14 +126,14 @@ def build_parser():
     ).setResultsName('env_spec', listAllMatches=True)
     nodes_spec = (
         Group(
-            Optional(attributes)('attributes')
-            + Group(OneOrMore(node))('nodes')
+            Optional(attributes)('attributes') +
+            Group(OneOrMore(node))('nodes')
         ) + nl
     ).setResultsName('node_spec', listAllMatches=True)
     ports_spec = (
         Group(
-            Optional(attributes)('attributes')
-            + Group(OneOrMore(port))('ports')
+            Optional(attributes)('attributes') +
+            Group(OneOrMore(port))('ports')
         ) + nl
     ).setResultsName('port_spec', listAllMatches=True)
     link_spec = (
@@ -143,12 +143,12 @@ def build_parser():
     ).setResultsName('link_spec', listAllMatches=True)
 
     statements = OneOrMore(
-        comment
-        | link_spec
-        | ports_spec
-        | nodes_spec
-        | environment_spec
-        | empty_line
+        comment |
+        link_spec |
+        ports_spec |
+        nodes_spec |
+        environment_spec |
+        empty_line
     )
     return statements
 
@@ -211,6 +211,7 @@ def parse_txtmeta(txtmeta):
                 ],
                 'attributes': OrderedDict(),
             })
+
     # Process the ports
     if 'port_spec' in parsed_result:
         for parsed in parsed_result['port_spec']:
