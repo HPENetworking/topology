@@ -61,7 +61,7 @@ from pyparsing import (
     Word, Literal, QuotedString,
     ParserElement, alphas, nums, alphanums,
     Group, OneOrMore, Optional,
-    LineEnd, Suppress, LineStart, restOfLine, CaselessLiteral
+    LineEnd, Suppress, LineStart, restOfLine, CaselessLiteral, Combine
 )
 
 log = logging.getLogger(__name__)
@@ -97,7 +97,13 @@ def build_parser():
     """
     ParserElement.setDefaultWhitespaceChars(' \t')
     nl = Suppress(LineEnd())
-    number = Word(nums).setParseAction(lambda l, s, t: int(t[0]))
+    inumber = Word(nums).setParseAction(lambda l, s, t: int(t[0]))
+    fnumber = (
+        Combine(
+            Optional('-') + Word(nums) + '.' + Word(nums) +
+            Optional('E' | 'e' + Optional('-') + Word(nums))
+        )
+    ).setParseAction(lambda toks: float(toks[0]))
     boolean = (
         CaselessLiteral('true') | CaselessLiteral('false')
     ).setParseAction(lambda l, s, t: t[0].casefold() == 'true')
@@ -105,9 +111,21 @@ def build_parser():
     text = QuotedString('"')
     identifier = Word(alphas, alphanums + '_')
     empty_line = LineStart() + LineEnd()
+    item_list = (
+        (text | fnumber | inumber | boolean) + Optional(Suppress(',')) +
+        Optional(nl)
+    )
+    custom_list = (
+        Suppress('(') + Optional(nl) + Group(OneOrMore(item_list)) +
+        Optional(nl) + Suppress(')')
+    ).setParseAction(lambda tok: tok.asList())
     attribute = Group(
         identifier('key') + Suppress(Literal('=')) +
-        (text | number | boolean | identifier)('value') + Optional(nl)
+        (
+            custom_list | text | fnumber | inumber | boolean |
+            identifier
+        )('value')
+        + Optional(nl)
     )
     attributes = (
         Suppress(Literal('[')) + Optional(nl) +
@@ -116,7 +134,9 @@ def build_parser():
     )
 
     node = identifier('node')
-    port = Group(node + Suppress(Literal(':')) + (identifier | number)('port'))
+    port = Group(
+        node + Suppress(Literal(':')) + (identifier | inumber)('port')
+    )
     link = Group(
         port('endpoint_a') + Suppress(Literal('--')) + port('endpoint_b')
     )
@@ -180,7 +200,7 @@ def parse_txtmeta(txtmeta):
                 '{}'.format(parsed_result['env_spec'][1])
             )
         for attr in parsed_result['env_spec'][0]:
-            data['environment'][attr.key] = attr.value
+            data['environment'][attr.key] = attr.value[0]
 
     # Process the links
     if 'link_spec' in parsed_result:
@@ -189,7 +209,7 @@ def parse_txtmeta(txtmeta):
             attrs = OrderedDict()
             if "attributes" in parsed[0]:
                 for attr in parsed[0].attributes:
-                    attrs[attr.key] = attr.value
+                    attrs[attr.key] = attr.value[0]
             data['links'].append({
                 'endpoints': (
                     (str(link.endpoint_a.node), str(link.endpoint_a.port)),
@@ -219,7 +239,7 @@ def parse_txtmeta(txtmeta):
             attrs = OrderedDict()
             if "attributes" in parsed[0]:
                 for attr in parsed[0].attributes:
-                    attrs[attr.key] = attr.value
+                    attrs[attr.key] = attr.value[0]
             data['ports'].append({
                 'ports': [
                     (str(port.node), str(port.port)) for port in ports
@@ -238,7 +258,7 @@ def parse_txtmeta(txtmeta):
             attrs = OrderedDict()
             if "attributes" in parsed[0]:
                 for attr in parsed[0].attributes:
-                    attrs[attr.key] = attr.value
+                    attrs[attr.key] = attr.value[0]
             data['nodes'].append({
                 'nodes': [str(node) for node in nodes],
                 'attributes': attrs,

@@ -42,8 +42,8 @@ def test_parse():
 
     # Links
     sw1:1 -- hs1:1
-    sw1:a -- hs1:a
-    [attr1=1] sw1:4 -- hs2:a
+    [attr1=2.1e2 attr2=-2.7e-1] sw1:a -- hs1:a
+    [attr1=1 attr2="lorem ipsum" attr3=(1, 3.0, "B")] sw1:4 -- hs2:a
     """
 
     actual = parse_txtmeta(topology)
@@ -102,11 +102,21 @@ def test_parse():
                 'endpoints': (('sw1', '1'), ('hs1', '1'))
             },
             {
-                'attributes': OrderedDict(),
+                'attributes': OrderedDict(
+                    [
+                        ('attr1', 210.0),
+                        ('attr2', -0.27)
+                    ]
+                ),
                 'endpoints': (('sw1', 'a'), ('hs1', 'a'))
             },
             {
-                'attributes': OrderedDict([('attr1', 1)]),
+                'attributes': OrderedDict(
+                    [
+                        ('attr1', 1), ('attr2', 'lorem ipsum'),
+                        ('attr3', [1, 3.0, 'B'])
+                    ]
+                ),
                 'endpoints': (('sw1', '4'), ('hs2', 'a'))
             }
         ]
@@ -145,14 +155,22 @@ def test_multiline():
     [
         virtual=none
         awesomeness=medium
+        float=1.0
+        list=(
+            1,
+            3.14,
+            True
+        )
     ]
     """
-
     actual = parse_txtmeta(topology)
 
     expected = {
         'environment': OrderedDict(
-            [('virtual', 'none'), ('awesomeness', 'medium')]
+            [
+                ('virtual', 'none'), ('awesomeness', 'medium'), ('float', 1.0),
+                ('list', [1, 3.14, True])
+            ]
         ),
         'nodes': [],
         'ports': [],
