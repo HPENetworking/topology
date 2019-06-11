@@ -14,6 +14,13 @@ Documentation
 Changelog
 =========
 
+1.2.0 (2019-06-11)
+------------------
+
+New
+~~~
+
+- Support for lists and floats types [Eduardo Mora]
 
 1.1.1 (2018-11-21)
 ------------------
