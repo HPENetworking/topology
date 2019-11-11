@@ -309,8 +309,8 @@ def pytest_runtest_setup(item):
     """
     pytest hook to setup test before run.
     """
-    test_id_marker = item.get_marker('test_id')
-    incompatible_marker = item.get_marker('platform_incompatible')
+    test_id_marker = item.get_closest_marker('test_id')
+    incompatible_marker = item.get_closest_marker('platform_incompatible')
 
     # If marked and xml logging enabled
     if test_id_marker is not None and hasattr(item.config, '_xml'):

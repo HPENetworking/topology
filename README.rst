@@ -37,6 +37,14 @@ License
 Changelog
 =========
 
+1.9.15 (2019-11-11)
+-------------------
+
+Changes
+~~~~~~~
+- Bumping version to 1.9.15 [Diego Dompe]
+- Changes to support newer versions of pytest
+
 
 1.9.14 (2018-11-21)
 -------------------

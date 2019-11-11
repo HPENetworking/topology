@@ -24,7 +24,7 @@ See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 from __future__ import unicode_literals, absolute_import
 from __future__ import print_function, division
 
-from pytest import config, mark
+from pytest import mark
 
 # Reload module to properly measure coverage
 from six.moves import reload_module
@@ -49,11 +49,11 @@ hs2:1 -- sw2:1
 
 
 @mark.test_id(1000)
-def test_build(topology):
+def test_build(topology, pytestconfig):
     """
     Test automatic build and unbuild of the topology using pytest plugin.
     """
-    assert config.pluginmanager.getplugin('topology')
+    assert pytestconfig.pluginmanager.getplugin('topology')
     assert isinstance(topology, TopologyManager)
     assert topology.get('sw1') is not None
     assert topology.get('sw2') is not None
