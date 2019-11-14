@@ -18,7 +18,7 @@ pynml==1.0.0
 pyparsing==2.1.10
 pytest==2.8.4
 pytz==2016.10
-requests==2.12.3
+requests==2.20.0
 rfc3986==0.4.1
 six==1.10.0
 snowballstemmer==1.2.1
