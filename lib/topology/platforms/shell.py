@@ -746,7 +746,7 @@ class PExpectBashShell(PExpectShell):
 
     def __init__(
             self,
-            initial_prompt=['\w+@.+:.+[#$] ', FORCED_PROMPT],
+            initial_prompt=[r'\w+@.+:.+[#$] ', FORCED_PROMPT],
             try_filter_echo=False, delay_after_echo_off=1, **kwargs):
 
         self._delay_after_echo_off = delay_after_echo_off
