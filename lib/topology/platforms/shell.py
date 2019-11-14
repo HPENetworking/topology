@@ -261,7 +261,7 @@ class BaseShell(object):
          existing connection as the default one.
         """
 
-    def execute(self, command, connection=None):
+    def execute(self, command, *args, connection=None, **kwargs):
         """
         Executes a command.
 
@@ -276,11 +276,11 @@ class BaseShell(object):
         :rtype: str
         :return: Shell response to the command being sent.
         """
-        self.send_command(command, connection=connection)
+        self.send_command(command, *args, connection=connection, **kwargs)
         return self.get_response(connection=connection)
 
-    def __call__(self, command, connection=None):
-        return self.execute(command, connection=connection)
+    def __call__(self, command, *args, connection=None, **kwargs):
+        return self.execute(command, *args, connection=connection, **kwargs)
 
     def _setup_shell(self, *args, connection=None, **kwargs):
         """
