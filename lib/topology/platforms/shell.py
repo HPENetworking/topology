@@ -386,6 +386,11 @@ class PExpectShell(BaseShell):
         self._password = password
         self._password_match = password_match
         self._prefix = prefix
+        # if no timeout is provided use "the default value specified by the
+        # class timeout attribute"
+        # https://pexpect.readthedocs.io/en/stable/api/pexpect.html#pexpect.spawn.expect
+        # which is 30s
+        # https://pexpect.readthedocs.io/en/stable/api/pexpect.html#pexpect.spawn
         self._timeout = timeout or -1
         self._encoding = encoding
         self._try_filter_echo = try_filter_echo
