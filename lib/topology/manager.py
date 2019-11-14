@@ -360,5 +360,14 @@ class TopologyManager(object):
             )
         self._platform.unlink(link_id)
 
+    def _set_test_log(self, log):
+        """
+        Set the current test execution log. This log is set by testlog library
+
+        :param log: the logging object requested
+        """
+        for enode in self.nodes.values():
+            enode._set_test_log(log)
+
 
 __all__ = ['TopologyManager']

@@ -37,8 +37,52 @@ License
 Changelog
 =========
 
-Changelog
-=========
+1.9.15 (2019-11-11)
+-------------------
+
+Changes
+~~~~~~~
+- Bumping version to 1.9.15 [Diego Dompe]
+- Changes to support newer versions of pytest
+
+
+1.9.14 (2018-11-21)
+-------------------
+
+Changes
+~~~~~~~
+- Bumping version to 1.9.14. [Diego Hurtado]
+
+Other
+~~~~~
+- Make new testlog func private. [Matthew Hall]
+
+
+1.9.13 (2018-11-16)
+-------------------
+
+New
+~~~
+- Environment attributes are now passed to the NMLManager. [Javier
+  Peralta]
+
+Changes
+~~~~~~~
+- Remove unit test of functionalty no longer on topology. [Javier
+  Peralta]
+- Moving injection to pyszn. [Diego Antonio Hurtado Pimentel]
+- Customize term codes regex. [David Diaz Barquero]
+
+  Add the ability to customize the terminal regex code for special shells
+
+Fix
+~~~
+- Pyszn uses correct depedency declaration. [Javier Peralta]
+- Minor fixes. [David Diaz]
+
+Other
+~~~~~
+- Add functions for new test specific log. [Matthew Hall]
 
 
 1.9.12 (2018-06-05)
