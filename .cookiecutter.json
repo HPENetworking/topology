@@ -1,0 +1,11 @@
+{
+    "author": "Hewlett Packard Enterprise Development LP",
+    "email": "hpe-networking@lists.hp.com",
+    "repo_url": "https://github.com/HPENetworking/topology_connect",
+    "doc_url": "http://topology.readthedocs.io/",
+    "project_name": "SSH/Telnet/etc connection Platform Engine for Topology",
+    "repo_name": "topology_connect",
+    "short_description": "SSH/Telnet/etc connection Platform Engine plugin for the Network Topology Framework.",
+    "year": "2015-2016",
+    "version": "0.4.0"
+}
