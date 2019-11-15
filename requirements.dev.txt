@@ -1,0 +1,33 @@
+#######################
+# Debugging           #
+#######################
+
+ipdb
+pprintpp
+
+#######################
+# Testing             #
+#######################
+
+deepdiff
+pytest==3.6.3
+pytest-logging
+pytest-cov
+
+#######################
+# Coding style        #
+#######################
+
+flake8
+pep8-naming
+
+
+#######################
+# Documentation       #
+#######################
+
+sphinx==1.7.8
+autoapi
+plantweb
+pygments-github-lexers
+sphinx-readable-theme

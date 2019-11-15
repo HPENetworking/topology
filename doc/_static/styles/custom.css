@@ -1,0 +1,41 @@
+/* Improve autodoc */
+
+/* Show reference in a box */
+dl.class,
+dl.function,
+dl.exception,
+dl.data {
+    background: #f3f6f6 !important;
+    border: 1px solid #D3D3D3 !important;
+}
+
+/* Extend reference heads to the width */
+dl.class dt,
+dl.function dt,
+dl.exception dt,
+dl.data dt {
+    width: 100% !important;
+}
+
+/* Improve box spacing */
+dl.class dd,
+dl.function dd,
+dl.exception dd,
+dl.data dd {
+  margin: 0 !important;
+  padding: 15px !important;
+}
+
+/* Remove namespace in reference, we know where we are thank you */
+dl.class dt code.descclassname,
+dl.function dt code.descclassname,
+dl.exception dt code.descclassname,
+dl.data dt code.descclassname {
+    display: none !important;
+}
+
+/* Make PlantUML SVGs responsive */
+object[type="image/svg+xml"] {
+    max-width: 100%;
+    height: auto !important;
+}
