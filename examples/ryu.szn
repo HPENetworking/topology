@@ -1,0 +1,30 @@
+#         +-------+
+#         |       |
+#         |  ryu  |
+#         |       |
+#         +-------+
+#          |     |
+#  +-------+     +-------+
+#  |  sw1  |     |  sw2  |
+#  +-------+     +-------+
+#      |             |
+#  +-------+     +-------+
+#  |  hs1  |     |  hs2  |
+#  +-------+     +-------+
+
+# Nodes
+[type=ryu name="Ryu" script="ryu/ryu/app/simple_switch.py"] ryu
+[type=p4switch name="Switch 1" ofip="10.0.10.1"] sw1
+[type=p4switch name="Switch 2" ofip="10.0.10.2"] sw2
+#[type=host name="Host 1"] hs1
+#[type=host name="Host 2"] hs2
+
+#Ports
+[ipv4="10.0.10.1/24" up=True] ryu:1
+[ipv4="10.0.10.2/24" up=True] ryu:2
+[ipv4="10.0.10.3/24" up=True] sw1:1
+[ipv4="10.0.10.4/24" up=True] sw2:1
+
+# Links
+ryu:1 -- sw1:1
+ryu:2 -- sw2:1

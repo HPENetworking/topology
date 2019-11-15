@@ -1,0 +1,20 @@
+*.py[cod]
+__pycache__
+
+# Packages
+*.egg
+*.egg-info
+dist/*
+build/*
+
+# Sphinx
+doc/_build/*
+doc/topology_docker/*
+
+# Tox
+.tox/*
+.cache/*
+.coverage
+
+# Misc
+*~

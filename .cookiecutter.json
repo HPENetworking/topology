@@ -1,0 +1,11 @@
+{
+    "author": "Hewlett Packard Enterprise Development LP",
+    "email": "hpe-networking@lists.hp.com",
+    "repo_url": "https://github.com/HPENetworking/topology_docker",
+    "doc_url": "http://topology-docker.rtfd.org/",
+    "project_name": "Docker Platform Engine for Topology",
+    "repo_name": "topology_docker",
+    "short_description": "Docker based Platform Engine plugin for the Network Topology Framework.",
+    "year": "2015-2016",
+    "version": "1.6.0"
+}
