@@ -22,7 +22,8 @@ description. The Topology framework only provides a built-in Platform Engine
 for debugging. You can provide your own or install any of the known Engine
 Platforms available as plugins like:
 
-- `Docker <http://topology-docker.readthedocs.org/>`_.
+- `Docker <https://topology-docker.readthedocs.io/>`_.
+- `Connect <https://topology-connect.readthedocs.io/>`_.
 
 
 Entry Point
@@ -88,7 +89,6 @@ reference a port using the specification name and it could be mapped to the
 real port name.
 
 .. uml::
-    :width: 100%
 
     actor User as U
     participant TopologyManager as M
