@@ -98,7 +98,10 @@ def test_spawn_args(spawn, shell):
     shell.connect()
 
     spawn.assert_called_with(
-        'test connection command', echo=False, env={'TERM': 'dumb'}
+        'test connection command',
+        env={'TERM': 'dumb'},
+        echo=False,
+        use_poll=True,
     )
 
     shell = Shell(
@@ -108,7 +111,10 @@ def test_spawn_args(spawn, shell):
     shell.connect()
 
     spawn.assert_called_with(
-        'test connection command', env={'TERM': 'smart'}, echo=True
+        'test connection command',
+        env={'TERM': 'smart'},
+        echo=True,
+        use_poll=True,
     )
 
 
