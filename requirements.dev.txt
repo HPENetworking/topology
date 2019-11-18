@@ -1,7 +1,6 @@
-flake8==3.5.0
-pep8-naming==0.4.1
+flake8
+pep8-naming
 pytest>=3.6
-pytest-cov==2.4.0
-deepdiff==1.1.0
-ipdb==0.10.1
--e git+https://github.com/HPENetworking/pyszn.git@master#egg=pyszn
+pytest-cov
+deepdiff
+ipdb
