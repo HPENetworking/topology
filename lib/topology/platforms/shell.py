@@ -401,13 +401,15 @@ class PExpectShell(BaseShell):
         self._shell_name = None
         self._errors = errors
         self._testlog = None
-
-        # Doing this to avoid having a mutable object as default value in the
-        # arguments.
-        if spawn_args is None:
-            self._spawn_args = {'env': {'TERM': 'dumb'}, 'echo': False}
-        else:
-            self._spawn_args = spawn_args
+        self._spawn_args = {
+            'env': {'TERM': 'dumb'},
+            'echo': False,
+            # The use_poll attribute enables using select.poll() over
+            # select.select() for socket handling. This is handy if your system
+            # could have > 1024 fds
+            'use_poll': True,
+            **(spawn_args or {})
+        }
 
         self._last_command = None
 
