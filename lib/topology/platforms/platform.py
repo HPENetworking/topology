@@ -49,7 +49,7 @@ class BasePlatform(object):
     """
 
     @abstractmethod
-    def __init__(self, timestamp, nmlmanager):
+    def __init__(self, timestamp, nmlmanager, **kwargs):
         super(BasePlatform, self).__init__()
 
     @abstractmethod
