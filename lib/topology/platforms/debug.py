@@ -39,8 +39,10 @@ class DebugPlatform(BasePlatform):
     See :class:`topology.platforms.platform.BasePlatform` for more information.
     """
 
-    def __init__(self, timestamp, nmlmanager):
-        super(DebugPlatform, self).__init__(timestamp, nmlmanager)
+    def __init__(self, timestamp, nmlmanager, **kwargs):
+        super(DebugPlatform, self).__init__(
+            timestamp, nmlmanager, **kwargs
+        )
 
     def pre_build(self):
         """

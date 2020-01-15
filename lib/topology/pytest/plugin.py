@@ -66,7 +66,7 @@ class TopologyPlugin(object):
 
     def __init__(
             self, platform, plot_dir, plot_format,
-            nml_dir, injected_attr, log_dir):
+            nml_dir, injected_attr, log_dir, platform_options):
         super(TopologyPlugin, self).__init__()
         self.platform = platform
         self.plot_dir = plot_dir
@@ -74,6 +74,7 @@ class TopologyPlugin(object):
         self.nml_dir = nml_dir
         self.injected_attr = injected_attr
         self.log_dir = log_dir
+        self.platform_options = platform_options
 
     def pytest_report_header(self, config):
         """
@@ -111,7 +112,9 @@ def topology(request):
 
     plugin = request.config._topology_plugin
     module = request.module
-    topomgr = TopologyManager(plugin.platform)
+    topomgr = TopologyManager(
+        engine=plugin.platform, options=plugin.platform_options
+    )
 
     # Setup framework logging
     logmanager.logging_context = module.__name__
@@ -231,6 +234,13 @@ def pytest_addoption(parser):
         default=None,
         help='Path to a directory where logs are to be stored'
     )
+    group.addoption(
+        '--topology-platform-options',
+        nargs='+',
+        default=None,
+        help='An argument used by the topology platform '
+             'with the form <key>=<value>'
+    )
 
 
 def pytest_configure(config):
@@ -244,6 +254,7 @@ def pytest_configure(config):
     nml_dir = config.getoption('--topology-nml-dir')
     injection_file = config.getoption('--topology-inject')
     log_dir = config.getoption('--topology-log-dir')
+    platform_options = config.getoption('--topology-platform-options')
 
     def create_dir(path):
         if path:
@@ -275,7 +286,8 @@ def pytest_configure(config):
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(
         platform, plot_dir, plot_format.lstrip('.'),
-        nml_dir, injected_attr, log_dir
+        nml_dir, injected_attr, log_dir,
+        parse_platform_options(platform_options)
     )
     config.pluginmanager.register(config._topology_plugin)
 
@@ -292,6 +304,38 @@ def pytest_configure(config):
         'mark a test as incompatible with a list of platform engines. '
         'Optionally specify a reason for better reporting'
     )
+
+
+def parse_platform_options(platform_options):
+    options = OrderedDict()
+    if not platform_options:
+        return options
+
+    for option in platform_options:
+
+        if '=' not in option:
+            raise Exception(
+                'Invalid option "{}", options must follow '
+                'the syntax "<option_name>=<value>"'.format(option)
+            )
+
+        key, value = option.split('=', 1)
+
+        # Try to cast value
+        for caster in [
+            int,
+            float,
+            booleanize,
+        ]:
+            try:
+                value = caster(value)
+                break
+            except Exception:
+                continue
+
+        options[key] = value
+
+    return options
 
 
 def pytest_unconfigure(config):
@@ -328,6 +372,28 @@ def pytest_runtest_setup(item):
                 )
             )
             skip(message)
+
+
+def booleanize(value):
+    """
+    Convert a string to a boolean.
+
+    :raises: ValueError if unable to convert.
+    :param str value: String to convert.
+    :return: True for 'yes' and 'true', False for 'no' and
+     'false'. Not case sensitive.
+    :rtype: bool
+    """
+    valuemap = {
+        'true': True,
+        'yes': True,
+        'false': False,
+        'no': False,
+    }
+    casted = valuemap.get(value.lower(), None)
+    if casted is None:
+        raise ValueError(str(value))
+    return casted
 
 
 __all__ = [

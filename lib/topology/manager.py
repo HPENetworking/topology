@@ -28,7 +28,9 @@ from __future__ import print_function, division
 
 import logging
 from sys import exc_info
+from warnings import warn
 from copy import deepcopy
+from inspect import signature
 from datetime import datetime
 from traceback import format_exc
 from collections import OrderedDict
@@ -74,9 +76,10 @@ class TopologyManager(object):
 
     :param str engine: Name of the platform engine to build the topology.
      See :func:`platforms` for how to get and discover available platforms.
+    :param dict options: Options to pass to the topology platform
     """
 
-    def __init__(self, engine=DEFAULT_PLATFORM, **kwargs):
+    def __init__(self, engine=DEFAULT_PLATFORM, options=None, **kwargs):
         super(TopologyManager, self).__init__()
 
         if engine not in platforms():
@@ -84,6 +87,7 @@ class TopologyManager(object):
 
         self.nml = ExtendedNMLManager(**kwargs)
         self.engine = engine
+        self.options = options or OrderedDict()
         self.nodes = OrderedDict()
         self.ports = OrderedDict()
 
@@ -233,7 +237,25 @@ class TopologyManager(object):
 
         # Instance platform
         plugin = load_platform(self.engine)
-        self._platform = plugin(timestamp, self.nml)
+
+        # Check if platform support to pass arguments to keep backwards
+        # compatibility
+        if any(
+            param.kind == param.VAR_KEYWORD
+            for param in reversed(signature(plugin).parameters.values())
+        ):
+            self._platform = plugin(
+                timestamp, self.nml, **self.options
+            )
+        else:
+            if self.options:
+                msg = (
+                    'Ignoring platform options "{}" '
+                    'as current platform "{}" does not support to pass options'
+                ).format(self.options, self.engine)
+                log.warning(msg)
+                warn(msg, DeprecationWarning)
+            self._platform = plugin(timestamp, self.nml)
 
         try:
             stage = 'pre_build'
