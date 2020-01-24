@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ Test suite for module topology.args.
 See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
+from collections import OrderedDict
 
 import pytest  # noqa
+from deepdiff import DeepDiff
 
-from topology import args
+from topology.args import parse_args, InvalidArgument
 
 
 def setup_module(module):
@@ -39,17 +39,53 @@ def teardown_module(module):
 
 def test_args(tmpdir):
 
-    topology = tmpdir.join('topology.txt')
+    with pytest.raises(InvalidArgument):
+        parse_args(['/this/doesnt/exists.szn'])
+
+    topology = tmpdir.join('topology.szn')
     topology.write('')
 
-    parsed = args.parse_args([str(topology)])
+    parsed = parse_args([str(topology)])
     assert parsed.verbose == 0
 
-    parsed = args.parse_args(['-v', str(topology)])
+    parsed = parse_args(['-v', str(topology)])
     assert parsed.verbose == 1
 
-    parsed = args.parse_args(['-vv', str(topology)])
+    parsed = parse_args(['-vv', str(topology)])
     assert parsed.verbose == 2
 
-    parsed = args.parse_args(['-vvv', str(topology)])
+    parsed = parse_args(['-vvv', str(topology)])
     assert parsed.verbose == 3
+
+    # Validate option parsing
+    with pytest.raises(InvalidArgument):
+        parsed = parse_args([
+            str(topology),
+            '--option', '1argument=100',
+        ])
+
+    with pytest.raises(InvalidArgument):
+        parsed = parse_args([
+            str(topology),
+            '--option', '$argument=100',
+        ])
+
+    parsed = parse_args([
+        str(topology),
+        '--option', 'var-1=Yes', 'var2=no', 'var_3=TRUE', 'var4=100',
+        '--option', 'var4=200', 'var5=helloworld', 'var6=/tmp/a/path',
+        '--option', 'var7=1.7560',
+    ])
+
+    expected = OrderedDict([
+        ('var_1', True),
+        ('var2', False),
+        ('var_3', True),
+        ('var4', 200),
+        ('var5', 'helloworld'),
+        ('var6', '/tmp/a/path'),
+        ('var7', 1.7560),
+    ])
+
+    ddiff = DeepDiff(parsed.options, expected)
+    assert not ddiff
