@@ -116,7 +116,7 @@ def parse_options(raw):
     """
     Parse a list of options given by the user.
 
-    :param list raw: Raw options given by the user in the CLi. Raw options are
+    :param list raw: Raw options given by the user in the CLI. Raw options are
      in the form:
 
      .. code-block:: python3
