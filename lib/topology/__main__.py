@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,25 +16,23 @@
 # under the License.
 
 """
-Application entry point module.
+topology executable module entry point.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 import sys
 import logging
+from io import StringIO
 from atexit import register
 from os.path import join, basename, splitext
 
-from six import StringIO
-
-from . import __version__
-from .manager import TopologyManager
-from .interact import interact
 from pyszn.parser import find_topology_in_python
 from pyszn.injection import parse_attribute_injection
+
+from . import __version__
+from .interact import interact
+from .manager import TopologyManager
 from .logging import manager as logmanager
+from .args import parse_args, InvalidArgument
 
 
 log = logging.getLogger(__name__)
@@ -46,6 +44,7 @@ def main(args):
 
     :param args: An arguments namespace.
     :type args: :py:class:`argparse.Namespace`
+
     :return: Exit code.
     :rtype: int
     """
@@ -129,4 +128,19 @@ def main(args):
     return 0
 
 
-__all__ = ['main']
+if __name__ == '__main__':
+
+    # Parse arguments
+    try:
+        args = parse_args()
+    except InvalidArgument as e:
+        log.critical(e)
+        exit(1)
+
+    # Run program
+    exit(main(args))
+
+
+__all__ = [
+    'main',
+]

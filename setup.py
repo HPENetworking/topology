@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2019 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ setup(
     version=find_version('lib/topology/__init__.py'),
     package_dir={'': 'lib'},
     packages=find_packages('lib'),
-    scripts=['bin/topology'],
 
     # Dependencies
     install_requires=find_requirements('requirements.txt'),
@@ -71,32 +70,38 @@ setup(
     author='Hewlett Packard Enterprise Development LP',
     author_email='hpe-networking@lists.hp.com',
     description=(
-        'Network Topology Framework using NML, with support for pytest.'
+        'Topology is a framework for building and testing network '
+        'topologies, with support for pytest.'
     ),
     long_description=read('README.rst'),
     url='http://topology.rtfd.org/',
     keywords='topology',
 
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
     # Entry points
     entry_points={
-        'pytest11': ['topology = topology.pytest.plugin'],
+        'console_scripts': [
+            'topology=topology.__main__:main',
+        ],
+        'pytest11': [
+            'topology = topology.pytest.plugin',
+        ],
         'topology_platform_10': [
-            'debug = topology.platforms.debug:DebugPlatform'
+            'debug = topology.platforms.debug:DebugPlatform',
         ],
         'topology_library_10': [
-            'common = topology.libraries.common'
+            'common = topology.libraries.common',
         ]
     }
 )

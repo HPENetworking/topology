@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,9 +39,6 @@ For reference see:
     http://pytest.org/dev/plugins.html#hook-specification-and-validation
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 from os import getcwd, makedirs
 from traceback import format_exc
 from collections import OrderedDict
@@ -49,6 +46,7 @@ from os.path import join, isabs, abspath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
+from topology.args import parse_options
 from topology.logging import get_logger, StepLogger
 
 
@@ -65,8 +63,9 @@ class TopologyPlugin(object):
     """
 
     def __init__(
-            self, platform, plot_dir, plot_format,
-            nml_dir, injected_attr, log_dir, platform_options):
+        self, platform, plot_dir, plot_format,
+        nml_dir, injected_attr, log_dir, platform_options
+    ):
         super(TopologyPlugin, self).__init__()
         self.platform = platform
         self.plot_dir = plot_dir
@@ -287,7 +286,7 @@ def pytest_configure(config):
     config._topology_plugin = TopologyPlugin(
         platform, plot_dir, plot_format.lstrip('.'),
         nml_dir, injected_attr, log_dir,
-        parse_platform_options(platform_options)
+        parse_options(platform_options)
     )
     config.pluginmanager.register(config._topology_plugin)
 
@@ -304,38 +303,6 @@ def pytest_configure(config):
         'mark a test as incompatible with a list of platform engines. '
         'Optionally specify a reason for better reporting'
     )
-
-
-def parse_platform_options(platform_options):
-    options = OrderedDict()
-    if not platform_options:
-        return options
-
-    for option in platform_options:
-
-        if '=' not in option:
-            raise Exception(
-                'Invalid option "{}", options must follow '
-                'the syntax "<option_name>=<value>"'.format(option)
-            )
-
-        key, value = option.split('=', 1)
-
-        # Try to cast value
-        for caster in [
-            int,
-            float,
-            booleanize,
-        ]:
-            try:
-                value = caster(value)
-                break
-            except Exception:
-                continue
-
-        options[key] = value
-
-    return options
 
 
 def pytest_unconfigure(config):
@@ -372,28 +339,6 @@ def pytest_runtest_setup(item):
                 )
             )
             skip(message)
-
-
-def booleanize(value):
-    """
-    Convert a string to a boolean.
-
-    :raises: ValueError if unable to convert.
-    :param str value: String to convert.
-    :return: True for 'yes' and 'true', False for 'no' and
-     'false'. Not case sensitive.
-    :rtype: bool
-    """
-    valuemap = {
-        'true': True,
-        'yes': True,
-        'false': False,
-        'no': False,
-    }
-    casted = valuemap.get(value.lower(), None)
-    if casted is None:
-        raise ValueError(str(value))
-    return casted
 
 
 __all__ = [
