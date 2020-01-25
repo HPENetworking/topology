@@ -3,8 +3,8 @@
 #   This requirements are Python packages that need to be installed in order
 #   to successfully generate the project's documentation.
 
-sphinx<=2.0.1
-autoapi
+sphinx
+autoapi>=1.4.1
 plantweb
 sphinx-readable-theme
 
