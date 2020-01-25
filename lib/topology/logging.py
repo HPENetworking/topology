@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,6 @@
 """
 Logging module for the Topology Modular Framework.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 import logging
 from abc import ABCMeta
@@ -52,6 +49,7 @@ class PexpectFileHandler(logging.FileHandler):
     changes after records, maintaining a shape that is closer to the actual
     PTTY's stream pexpect uses.
     """
+
     def emit(self, record):
         """
         Emit a record.
@@ -164,6 +162,7 @@ class StdOutLogger(BaseLogger):
     """
     Logger that logs to the standard output.
     """
+
     def __init__(self, *args, **kwargs):
         super(StdOutLogger, self).__init__(*args, **kwargs)
 
@@ -190,6 +189,7 @@ class FileLogger(BaseLogger):
     :param str file_formatter: Format to use in the PexpectFileHandler,
      defaulting to ``logging.BASIC_FORMAT``.
     """
+
     def __init__(self, *args, **kwargs):
         self._file_handler = None
         self._file_formatter = kwargs.pop(
@@ -346,6 +346,7 @@ class ConnectionLogger(BaseLogger):
     Where ``<context>`` is optional if running interactively or if the context
     in the LoggerManager has not been set.
     """
+
     def __init__(self, *args, **kwargs):
         super(ConnectionLogger, self).__init__(*args, **kwargs)
         self.logger.addHandler(logging.StreamHandler())
@@ -388,6 +389,7 @@ class StepLogger(StdOutLogger):
     This class will log a message and will show the step number and the caller
     name and line number.
     """
+
     def __init__(
         self, nameparts=OrderedDict(
             [('test_suite', ''), ('test_case', '')]
@@ -470,6 +472,7 @@ class LoggingManager(object):
      this setting will be notified to all loggers.
     :var str logging_context: Current framework wide logging context.
     """
+
     def __init__(self, default_level=logging.INFO, default_propagate=False):
         super(LoggingManager, self).__init__()
         """
@@ -628,7 +631,7 @@ class LoggingManager(object):
 
 manager = LoggingManager()
 """
-Main framework wide instance of :class:LoggingManager.
+Main framework wide instance of :py:class:`LoggingManager`.
 """
 
 get_logger = manager.get_logger
