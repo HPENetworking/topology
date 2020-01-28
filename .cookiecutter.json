@@ -2,10 +2,10 @@
     "author": "Hewlett Packard Enterprise Development LP",
     "email": "hpe-networking@lists.hp.com",
     "repo_url": "https://github.com/HPENetworking/topology",
-    "doc_url": "http://topology.rtfd.org/",
-    "project_name": "Network Topology Framework",
+    "doc_url": "https://topology.readthedocs.io/",
+    "project_name": "Topology Framework",
     "repo_name": "topology",
-    "short_description": "Network Topology Framework using NML, with support for pytest.",
-    "year": "2015-2016",
-    "version": "1.9.14"
+    "short_description": "Framework for building and testing network topologies, with support for pytest.",
+    "year": "2015-2020",
+    "version": "1.10.0"
 }

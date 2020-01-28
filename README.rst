@@ -38,6 +38,19 @@ License
 Changelog
 =========
 
+1.10.0 (2020-01-28)
+-------------------
+
+New
+~~~
+- Platform arguments can now be passed from the CLI and/or the Pytest plugin.
+  Use ``--option key=value`` in the CLI and
+  ``--topology-platform-option key=value`` in Pytest. Options given using
+  this method will be passed as keyword arguments to the platform. Values will
+  be "autoparsed" to a Python type using the following order: floats, integers,
+  booleans  (yes, no, true, false, case insensitive) and finally any other is
+  considered a strings. [Carlos Jenkins & David Diaz]
+
 
 1.9.15 (2019-11-18)
 -------------------
