@@ -184,6 +184,10 @@ class TopologyManager(object):
 
             # Explicit-create links
             attrs = deepcopy(link_spec['attributes'])
+            # Set an id for the bilink
+            attrs['identifier'] = ' -- '.join(
+                endpoint.identifier for endpoint in endpoints
+            )
 
             # Inject the run-specific attributes
             if inject is not None and \
