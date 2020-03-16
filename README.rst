@@ -38,6 +38,19 @@ License
 Changelog
 =========
 
+1.11.0 (2020-03-16)
+-------------------
+
+Changes
+~~~~~~~
+- Set a meaningful identifier for NML bilinks.
+
+  Currently the bilinks ID is the Python instance ID, this commit set it to a
+  combination of the port IDs using the same syntax as pyszn:
+
+     ``node0:port0 -- node1:port1``
+
+
 1.10.0 (2020-01-28)
 -------------------
 
