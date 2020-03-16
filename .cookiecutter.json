@@ -7,5 +7,5 @@
     "repo_name": "topology",
     "short_description": "Framework for building and testing network topologies, with support for pytest.",
     "year": "2015-2020",
-    "version": "1.10.0"
+    "version": "1.11.0"
 }
