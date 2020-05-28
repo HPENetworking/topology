@@ -42,7 +42,7 @@ For reference see:
 from os import getcwd, makedirs
 from traceback import format_exc
 from collections import OrderedDict
-from os.path import join, isabs, abspath, exists, isdir
+from os.path import join, isabs, abspath, realpath, exists, isdir
 
 from pytest import fixture, fail, hookimpl, skip
 
@@ -274,7 +274,7 @@ def pytest_configure(config):
 
         # Get a list of all testing directories
         search_paths = [
-            abspath(arg) for arg in config.args if isdir(arg)
+            realpath(arg) for arg in config.args if isdir(arg)
         ]
 
         injected_attr = parse_attribute_injection(
