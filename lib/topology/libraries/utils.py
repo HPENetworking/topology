@@ -61,7 +61,7 @@ def stateprovider(stateclass, statename=None, initfunc=None):
 
     # Set a default statename
     if statename is None:
-        statename = '_lib_state_'.format(stateclass.__name__.lower())
+        statename = '_lib_state_{}'.format(stateclass.__name__.lower())
 
     def decorator(func):
         def replacement(enode, *args, **kwargs):
