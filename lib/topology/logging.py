@@ -434,7 +434,10 @@ class StepLogger(StdOutLogger):
             '>>> [{:03d}] :: {}:{}\n{}'.format(
                 self.step, execution_context, line_number,
                 '\n'.join(
-                    ['... {}'.format(l) for l in msg.strip().splitlines()]
+                    [
+                        '... {}'.format(line)
+                        for line in msg.strip().splitlines()
+                    ]
                 )
             )
         )
