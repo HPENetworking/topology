@@ -39,15 +39,19 @@ For reference see:
     http://pytest.org/dev/plugins.html#hook-specification-and-validation
 """
 
+from time import time
+from logging import getLogger
 from os import getcwd, makedirs
 from traceback import format_exc
 from collections import OrderedDict
 from os.path import join, isabs, abspath, realpath, exists, isdir
-
 from pytest import fixture, fail, hookimpl, skip
 
 from topology.args import parse_options
 from topology.logging import get_logger, StepLogger
+
+
+log = getLogger(__name__)
 
 
 class TopologyPlugin(object):
@@ -242,10 +246,11 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_sessionstart(session):
     """
     pytest hook to configure plugin.
     """
+    config = session.config
     # Get registered options
     platform = config.getoption('--topology-platform')
     plot_format = config.getoption('--topology-plot-format')
@@ -271,7 +276,8 @@ def pytest_configure(config):
     from pyszn.injection import parse_attribute_injection
     injected_attr = None
     if injection_file is not None:
-
+        log.info('Processing attribute injection...')
+        start_time = time()
         # Get a list of all testing directories
         search_paths = [
             realpath(arg) for arg in config.args if isdir(arg)
@@ -279,7 +285,12 @@ def pytest_configure(config):
 
         injected_attr = parse_attribute_injection(
             injection_file,
-            search_paths=search_paths
+            search_paths=search_paths,
+            ignored_paths=config.getini('norecursedirs')
+        )
+        log.info(
+            'Attribute injection completed after {}s'
+            .format(time() - start_time)
         )
 
     # Create and register plugin
@@ -345,6 +356,5 @@ __all__ = [
     'TopologyPlugin',
     'topology',
     'pytest_addoption',
-    'pytest_configure',
     'StepLogger'
 ]
