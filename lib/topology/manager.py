@@ -316,7 +316,7 @@ class TopologyManager(object):
 
             self._platform.post_build()
 
-        except Exception:
+        except (Exception, KeyboardInterrupt):
             e = exc_info()[1]
             log.critical(
                 (
