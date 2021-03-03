@@ -64,11 +64,17 @@ class TopologyPlugin(object):
     :param str plot_format: Format to plot the topologies.
     :param str nml_dir: Directory to auto-export topologies. ``None`` if
      feature is disabled.
+    :param dict injected_attr: A dictionary holding topology attributes to
+     inject.
+    :param str log_dir: Path where to store logs.
+    :param dict platform_options: Dictionary holding parameters passed directly
+     to the topology platform object.
+    :param int build_retries: Amount of times to retry the build stage.
     """
 
     def __init__(
         self, platform, plot_dir, plot_format,
-        nml_dir, injected_attr, log_dir, platform_options
+        nml_dir, injected_attr, log_dir, platform_options, build_retries
     ):
         super(TopologyPlugin, self).__init__()
         self.platform = platform
@@ -78,6 +84,7 @@ class TopologyPlugin(object):
         self.injected_attr = injected_attr
         self.log_dir = log_dir
         self.platform_options = platform_options
+        self.build_retries = build_retries
 
     def pytest_report_header(self, config):
         """
@@ -171,8 +178,31 @@ def topology(request):
                 topomgr.load(topo, inject=suite_injected_attr)
             else:
                 topomgr.parse(topo, inject=suite_injected_attr)
-            topomgr.build()
         except Exception:
+            fail(
+                'Error loading topology in module {}:\n{}'.format(
+                    module.__name__,
+                    format_exc()
+                ),
+                pytrace=False
+            )
+
+        for iteration in range(plugin.build_retries + 1):
+            try:
+                topomgr.build()
+                log.info(
+                    'Attempt {} on building topology was successful'.format(
+                        iteration
+                    )
+                )
+                break
+            except Exception:
+                msg = (
+                    '{}\nAttempt {} to build topology failed.'
+                ).format(format_exc(), iteration)
+
+                log.warning(msg)
+        else:
             fail(
                 'Error building topology in module {}:\n{}'.format(
                     module.__name__,
@@ -244,6 +274,12 @@ def pytest_addoption(parser):
         help='An argument used by the topology platform '
              'with the form <key>=<value>'
     )
+    group.addoption(
+        '--topology-build-retries',
+        default=0,
+        type='int',
+        help='Retry building a topology up to defined times'
+    )
 
 
 def pytest_sessionstart(session):
@@ -259,6 +295,10 @@ def pytest_sessionstart(session):
     injection_file = config.getoption('--topology-inject')
     log_dir = config.getoption('--topology-log-dir')
     platform_options = config.getoption('--topology-platform-options')
+    build_retries = config.getoption('--topology-build-retries')
+
+    if build_retries < 0:
+        raise Exception('--topology-build-retries can\'t be less than 0')
 
     def create_dir(path):
         if path:
@@ -295,9 +335,14 @@ def pytest_sessionstart(session):
 
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(
-        platform, plot_dir, plot_format.lstrip('.'),
-        nml_dir, injected_attr, log_dir,
-        parse_options(platform_options)
+        platform,
+        plot_dir,
+        plot_format.lstrip('.'),
+        nml_dir,
+        injected_attr,
+        log_dir,
+        parse_options(platform_options),
+        build_retries
     )
     config.pluginmanager.register(config._topology_plugin)
 
