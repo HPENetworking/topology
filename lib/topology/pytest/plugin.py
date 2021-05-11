@@ -67,6 +67,8 @@ class TopologyPlugin(object):
     :param dict injected_attr: A dictionary holding topology attributes to
      inject.
     :param str log_dir: Path where to store logs.
+    :param list szn_dir: List of paths to directories where ``*.szn`` files
+     are located.
     :param dict platform_options: Dictionary holding parameters passed directly
      to the topology platform object.
     :param int build_retries: Amount of times to retry the build stage.
@@ -74,7 +76,8 @@ class TopologyPlugin(object):
 
     def __init__(
         self, platform, plot_dir, plot_format,
-        nml_dir, injected_attr, log_dir, platform_options, build_retries
+        nml_dir, injected_attr, log_dir, szn_dir, platform_options,
+        build_retries
     ):
         super(TopologyPlugin, self).__init__()
         self.platform = platform
@@ -83,6 +86,7 @@ class TopologyPlugin(object):
         self.nml_dir = nml_dir
         self.injected_attr = injected_attr
         self.log_dir = log_dir
+        self.szn_dir = szn_dir
         self.platform_options = platform_options
         self.build_retries = build_retries
 
@@ -268,6 +272,13 @@ def pytest_addoption(parser):
         help='Path to a directory where logs are to be stored'
     )
     group.addoption(
+        '--topology-szn-dir',
+        default=None,
+        action='append',
+        help='Path to a directory where szn files are located. '
+             'Can be used multiple times'
+    )
+    group.addoption(
         '--topology-platform-options',
         nargs='+',
         default=None,
@@ -294,6 +305,7 @@ def pytest_sessionstart(session):
     nml_dir = config.getoption('--topology-nml-dir')
     injection_file = config.getoption('--topology-inject')
     log_dir = config.getoption('--topology-log-dir')
+    szn_dir = config.getoption('--topology-szn-dir')
     platform_options = config.getoption('--topology-platform-options')
     build_retries = config.getoption('--topology-build-retries')
 
@@ -326,7 +338,8 @@ def pytest_sessionstart(session):
         injected_attr = parse_attribute_injection(
             injection_file,
             search_paths=search_paths,
-            ignored_paths=config.getini('norecursedirs')
+            ignored_paths=config.getini('norecursedirs'),
+            szn_dir=szn_dir
         )
         log.info(
             'Attribute injection completed after {}s'
@@ -341,6 +354,7 @@ def pytest_sessionstart(session):
         nml_dir,
         injected_attr,
         log_dir,
+        szn_dir,
         parse_options(platform_options),
         build_retries
     )

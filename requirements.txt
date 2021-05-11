@@ -7,4 +7,4 @@ six
 pexpect>=4.6
 pyparsing
 pynml
-pyszn>=1.3.0
+pyszn>=1.4.0
