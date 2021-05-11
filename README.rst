@@ -38,6 +38,17 @@ License
 Changelog
 =========
 
+1.16.0 (2021-05-11)
+-------------------
+
+New
+~~~
+- Add pytest option ``--topology-szn-dir``.
+  
+  This new option will allow to pass the path of a directory
+  where topologies files ``*.szn`` will be defined.
+  
+
 1.11.0 (2020-03-16)
 -------------------
 
