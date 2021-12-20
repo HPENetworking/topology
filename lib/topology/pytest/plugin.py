@@ -44,10 +44,10 @@ from logging import getLogger
 from os import getcwd, makedirs
 from traceback import format_exc
 from collections import OrderedDict
-from os.path import join, isabs, abspath, realpath, exists, isdir
 from pytest import fixture, fail, hookimpl, skip
+from os.path import join, isabs, abspath, realpath, exists, isdir
 
-from topology.args import parse_options
+from topology.args import parse_options, ExtendAction
 from topology.logging import get_logger, StepLogger
 
 
@@ -282,6 +282,7 @@ def pytest_addoption(parser):
         '--topology-platform-options',
         nargs='+',
         default=None,
+        action=ExtendAction,
         help='An argument used by the topology platform '
              'with the form <key>=<value>'
     )
