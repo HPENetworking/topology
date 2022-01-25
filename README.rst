@@ -19,7 +19,7 @@ License
 
 .. code-block:: text
 
-   Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
+   Copyright (C) 2015-2022 Hewlett Packard Enterprise Development LP
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -38,23 +38,80 @@ License
 Changelog
 =========
 
+1.17.0 (2022-01-25)
+-------------------
+
+Changes
+~~~~~~~
+- pytest flag ``--topology-platform-options`` now uses the ExtendAction to
+  allowing extending and overriding options in CLI. [Francisco Mata]
+
+
 1.16.0 (2021-05-11)
 -------------------
 
 New
 ~~~
-- Add pytest option ``--topology-szn-dir``.
-  
-  This new option will allow to pass the path of a directory
-  where topologies files ``*.szn`` will be defined.
-  
+- Add pytest option ``--topology-szn-dir``. [Jose Martinez]
+
+  This new option will allow to pass the path of a directory where topologies
+  files ``*.szn`` will be defined.
+
+
+1.15.0 (2021-03-03)
+-------------------
+
+New
+~~~
+- Add pytest option ``--topology-build-retries``. [David Diaz]
+
+  Allow for unstable backends to try topology build more than once.
+
+
+1.14.0 (2021-01-06)
+-------------------
+
+Changes
+~~~~~~~
+- Call topology rollback on keyboardInterrupt during build. [David Diaz]
+
+
+1.13.0 (2020-08-05)
+-------------------
+
+New
+~~~
+- Ignore the same paths pytest ignores. [David Diaz]
+
+  When running topology via the pytest plugin, ignore the same paths pytest
+  does by using norecursedirs ini option.
+
+  Also move topology plugin configuration to sessionstart as logs on pytest are
+  live only after that point.
+
+
+1.12.0 (2020-06-05)
+-------------------
+
+Changes
+~~~~~~~
+- Use realpath for pytest plugin search paths. [David Diaz]
+
+  Starting on pytest 3.9.2 pytest resolves symbolic links:
+
+  https://github.com/pytest-dev/pytest/pull/4108/
+
+  This causes an incompatibility with the attribute injection feature as the
+  paths pytest sees (realpaths) differ from the injected_attr (abspath) found
+  on the topology_plugin.
+
 
 1.11.0 (2020-03-16)
 -------------------
 
 Changes
 ~~~~~~~
-- Set a meaningful identifier for NML bilinks.
+- Set a meaningful identifier for NML bilinks. [David Diaz]
 
   Currently the bilinks ID is the Python instance ID, this commit set it to a
   combination of the port IDs using the same syntax as pyszn:
