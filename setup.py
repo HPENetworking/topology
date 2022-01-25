@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2022 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,27 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from pathlib import Path
+
 from setuptools import setup, find_packages
+
+
+def check_directory():
+    """
+    You must always change directory to the parent of this file before
+    executing the setup.py script. setuptools will fail reading files,
+    including and excluding files from the MANIFEST.in, defining the library
+    path, etc, if not.
+    """
+    from os import chdir
+
+    here = Path(__file__).parent.resolve()
+    if Path.cwd().resolve() != here:
+        print('Changing path to {}'.format(here))
+        chdir(str(here))
+
+
+check_directory()
 
 
 def read(filename):
@@ -74,6 +94,7 @@ setup(
         'topologies, with support for pytest.'
     ),
     long_description=read('README.rst'),
+    long_description_content_type='text/x-rst',
     url='http://topology.rtfd.org/',
     keywords='topology',
 
