@@ -32,6 +32,8 @@ from six.moves import reload_module
 
 import topology.platforms.manager
 from topology.manager import TopologyManager
+from topology.graph import TopologyGraph
+
 
 reload_module(topology.platforms.manager)
 
@@ -40,24 +42,34 @@ def test_build():
     """
     Test building and unbuilding a topology using the Mininet engine.
     """
+    # Create a graph
+    graph = TopologyGraph()
+
+    # Create some nodes
+    graph.create_node('sw1', name='My Switch 1')
+    graph.create_node('hs1', name='My Host 1', type='host')
+
+    # Create some ports
+    graph.create_port('p1', 'sw1')
+    graph.create_port('p2', 'sw1')
+    graph.create_port('p3', 'sw1')
+
+    graph.create_port('p1', 'hs1')
+    graph.create_port('p2', 'hs1')
+    graph.create_port('p3', 'hs1')
+
+    # Create the links
+    graph.create_link('sw1', 'p1', 'hs1', 'p1')
+    graph.create_link('sw1', 'p2', 'hs1', 'p2')
+
+    # Check consistency of the graph
+    graph.check_consistency()
+
+    # Create the topology and set the graph
     topology = TopologyManager(engine='debug')
+    topology.graph = graph
 
-    # Create topology using the NMLManager
-    sw1 = topology.nml.create_node(identifier='sw1', name='My Switch 1')
-    hs1 = topology.nml.create_node(identifier='hs1', name='My Host 1',
-                                   type='host')
-
-    sw1p1 = topology.nml.create_biport(sw1)
-    sw1p2 = topology.nml.create_biport(sw1)
-    sw1p3 = topology.nml.create_biport(sw1)  # noqa
-    hs1p1 = topology.nml.create_biport(hs1)
-    hs1p2 = topology.nml.create_biport(hs1)
-    hs1p3 = topology.nml.create_biport(hs1)  # noqa
-
-    sw1p1_hs1p1 = topology.nml.create_bilink(sw1p1, hs1p1)  # noqa
-    sw1p2_hs1p2 = topology.nml.create_bilink(sw1p2, hs1p2)  # noqa
-
-    # Build topology
+    # Build the topology
     topology.build()
 
     # Get an engine node

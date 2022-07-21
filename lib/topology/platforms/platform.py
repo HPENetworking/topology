@@ -44,12 +44,12 @@ class BasePlatform(object):
     See the :doc:`Plugins Development Guide </plugins>` for reference.
 
     :param str timestamp: Timestamp in ISO 8601 format.
-    :param nmlmanager: Manager holding the NML namespace.
-    :type nmlmanager: :class:`pynml.manager.NMLManager`
+    :param graph: Topology Graph.
+    :type graph: :class:`topology.graph.TopologyGraph`
     """
 
     @abstractmethod
-    def __init__(self, timestamp, nmlmanager, **kwargs):
+    def __init__(self, timestamp, graph, **kwargs):
         super(BasePlatform, self).__init__()
 
     @abstractmethod
@@ -66,31 +66,31 @@ class BasePlatform(object):
         """
         Add a node to your platform.
 
-        This method receives a NML node and must return a new Engine Node
+        This method receives a Topology Graph node and must return a new Engine Node
         subclass of :class:`BaseNode` that implements the communication
         mechanism with that node.
 
-        :param node: The specification NML node to add to the platform.
-        :type node: :class:`pynml.nml.Node`
+        :param node: The Topology Graph node to add to the platform.
+        :type node: :class:`topology.graph.Node`
         :rtype: BaseNode
         :return: Platform specific communication node.
         """
 
     @abstractmethod
-    def add_biport(self, node, biport):
+    def add_biport(self, node, port):
         """
         Add a bidirectional port to the given node.
 
-        This method receives a NML node and a NML bidirectional port that
+        This method receives a Topology Graph node and a port that
         specifies the port required to be added. This methods returns nothing
         as the topology users don't expect to deal directly with ports. All
         interaction is done with the nodes.
 
-        :param node: The specification NML node owner of the port.
-        :type node: :class:`pynml.nml.Node`
-        :param biport: The specification NMP bidirectional port to add to the
-         platform.
-        :type biport: :class:`pynml.nml.BidirectionalPort`
+        :param node: Topology Graph Node owner of the port, holding the node
+         metadata.
+        :type node: :class:`topology.graph.Node`
+        :param port: The Topology Graph Port holding the port metadata.
+        :type biport: :class:`topology.graph.BidirectionalPort`
         :rtype: str
         :return: Real name of the port in the node. This real will be used to
          populate an internal map between the specification name of the port
@@ -99,26 +99,26 @@ class BasePlatform(object):
         """
 
     @abstractmethod
-    def add_bilink(self, nodeport_a, nodeport_b, bilink):
+    def add_bilink(self, nodeport_a, nodeport_b, link):
         """
-        Add a bidirectional link between given nodes and ports.
+        Add a link between given nodes and ports.
 
-        This method receives two tuples with the NML nodes and bidirectional
-        ports associated with the bidirectional link and also the NML
-        bidirectional link object that specifies the link required to be added
-        to the platform. This methods returns nothing as the topology users
-        don't expect to deal directly with links. All interaction is done with
-        the nodes.
+        This method receives two tuples with the nodes and ports associated
+        with the link and the link object to be added to the platform.
 
-        :param nodeport_a: A tuple (Node, BiPort) of the first endpoint.
+        Notice the ``nodeport_a`` and ``nodeport_b`` are passed for backwards
+        compatibility. However, now the link object contains the ports and
+        nodes associated to the link, so newer platform implementations could
+        just ignore ``nodeport_a`` and ``nodeport_b``.
+
+        :param nodeport_a: A tuple (Node, Port) of the first endpoint.
         :type nodeport_a:
-         (:class:`pynml.nml.Node`, :class:`pynml.nml.BidirectionalPort`)
-        :param nodeport_b: A tuple (Node, BiPort) of the second endpoint.
+         (:class:`topology.graph.Node`, :class:`topology.graph.Port`)
+        :param nodeport_b: A tuple (Node, Port) of the second endpoint.
         :type nodeport_b:
-         (:class:`pynml.nml.Node`, :class:`pynml.nml.BidirectionalPort`)
-        :param bilink: The specification NMP bidirectional link to add to the
-         platform.
-        :type biport: :class:`pynml.nml.BidirectionalLink`
+         (:class:`topology.graph.Node`, :class:`topology.graph.Port`)
+        :param link: The Topology Graph Link.
+        :type link: :class:`topology.graph.Link`
         """
 
     @abstractmethod

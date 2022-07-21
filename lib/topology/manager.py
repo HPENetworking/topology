@@ -36,10 +36,9 @@ from traceback import format_exc
 from collections import OrderedDict
 
 from six import string_types
-
-from pynml.manager import ExtendedNMLManager
-
 from pyszn.parser import parse_txtmeta
+
+from .graph import TopologyGraph, Link
 from .platforms.node import BaseNode
 from .platforms.manager import platforms, load_platform, DEFAULT_PLATFORM
 
@@ -59,19 +58,21 @@ class TopologyManager(object):
       To use this option call the :meth:`parse`.
     - Using a basic Python dictionary to load the description of the topology.
       To use this option call the :meth:`load`.
-    - Build a full NML topology using NML objects and relations and register
-      all the objects in the namespace using the embedded
-      :class:`pynml.manager.ExtendedNMLManager`, for example:
+    - Set the :attr:`graph` attribute to a :class:`TopologyGraph` object. For
+      example:
 
       ::
 
+         from topology.graph import TopologyGraph
+         from topology.manager import TopologyManager
+
          mgr = TopologyManager()
-         sw1 = mgr.create_node(name='My Switch 1')
-         sw2 = mgr.create_node(name='My Switch 2')
-         sw1p1 = mgr.create_biport(sw1)
+         graph = TopologyGraph()
+         graph.add_node(Node('My Node'))
+         mgr.graph = graph
          # ...
 
-      See :class:`pynml.manager.ExtendedNMLManager` for more information of
+      See :class:`topology.graph.TopologyGraph` for more information of
       this usage.
 
     :param str engine: Name of the platform engine to build the topology.
@@ -85,7 +86,7 @@ class TopologyManager(object):
         if engine not in platforms():
             raise RuntimeError('Unknown platform engine "{}".'.format(engine))
 
-        self.nml = ExtendedNMLManager(**kwargs)
+        self.graph = TopologyGraph()
         self.engine = engine
         self.options = options or OrderedDict()
         self.nodes = OrderedDict()
@@ -93,6 +94,23 @@ class TopologyManager(object):
 
         self._platform = None
         self._built = False
+
+    @property
+    def nml(self):
+        """
+        Topology no longer users NML specification. This method now returns
+        a :class:`topology.graph.TopologyGraph` object which was carefully
+        made to have the same interface as ExtendedNMLManger used to have.
+
+        This is obsolete and will be removed in future versions. Use the
+        :attr:`graph` attribute instead.
+        """
+        warn(
+            "nml attribute is obsolete and will be removed in future "
+            "versions. Use graph attribute instead.",
+            DeprecationWarning
+        )
+        return self.graph
 
     def load(self, dictmeta, inject=None):
         """
@@ -132,69 +150,95 @@ class TopologyManager(object):
         if inject is not None and 'environment' in inject:
             environment.update(inject['environment'])
 
-        self.nml.create_environment(**environment)
+        self.graph.environment = environment
 
         # Load nodes
+        node_to_parent = {}
         for nodes_spec in dictmeta.get('nodes', []):
             for node_id in nodes_spec['nodes']:
 
-                # Explicitly create node
+                # Get node attributes
                 attrs = deepcopy(nodes_spec['attributes'])
-                attrs['identifier'] = node_id
 
                 # Inject the run-specific attributes
                 if inject is not None and node_id in inject['nodes']:
                     attrs.update(inject['nodes'][node_id])
 
-                self.nml.create_node(**attrs)
+                # Create a new node
+                self.graph.create_node(node_id, **attrs)
+
+                parent_id = nodes_spec['parent']
+                if parent_id is not None:
+                    node_to_parent[node_id] = parent_id
 
         # Load ports
         for ports_spec in dictmeta.get('ports', []):
-            for node_id, port in ports_spec['ports']:
+            for node_id, port_label in ports_spec['ports']:
 
-                node = self.nml.get_object(node_id)
+                # Create the node if still not created
+                self.graph.create_node(node_id)
 
-                # Explicitly create port
+                # Get port attributes
                 attrs = deepcopy(ports_spec['attributes'])
-                attrs['identifier'] = '{}-{}'.format(node_id, port)
-                attrs['label'] = port
 
                 # Inject the run-specific attributes
-                if inject is not None and (node_id, port) in inject['ports']:
-                    attrs.update(inject['ports'][(node_id, port)])
+                if (
+                    inject is not None and
+                    (node_id, port_label) in inject['ports']
+                ):
+                    attrs.update(inject['ports'][(node_id, port_label)])
 
-                self.nml.create_biport(node, **attrs)
+                # Create a new port. This call also adds the port to the
+                # topology and node.
+                self.graph.create_port(port_label, node_id, **attrs)
 
         # Load links
         for link_spec in dictmeta.get('links', []):
 
-            # Get endpoints
-            endpoints = [None, None]
-            for idx, (node_id, port) in enumerate(link_spec['endpoints']):
-
-                # Auto-create node
-                node = self.nml.get_object(node_id)
-
-                # Auto-create biport
-                port_id = '{}-{}'.format(node_id, port)
-                biport = self.nml.get_object(port_id)
-
-                # Register endpoint
-                endpoints[idx] = biport
-
-            # Explicit-create links
+            # Get link attributes
             attrs = deepcopy(link_spec['attributes'])
-            # Set an id for the bilink
-            attrs['identifier'] = ' -- '.join(
-                endpoint.identifier for endpoint in endpoints
-            )
 
             # Inject the run-specific attributes
-            if inject is not None and \
-               link_spec['endpoints'] in inject['links']:
+            if (
+                inject is not None and
+                link_spec['endpoints'] in inject['links']
+            ):
                 attrs.update(inject['links'][link_spec['endpoints']])
 
-            self.nml.create_bilink(*endpoints, **attrs)
+            # This variable will hold these data for the link:
+            # endpoints = [(node1_id, port1_label), (node2_id, port2_label)]
+            endpoints = []
+
+            for node_id, port_label in link_spec['endpoints']:
+
+                # Create the node if it's still not created
+                self.graph.create_node(node_id)
+
+                # Create the port if it's still not created.
+                self.graph.create_port(port_label, node_id)
+
+                # Register endpoint
+                endpoints.append((node_id, port_label))
+
+            # Decompose the endpoints list into two tuples
+            node1_id, port1_label = endpoints[0]
+            node2_id, port2_label = endpoints[1]
+
+            # Create a new link
+            self.graph.create_link(
+                node1_id, port1_label, node2_id, port2_label, **attrs
+            )
+
+        # Set parent-child relationships
+        for node_id, parent_id in node_to_parent.items():
+            node = self.graph.get_node(node_id)
+            parent = self.graph.get_node(parent_id)
+
+            # Set the child's parent
+            node.parent = parent
+
+            # Add the child to the parent's children
+            parent.add_subnode(node)
 
     def parse(self, txtmeta, load=True, inject=None):
         """
@@ -249,7 +293,7 @@ class TopologyManager(object):
             for param in reversed(signature(plugin).parameters.values())
         ):
             self._platform = plugin(
-                timestamp, self.nml, **self.options
+                timestamp, self.graph, **self.options
             )
         else:
             if self.options:
@@ -259,14 +303,14 @@ class TopologyManager(object):
                 ).format(self.options, self.engine)
                 log.warning(msg)
                 warn(msg, DeprecationWarning)
-            self._platform = plugin(timestamp, self.nml)
+            self._platform = plugin(timestamp, self.graph)
 
         try:
             stage = 'pre_build'
             self._platform.pre_build()
 
             stage = 'add_node'
-            for node in self.nml.nodes():
+            for node in self.graph.nodes():
                 enode = self._platform.add_node(node)
 
                 # Check that engine node implements the minimum interface
@@ -285,26 +329,29 @@ class TopologyManager(object):
                 self.ports[enode.identifier] = OrderedDict()
 
             stage = 'add_biport'
-            for node, biport in self.nml.biports():
-                eport = self._platform.add_biport(node, biport)
+            for node in self.graph.nodes():
+                for port in node.ports():
+                    eport = self._platform.add_biport(node, port)
 
-                # Check that engine port is of correct type
-                if not isinstance(eport, string_types):
-                    msg = (
-                        'Platform {} returned an invalid '
-                        'engine port name {}.'
-                    ).format(self.engine, enode)
-                    log.critical(msg)
-                    raise Exception(msg)
+                    # Check that engine port is of correct type
+                    if not isinstance(eport, string_types):
+                        msg = (
+                            'Platform {} returned an invalid '
+                            'engine port name {}.'
+                        ).format(self.engine, enode)
+                        log.critical(msg)
+                        raise Exception(msg)
 
                 # Register engine port
-                label = biport.metadata.get('label', biport.identifier)
+                label = port.metadata.get('label', port.identifier)
                 enode_id = node_enode_map[node.identifier]
                 self.ports[enode_id][label] = eport
 
             stage = 'add_bilink'
-            for node_porta, node_portb, bilink in self.nml.bilinks():
-                self._platform.add_bilink(node_porta, node_portb, bilink)
+            for link in self.graph.links():
+                node_porta = (link.node1, link.port1)
+                node_portb = (link.node2, link.port2)
+                self._platform.add_bilink(node_porta, node_portb, link)
 
             stage = 'post_build'
 
@@ -354,7 +401,7 @@ class TopologyManager(object):
 
     def get(self, identifier):
         """
-        Get a platform engine with given identifier.
+        Get a platform node with given identifier.
 
         :param str identifier: The node identifier.
         :rtype: A subclass of :class:`topology.platforms.node.BaseNode`
@@ -368,6 +415,11 @@ class TopologyManager(object):
 
         :param str link_id: Link identifier to be recreated.
         """
+        warn(
+            'relink() is deprecated and will be removed in future releases.'
+            'Use set_link() instead.',
+            DeprecationWarning
+        )
         if not self._built:
             raise RuntimeError(
                 'You cannot relink on a never built topology.'
@@ -380,11 +432,40 @@ class TopologyManager(object):
 
         :param str link_id: Link identifier to be recreated.
         """
+        warn(
+            'unlink() is deprecated and will be removed in future releases.'
+            'Use unset_link() instead.',
+            DeprecationWarning
+        )
         if not self._built:
             raise RuntimeError(
                 'You cannot unlink on a never built topology.'
             )
         self._platform.unlink(link_id)
+
+    def unset_link(self, node1_id, port1_label, node2_id, port2_label):
+        """
+        Unset a link between two nodes.
+
+        :param str node1_id: The first node identifier.
+        :param str port1_label: The first port label.
+        :param str node2_id: The second node identifier.
+        :param str port2_label: The second port label.
+        """
+        link_id = Link.calc_id(node1_id, port1_label, node2_id, port2_label)
+        self.unlink(link_id)
+
+    def set_link(self, node1_id, port1_label, node2_id, port2_label):
+        """
+        Set a link between two nodes.
+
+        :param str node1_id: The first node identifier.
+        :param str port1_label: The first port label.
+        :param str node2_id: The second node identifier.
+        :param str port2_label: The second port label.
+        """
+        link_id = Link.calc_id(node1_id, port1_label, node2_id, port2_label)
+        self.relink(link_id)
 
     def _set_test_log(self, log):
         """
