@@ -39,9 +39,9 @@ class DebugPlatform(BasePlatform):
     See :class:`topology.platforms.platform.BasePlatform` for more information.
     """
 
-    def __init__(self, timestamp, nmlmanager, **kwargs):
+    def __init__(self, timestamp, graph, **kwargs):
         super(DebugPlatform, self).__init__(
-            timestamp, nmlmanager, **kwargs
+            timestamp, graph, **kwargs
         )
 
     def pre_build(self):
@@ -57,7 +57,7 @@ class DebugPlatform(BasePlatform):
         log.debug('[HOOK] add_node({})'.format(
             node
         ))
-        return DebugNode(node.identifier, name=node.name, **node.metadata)
+        return DebugNode(node.identifier, **node.metadata)
 
     def add_biport(self, node, biport):
         """

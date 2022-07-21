@@ -203,18 +203,6 @@ def validate_args(args):
         )
     args.topology = abspath(args.topology)
 
-    # Determine plot directory and create it if required
-    if args.plot_dir:
-        if not isabs(args.plot_dir):
-            args.plot_dir = join(abspath(getcwd()), args.plot_dir)
-        mkpath(args.nml_dir)
-
-    # Determine NML export directory and create it if required
-    if args.nml_dir:
-        if not isabs(args.nml_dir):
-            args.nml_dir = join(abspath(getcwd()), args.nml_dir)
-        mkpath(args.nml_dir)
-
     # Verify inject file exists
     if args.inject:
         if not isfile(args.inject):

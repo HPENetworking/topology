@@ -8,3 +8,5 @@ pexpect>=4.6
 pyparsing
 pynml
 pyszn>=1.4.0
+typing_extensions
+pprintpp

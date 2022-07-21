@@ -27,8 +27,8 @@ used. Once built, the plugin registers the *unbuild* for when the module has
 ended all the tests.
 
 If the ``TOPOLOGY`` variable isn't present the fixture assumes the user will
-prefer to build the topology using the standard NML objects with the
-:class:`pynml.manager.NMLManager` instance enbeed into the
+prefer to build the topology using Topology Graph objects directly with the
+:class:`topology.graph.TopologyGraph` instance enbeed into the
 :class:`topology.manager.TopologyManager`.
 
 To be able to select the platform engine this plugins registers the
@@ -58,12 +58,7 @@ class TopologyPlugin(object):
     """
     pytest plugin for Topology.
 
-    :param str platform: Platform engine name to run the tests with.
-    :param str plot_dir: Directory to auto-plot topologies. ``None`` if
-     feature is disabled.
-    :param str plot_format: Format to plot the topologies.
-    :param str nml_dir: Directory to auto-export topologies. ``None`` if
-     feature is disabled.
+    :param str platform: Platform engine name to run the tests with
     :param dict injected_attr: A dictionary holding topology attributes to
      inject.
     :param str log_dir: Path where to store logs.
@@ -75,15 +70,11 @@ class TopologyPlugin(object):
     """
 
     def __init__(
-        self, platform, plot_dir, plot_format,
-        nml_dir, injected_attr, log_dir, szn_dir, platform_options,
+        self, platform, injected_attr, log_dir, szn_dir, platform_options,
         build_retries
     ):
         super(TopologyPlugin, self).__init__()
         self.platform = platform
-        self.plot_dir = plot_dir
-        self.plot_format = plot_format
-        self.nml_dir = nml_dir
         self.injected_attr = injected_attr
         self.log_dir = log_dir
         self.szn_dir = szn_dir
@@ -95,14 +86,6 @@ class TopologyPlugin(object):
         pytest hook to print information of the report header.
         """
         header = ["topology: platform='{}'".format(self.platform)]
-        if self.plot_dir:
-            header.append("          plot_dir='{}' ({})".format(
-                self.plot_dir, self.plot_format
-            ))
-        if self.nml_dir:
-            header.append("          nml_dir='{}'".format(
-                self.nml_dir
-            ))
         if self.log_dir:
             header.append("          log_dir='{}'".format(
                 self.log_dir
@@ -135,32 +118,12 @@ def topology(request):
     if plugin.log_dir:
         logmanager.logging_directory = plugin.log_dir
 
-    # Finalizer unbuild the topology and plot it
+    # Finalizer unbuild the topology
     def finalizer():
 
         # Do nothing is topology isn't built
         if not topomgr.is_built():
             return
-
-        # Plot topology
-        if plugin.plot_dir:
-            plot_file = join(
-                plugin.plot_dir,
-                '{}.{}'.format(module.__name__, plugin.plot_format)
-            )
-            topomgr.nml.save_graphviz(
-                plot_file, keep_gv=True
-            )
-
-        # Export topology as NML
-        if plugin.nml_dir:
-            nml_file = join(
-                plugin.nml_dir,
-                '{}.xml'.format(module.__name__)
-            )
-            topomgr.nml.save_nml(
-                nml_file, pretty=True
-            )
 
         topomgr.unbuild()
 
@@ -247,21 +210,6 @@ def pytest_addoption(parser):
         choices=platforms()
     )
     group.addoption(
-        '--topology-plot-dir',
-        default=None,
-        help='Directory to auto-plot topologies'
-    )
-    group.addoption(
-        '--topology-plot-format',
-        default='svg',
-        help='Format for plotting topologies'
-    )
-    group.addoption(
-        '--topology-nml-dir',
-        default=None,
-        help='Directory to export topologies as NML XML'
-    )
-    group.addoption(
         '--topology-inject',
         default=None,
         help='Path to an attributes injection file'
@@ -301,9 +249,6 @@ def pytest_sessionstart(session):
     config = session.config
     # Get registered options
     platform = config.getoption('--topology-platform')
-    plot_format = config.getoption('--topology-plot-format')
-    plot_dir = config.getoption('--topology-plot-dir')
-    nml_dir = config.getoption('--topology-nml-dir')
     injection_file = config.getoption('--topology-inject')
     log_dir = config.getoption('--topology-log-dir')
     szn_dir = config.getoption('--topology-szn-dir')
@@ -320,9 +265,7 @@ def pytest_sessionstart(session):
             if not exists(path):
                 makedirs(path)
 
-    # Determine plot, NML and log directory paths and create them if required
-    create_dir(plot_dir)
-    create_dir(nml_dir)
+    # Determine log directory paths and create them if required
     create_dir(log_dir)
 
     # Parse attributes injection file
@@ -350,9 +293,6 @@ def pytest_sessionstart(session):
     # Create and register plugin
     config._topology_plugin = TopologyPlugin(
         platform,
-        plot_dir,
-        plot_format.lstrip('.'),
-        nml_dir,
         injected_attr,
         log_dir,
         szn_dir,
