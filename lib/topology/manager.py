@@ -342,10 +342,10 @@ class TopologyManager(object):
                         log.critical(msg)
                         raise Exception(msg)
 
-                # Register engine port
-                label = port.metadata.get('label', port.identifier)
-                enode_id = node_enode_map[node.identifier]
-                self.ports[enode_id][label] = eport
+                    # Register engine port
+                    label = port.metadata.get('label', port.identifier)
+                    enode_id = node_enode_map[node.identifier]
+                    self.ports[enode_id][label] = eport
 
             stage = 'add_bilink'
             for link in self.graph.links():
