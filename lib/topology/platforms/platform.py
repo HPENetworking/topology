@@ -66,9 +66,9 @@ class BasePlatform(object):
         """
         Add a node to your platform.
 
-        This method receives a Topology Graph node and must return a new Engine Node
-        subclass of :class:`BaseNode` that implements the communication
-        mechanism with that node.
+        This method receives a Topology Graph node and must return a new
+        Engine Node subclass of :class:`BaseNode` that implements the
+        communication mechanism with that node.
 
         :param node: The Topology Graph node to add to the platform.
         :type node: :class:`topology.graph.Node`

@@ -22,8 +22,8 @@ topology executable module entry point.
 import sys
 import logging
 from io import StringIO
+from warnings import warn
 from atexit import register
-from os.path import join, basename, splitext
 
 from pyszn.parser import find_topology_in_python
 from pyszn.injection import parse_attribute_injection
@@ -107,23 +107,12 @@ def main(args):
         interact(mgr)
 
     # Plot and export topology
-    module = splitext(basename(args.topology))[0]
     if args.plot_dir:
-        plot_file = join(
-            args.plot_dir, '{}.{}'.format(module, args.plot_format)
-        )
-        mgr.nml.save_graphviz(
-            plot_file, keep_gv=True
-        )
+        warn('--plot-dir is no longer supported, ignoring', DeprecationWarning)
 
     # Export topology as NML
     if args.nml_dir:
-        nml_file = join(
-            args.nml_dir, '{}.xml'.format(module)
-        )
-        mgr.nml.save_nml(
-            nml_file, pretty=True
-        )
+        warn('--nml-dir is no longer supported, ignoring', DeprecationWarning)
 
     return 0
 
