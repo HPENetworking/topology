@@ -51,11 +51,16 @@ class Link:
         self._port1 = port1
         self._port2 = port2
         self._metadata = {} if metadata is None else metadata
-        self.identifier = Link.calc_id(
-            node1.identifier,
-            port1.label,
-            node2.identifier,
-            port2.label
+
+        # Allow to override the identifier of the link.
+        self.identifier = self.metadata.pop(
+            'identifier',
+            Link.calc_id(
+                node1.identifier,
+                port1.label,
+                node2.identifier,
+                port2.label
+            )
         )
         self.attrs = {}
 
@@ -81,7 +86,7 @@ class Link:
         port1_label: str,
         node2_id: str,
         port2_label: str
-    ) -> frozenset[Node, Port, Node, Port]:
+    ) -> str:
         """
         Calculates the identifier of the link.
         :param str node1_id: The identifier of the first node.
@@ -91,7 +96,13 @@ class Link:
         """
         port1_id = Port.calc_id(node1_id, port1_label)
         port2_id = Port.calc_id(node2_id, port2_label)
-        return frozenset((port1_id, port2_id))
+
+        # Any pair of ports produce the same identifier regardless their order.
+        return (
+            f'{port1_id} -- {port2_id}'
+            if port1_id <= port2_id else
+            f'{port2_id} -- {port1_id}'
+        )
 
     @property
     def node1(self) -> Node:
@@ -134,16 +145,22 @@ class Link:
 
         :param str node_id: The identifier of the node.
         """
-        return node_id in self.identifier
+        return (
+            self.node1.identifier == node_id or
+            self.node2.identifier == node_id
+        )
 
-    def has_port(self, node_id: str, port_id: str) -> bool:
+    def has_port(self, node_id: str, port_label: str) -> bool:
         """
         Returns True if the link has the port.
 
         :param str node_id: The identifier of the node.
-        :param str port_id: The identifier of the port.
+        :param str port_label: The port label.
         """
-        return (node_id, port_id) in self.identifier
+        return (
+            self.port1.identifier == Port.calc_id(node_id, port_label) or
+            self.port2.identifier == Port.calc_id(node_id, port_label)
+        )
 
 
 __all__ = ['Link']
