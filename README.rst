@@ -38,6 +38,28 @@ License
 Changelog
 =========
 
+1.18.0 (2022-08-39)
+-------------------
+
+Changes
+~~~~~~~
+- Add support for subnode
+
+    - Subnodes can be specified using the ``node>subnode`` syntax and
+      they can be nested as well. Ports can be specified for any node and links
+      can be specified between aany pair of nodes regardless the nesting level,
+      for example: ``node>subnode1>subnode2:p1 -- node:p1``.
+    - Replace NMLExtendedManager by a new TopologyGraph
+      class and other classes for Node, Link and Port.
+      TopologyGraph has the same API as the old NMLExtendedManager,
+      thus backwards compatibility is preserved.
+    - Drop support for NML and graphviz plot output
+      which implies these pytest plugin flags and CLI arguments now
+      do nothing. Notice they might be removed in a future release:
+      - --topology-nml-dir
+      - --topology-plot-dir
+      - --topology-plot-format
+
 1.17.0 (2022-01-25)
 -------------------
 
