@@ -38,6 +38,16 @@ License
 Changelog
 =========
 
+
+1.18.1 (2022-10-31)
+-------------------
+
+Fixes
+~~~~~
+- Using topology as module did not inject attributes appropriately. Now it uses
+  the topology file path as top search-path.
+
+
 1.18.0 (2022-08-39)
 -------------------
 
