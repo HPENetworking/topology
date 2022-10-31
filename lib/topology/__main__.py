@@ -22,6 +22,7 @@ topology executable module entry point.
 import sys
 import logging
 from io import StringIO
+from pathlib import Path
 from warnings import warn
 from atexit import register
 
@@ -58,7 +59,9 @@ def main(args):
     # Parse attributes injection file
     injected_attr = None
     if args.inject is not None:
-        injection_spec = parse_attribute_injection(args.inject)
+        injection_spec = parse_attribute_injection(
+            args.inject,
+            search_paths=[Path(args.topology).parent])
         injected_attr = injection_spec.get(args.topology, None)
 
     # Create manager
