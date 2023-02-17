@@ -335,9 +335,10 @@ def pytest_sessionstart(session):
         start_time = time()
         # Get a list of all testing directories
         search_paths = [
-            realpath(Path(arg).parent) for arg in config.args if Path(arg).parent.exists
+            realpath(arg) for arg in config.args if isdir(arg)
         ]
 
+        search_paths.append(realpath(Path(injection_file).parent))
         log.info(f"injection_file:{injection_file},search_paths:{search_paths},szn_dir={szn_dir}")
         injected_attr = parse_attribute_injection(
             injection_file,
