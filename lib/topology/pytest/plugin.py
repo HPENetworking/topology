@@ -46,7 +46,6 @@ from traceback import format_exc
 from collections import OrderedDict
 from pytest import fixture, fail, hookimpl, skip
 from os.path import join, isabs, abspath, realpath, exists, isdir
-from pathlib import Path
 
 from topology.args import parse_options, ExtendAction
 from topology.logging import get_logger, StepLogger
@@ -338,7 +337,6 @@ def pytest_sessionstart(session):
             realpath(arg) for arg in config.args if isdir(arg)
         ]
 
-        search_paths.append(realpath(Path(injection_file).parent))
         log.debug(
             f"injection_file:{injection_file}, search_paths:{search_paths}, szn_dir={szn_dir}")
         injected_attr = parse_attribute_injection(
