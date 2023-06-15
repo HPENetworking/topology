@@ -49,7 +49,7 @@ def main(args):
     :return: Exit code.
     :rtype: int
     """
-    print('Starting Network Topology Framework v{}'.format(__version__))
+    print('Starting Topology Framework v{}'.format(__version__))
 
     # Setup framework logging
     logmanager.logging_context = None
@@ -61,7 +61,10 @@ def main(args):
     if args.inject is not None:
         injection_spec = parse_attribute_injection(
             args.inject,
-            search_paths=[Path(args.topology).parent])
+            search_paths=[
+                Path(args.topology).parent,
+            ]
+        )
         injected_attr = injection_spec.get(args.topology, None)
 
     # Create manager
@@ -120,8 +123,7 @@ def main(args):
     return 0
 
 
-if __name__ == '__main__':
-
+def __main__():  # noqa: N807
     # Parse arguments
     try:
         args = parse_args()
@@ -131,6 +133,10 @@ if __name__ == '__main__':
 
     # Run program
     exit(main(args))
+
+
+if __name__ == '__main__':
+    __main__()
 
 
 __all__ = [

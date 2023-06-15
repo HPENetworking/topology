@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2022 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2023 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -105,15 +105,17 @@ setup(
         'Natural Language :: English',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
 
     # Entry points
     entry_points={
         'console_scripts': [
-            'topology=topology.__main__:main',
+            'topology=topology.__main__:__main__',
         ],
         'pytest11': [
             'topology = topology.pytest.plugin',
@@ -124,5 +126,8 @@ setup(
         'topology_library_10': [
             'common = topology.libraries.common',
         ]
-    }
+    },
+
+    # Minimal Python version
+    python_requires='>=3.6',
 )
