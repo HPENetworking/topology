@@ -5,7 +5,7 @@ How to make a Topology release?
 
 #. Edit version::
 
-    nano .cookiecutter.json lib/topology/__init__.py
+    nano lib/topology/__init__.py
 
 #. Update changelog in README.rst::
 
@@ -29,8 +29,18 @@ How to make a Topology release?
 
 #. Upload to PyPI::
 
-    twine upload --username hpe-networking dist/topology-x.y.z.tar.gz
-    twine upload --username hpe-networking dist/topology-x.y.z-py3-none-any.whl
+    twine upload --repository hpepypi --skip-existing dist/*
+
+You need to have an entry in ``~/.pypirc``::
+
+    [distutils]
+    index-servers =
+        hpepypi
+
+    [hpepypi]
+    repository = https://upload.pypi.org/legacy/
+    username = hpe-networking
+    password = *******
 
 #. Add entry in GitHub releases:
 
