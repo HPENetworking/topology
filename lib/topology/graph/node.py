@@ -161,7 +161,7 @@ class Node:
         """
         Adds a port to the node.
 
-        :param Port port: The port to add.
+        :param topology.graph.Port port: The port to add.
         """
         if port.node_id != self.identifier:
             raise Inconsistent(

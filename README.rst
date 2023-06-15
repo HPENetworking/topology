@@ -19,7 +19,7 @@ License
 
 .. code-block:: text
 
-   Copyright (C) 2015-2022 Hewlett Packard Enterprise Development LP
+   Copyright (C) 2015-2023 Hewlett Packard Enterprise Development LP
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -37,6 +37,13 @@ License
 
 Changelog
 =========
+
+1.18.2 (2023-06-15)
+-------------------
+
+Fixes
+~~~~~
+- 'topology' executable was broken and could not be called. Fixed.
 
 
 1.18.1 (2022-10-31)
