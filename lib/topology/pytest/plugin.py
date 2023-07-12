@@ -334,12 +334,9 @@ def pytest_runtest_setup(item):
     test_id_marker = item.get_closest_marker('test_id')
     incompatible_marker = item.get_closest_marker('platform_incompatible')
 
-    # If marked and xml logging enabled
-    if test_id_marker is not None and hasattr(item.config, '_xml'):
+    if test_id_marker is not None:
         test_id = test_id_marker.args[0]
-        item.config._xml.node_reporter(item.nodeid).add_property(
-            'test_id', test_id
-        )
+        item.user_properties.append(('test_id', test_id))
 
     if incompatible_marker:
         platform = item.config._topology_plugin.platform
