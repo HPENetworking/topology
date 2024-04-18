@@ -237,7 +237,7 @@ def pytest_addoption(parser):
     group.addoption(
         '--topology-build-retries',
         default=0,
-        type='int',
+        type=int,
         help='Retry building a topology up to defined times'
     )
 
