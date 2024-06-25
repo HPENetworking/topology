@@ -35,6 +35,18 @@ License
 Changelog
 =========
 
+1.18.3 (2024-06-25)
+-------------------
+
+Fix
+~~~
+
+- Move argparse type from 'int' to int.
+
+  In latest version of pytest, the 'int' value as type is
+  no longer supported, causing issues when topology is
+  started.
+
 1.18.2 (2023-06-15)
 -------------------
 
