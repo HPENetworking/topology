@@ -20,11 +20,10 @@ Argument management module.
 """
 
 import logging
-from os import getcwd
 from re import compile
 from pprint import pformat
+from os import getcwd, makedirs
 from collections import OrderedDict
-from distutils.dir_util import mkpath
 from argparse import Action, ArgumentParser
 from os.path import join, isabs, abspath, isfile
 
@@ -215,7 +214,7 @@ def validate_args(args):
     if args.log_dir:
         if not isabs(args.log_dir):
             args.log_dir = join(abspath(getcwd()), args.log_dir)
-        mkpath(args.log_dir)
+        makedirs(args.log_dir, exist_ok=True)
 
     # Parse options
     if args.options:
