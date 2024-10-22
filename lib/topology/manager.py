@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2024 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import logging
 from sys import exc_info
 from warnings import warn
 from copy import deepcopy
-from inspect import signature
 from datetime import datetime
 from traceback import format_exc
 from collections import OrderedDict
@@ -94,6 +93,7 @@ class TopologyManager(object):
 
         self._platform = None
         self._built = False
+        self._resolved = False
 
     @property
     def nml(self):
@@ -267,6 +267,33 @@ class TopologyManager(object):
         """
         return self._built
 
+    def resolve(self):
+        """
+        Resolve the topology.
+
+        This method resolves the topology graph by calling the platform
+        to resolve the topology. If the topology is not resolvable, the
+        platform should raise an exception.
+        """
+        if self._built:
+            raise RuntimeError(
+                'You cannot resolve an already built topology.'
+            )
+        # Instance platform
+        plugin = load_platform(self.engine)
+        timestamp = datetime.now().replace(microsecond=0).isoformat()
+
+        self._platform = plugin(
+            timestamp, self.graph, **self.options
+        )
+        if not hasattr(self._platform, 'resolve'):
+            log.warning('Platform does not implement resolve method.')
+            self._resolved = True
+            return
+
+        self._platform.resolve()
+        self._resolved = True
+
     def build(self):
         """
         Build the topology hold by this manager.
@@ -279,31 +306,12 @@ class TopologyManager(object):
                 'You cannot build a topology twice.'
             )
 
+        if not self._resolved:
+            # To keep backward compatibility, resolve the topology if it was
+            # not resolved yet.
+            self.resolve()
+
         node_enode_map = OrderedDict()
-        timestamp = datetime.now().replace(microsecond=0).isoformat()
-        stage = 'instance'
-
-        # Instance platform
-        plugin = load_platform(self.engine)
-
-        # Check if platform support to pass arguments to keep backwards
-        # compatibility
-        if any(
-            param.kind == param.VAR_KEYWORD
-            for param in reversed(signature(plugin).parameters.values())
-        ):
-            self._platform = plugin(
-                timestamp, self.graph, **self.options
-            )
-        else:
-            if self.options:
-                msg = (
-                    'Ignoring platform options "{}" '
-                    'as current platform "{}" does not support to pass options'
-                ).format(self.options, self.engine)
-                log.warning(msg)
-                warn(msg, DeprecationWarning)
-            self._platform = plugin(timestamp, self.graph)
 
         try:
             stage = 'pre_build'
