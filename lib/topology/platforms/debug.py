@@ -43,6 +43,7 @@ class DebugPlatform(BasePlatform):
         super(DebugPlatform, self).__init__(
             timestamp, graph, **kwargs
         )
+        self.debug_value = 'fordebug'
 
     def resolve(self):
         """

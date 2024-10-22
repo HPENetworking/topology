@@ -96,6 +96,13 @@ class TopologyManager(object):
         self._resolved = False
 
     @property
+    def platform(self):
+        """
+        The platform object that is currently being used to build the topology.
+        """
+        return self._platform
+
+    @property
     def nml(self):
         """
         Topology no longer users NML specification. This method now returns
