@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2024 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -51,6 +51,17 @@ class BasePlatform(object):
     @abstractmethod
     def __init__(self, timestamp, graph, **kwargs):
         super(BasePlatform, self).__init__()
+
+    def resolve(self):
+        """
+        Resolve the topology.
+
+        This method is called after the platform is created and before the
+        build process starts. It should resolve the topology graph, making sure
+        all nodes, ports and links are correctly defined and all requirements
+        are satisfied. If the graph is not resolvable, this method should raise
+        an exception.
+        """
 
     @abstractmethod
     def pre_build(self):

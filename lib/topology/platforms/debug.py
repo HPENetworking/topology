@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2024 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -43,6 +43,12 @@ class DebugPlatform(BasePlatform):
         super(DebugPlatform, self).__init__(
             timestamp, graph, **kwargs
         )
+
+    def resolve(self):
+        """
+        See :meth:`BasePlatform.resolve` for more information.
+        """
+        log.debug('[HOOK] resolve')
 
     def pre_build(self):
         """
