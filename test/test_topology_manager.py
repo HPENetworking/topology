@@ -72,6 +72,9 @@ def test_build():
     # Build the topology
     topology.build()
 
+    assert topology.engine == 'debug'
+    assert topology.platform.debug_value == 'fordebug'
+
     # Get an engine node
     assert topology.get('sw1') is not None
     assert topology.get('hs1') is not None
