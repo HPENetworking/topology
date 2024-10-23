@@ -35,6 +35,19 @@ License
 Changelog
 =========
 
+1.19.0 (2024-10-23)
+-------------------
+
+Changes
+~~~~~~~
+
+- Add a step before build to resolve the topology graph. This additional step
+  allows the user to take decisions before trying to build the topology and
+  figuring out it is not possible too late.
+
+- Add "platform" property so users can access the platform instance from the
+  topology manager.
+
 1.18.3 (2024-06-25)
 -------------------
 
