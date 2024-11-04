@@ -34,8 +34,7 @@ from pexpect import TIMEOUT
 
 from topology.logging import get_logger
 
-
-TERM_CODES_REGEX = r'\x1b[E|\[](\?)?([0-9]{1,2}(;[0-9]{1,2})?)?[m|K|h|H|r]?'
+TERM_CODES_REGEX = r'\x1B[@-_][0-?]*[ -/]*[@-~]'
 """
 Regular expression to match terminal control codes.
 
@@ -48,23 +47,16 @@ This regular expression allows to remove them as they are unneeded for the
 purpose of executing commands and parsing their outputs
 (unless proven otherwise).
 
-``\\x1b``
-  Match prefix that indicates the next characters are part of a terminal code
-  string.
-``[E|\\[]``
-  Match either ``E`` or ``[``.
-``(\\?)?``
-  Match zero or one ``?``.
-``([0-9]{1,2}``
-  Match 1 or 2 numerical digits.
-``(;[0-9]{1,2})?``
-  Match zero or one occurences of the following pattern: ``;`` followed by 1
-  or 2 numerical digits.
-``)?``
-  Means the pattern composed by the the last 2 parts above can be found zero or
-  one times.
-``[m|K|h|H|r]?``
-  Match zero or one occurrences of either ``m``, ``K``, ``h``, ``H`` or ``r``.
+This pattern works as follows:
+
+``\x1B[@-_]``: Matches the escape character (ASCII code 27) followed by any
+character in the range from @ to _.
+``[0-?]*``: Matches zero or more characters in the range from 0 to ?.
+``[ -/]*``: Matches zero or more characters in the range from space to /.
+``[@-~]``: Matches a single character in the range from @ to ~.
+
+This should cover a wide variety of ANSI escape sequences, including those for
+text formatting, cursor movement, and other terminal control codes.
 """
 
 
