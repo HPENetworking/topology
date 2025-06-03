@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2025 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,11 @@ from inspect import isclass
 from traceback import format_exc
 from collections import OrderedDict
 
-from pkg_resources import iter_entry_points
+import sys
+if sys.version_info >= (3, 8):
+    from importlib.metadata import entry_points
+else:
+    from importlib_metadata import entry_points  # backport for Python < 3.8
 
 from .node import BaseNode
 
@@ -88,7 +92,7 @@ class NodeLoader(object):
         available = OrderedDict()
 
         # Iterate over entry points
-        for ep in iter_entry_points(group=self.entrypoint):
+        for ep in entry_points(group=self.entrypoint):
 
             name = ep.name
 
