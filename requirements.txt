@@ -1,3 +1,4 @@
+importlib-metadata; python_version < "3.8"
 six
 # Why pinning pexpect to 4.6?
 # pexpect 4.5 introduced the use_poll keyword argument to allow
