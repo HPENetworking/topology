@@ -33,7 +33,7 @@ from collections import OrderedDict
 from argparse import Namespace
 
 import sys
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 9):
     from importlib.metadata import entry_points
 else:
     from importlib_metadata import entry_points  # backport for Python < 3.8
