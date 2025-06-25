@@ -135,9 +135,9 @@ class Link:
     @property
     def metadata(self) -> dict:
         """
-        Returns a copy of the metadata of the link.
+        Returns the metadata of the link.
         """
-        return deepcopy(self._metadata)
+        return self._metadata
 
     def has_node(self, node_id: str) -> bool:
         """
