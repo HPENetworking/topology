@@ -101,9 +101,9 @@ class Node:
     @property
     def metadata(self) -> dict:
         """
-        Returns a deepcopy of the metadata of the node.
+        Returns the metadata of the node.
         """
-        return deepcopy(self._metadata)
+        return self._metadata
 
     def has_parent(self) -> bool:
         """

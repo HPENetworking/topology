@@ -81,9 +81,9 @@ class Port:
     @property
     def metadata(self) -> dict:
         """
-        Returns the readonly metadata of the port.
+        Returns the metadata of the port.
         """
-        return deepcopy(self._metadata)
+        return self._metadata
 
     @property
     def node_id(self) -> str:
