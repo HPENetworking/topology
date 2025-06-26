@@ -39,19 +39,31 @@ For reference see:
     http://pytest.org/dev/plugins.html#hook-specification-and-validation
 """
 
+import glob
+from json import dumps
 from time import time
+from pathlib import Path
 from logging import getLogger
+from typing import Tuple
+from deepdiff import DeepHash
 from os import getcwd, makedirs
 from traceback import format_exc
 from collections import OrderedDict
+from pyszn.parser import parse_txtmeta
 from pytest import fixture, fail, hookimpl, skip
 from os.path import join, isabs, abspath, realpath, exists, isdir
 
+from ..manager import TopologyManager
 from topology.args import parse_options, ExtendAction
 from topology.logging import get_logger, StepLogger
 
 
 log = getLogger(__name__)
+
+
+# When --topology-group-by-topology is used, this variable will hold a tuple
+# of (topology_hash, TopologyManager) for the current built topology.
+CURRENT_TOPOLOGY: Tuple[DeepHash, TopologyManager] = None
 
 
 class TopologyPlugin(object):
@@ -94,6 +106,23 @@ class TopologyPlugin(object):
         return '\n'.join(header)
 
 
+def _destroy_topology():
+    """
+    Destroy current topology.
+    """
+    global CURRENT_TOPOLOGY
+    if CURRENT_TOPOLOGY is None:
+        return
+
+    topology_hash, topomgr = CURRENT_TOPOLOGY
+
+    if topomgr.is_built():
+        log.info(f'Destroying setup with hash {topology_hash}')
+        topomgr.unbuild()
+
+    CURRENT_TOPOLOGY = None
+
+
 @fixture(scope='module')
 def topology(request):
     """
@@ -104,81 +133,102 @@ def topology(request):
     - https://pytest.org/latest/fixture.html
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
-    from ..manager import TopologyManager
     from ..logging import manager as logmanager
 
-    plugin = request.config._topology_plugin
+    # Cache of current built topology = (topology_hash, TopologyManager)
+    global CURRENT_TOPOLOGY
+
+    plugin: TopologyPlugin = request.config._topology_plugin
     module = request.module
-    topomgr = TopologyManager(
-        engine=plugin.platform, options=plugin.platform_options
-    )
 
     # Setup framework logging
     logmanager.logging_context = module.__name__
     if plugin.log_dir:
         logmanager.logging_directory = plugin.log_dir
 
-    # Finalizer unbuild the topology
-    def finalizer():
+    # If --topology-group-by-topology is used, check if the
+    # topology_hash is already built and if so, return the existing
+    # TopologyManager instance. This allows the topology to be built once
+    # per group of tests, rather than rebuilding it for each individual test.
+    group_by_topology = request.config.getoption(
+        '--topology-group-by-topology'
+    )
 
-        # Do nothing is topology isn't built
-        if not topomgr.is_built():
-            return
+    if group_by_topology and CURRENT_TOPOLOGY is not None:
+        # Fetch topology data for this module
+        assert hasattr(module, '__TOPOLOGY_HASH__'), (
+            f'Module {module.__name__} has no __TOPOLOGY_HASH__ attribute. '
+            'This should have been set when collecting the tests '
+            '(there is a bug in topology pytest plugin)'
+        )
 
-        topomgr.unbuild()
+        topology_hash = module.__TOPOLOGY_HASH__
 
-    # Autobuild topology if available.
-    if hasattr(module, 'TOPOLOGY'):
+        # If the topology is already built, check if the topology_hash matches
+        cached_hash, topomgr = CURRENT_TOPOLOGY
 
-        # Get topology description
-        topo = module.TOPOLOGY
-
-        # Get attributes to inject
-        suite_injected_attr = None
-        if plugin.injected_attr is not None:
-            suite_injected_attr = plugin.injected_attr.get(
-                abspath(module.__file__), None
+        if topology_hash == cached_hash:
+            # If the topology is already built, return the existing instance
+            log.info(
+                f'Reusing topology_hash {topology_hash} for suite '
+                f'{abspath(module.__file__)}'
             )
+            return topomgr
 
-        try:
-            if isinstance(topo, dict):
-                topomgr.load(topo, inject=suite_injected_attr)
-            else:
-                topomgr.parse(topo, inject=suite_injected_attr)
-        except Exception:
-            fail(
-                'Error loading topology in module {}:\n{}'.format(
-                    module.__name__,
-                    format_exc()
-                ),
-                pytrace=False
-            )
+    # Either grouping by topology is disabled, or we just finished to run
+    # a topology group and this is a new unique topology (or this is the fist
+    # topology ever), so we need to build a new topology manager instance for
+    # this module. If the topology was already built, destroy it first.
+    _destroy_topology()
 
-        for iteration in range(plugin.build_retries + 1):
-            try:
-                topomgr.build()
-                log.info(
-                    'Attempt {} on building topology was successful'.format(
-                        iteration
-                    )
-                )
-                break
-            except Exception:
-                msg = (
-                    '{}\nAttempt {} to build topology failed.'
-                ).format(format_exc(), iteration)
+    topomgr = TopologyManager(
+        engine=plugin.platform, options=plugin.platform_options
+    )
 
-                log.warning(msg)
+    topology, injected_attr = get_module_topology(plugin, module)
+
+    try:
+        if isinstance(topology, dict):
+            topomgr.load(topology, inject=injected_attr)
         else:
-            fail(
-                'Error building topology in module {}:\n{}'.format(
-                    module.__name__,
-                    format_exc()
-                ), pytrace=False
+            topomgr.parse(topology, inject=injected_attr)
+    except Exception:
+        fail(
+            'Error loading topology in module {}:\n{}'.format(
+                module.__name__,
+                format_exc()
+            ),
+            pytrace=False
+        )
+
+    for iteration in range(plugin.build_retries + 1):
+        try:
+            topomgr.build()
+            log.info(
+                'Attempt {} on building topology was successful'.format(
+                    iteration
+                )
             )
+            break
+        except Exception:
+            msg = (
+                '{}\nAttempt {} to build topology failed.'
+            ).format(format_exc(), iteration)
 
-        request.addfinalizer(finalizer)
+            log.warning(msg)
+    else:
+        fail(
+            'Error building topology in module {}:\n{}'.format(
+                module.__name__,
+                format_exc()
+            ), pytrace=False
+        )
 
+    if group_by_topology:
+        # Notice if grouping by topology is disabled, CURRENT_TOPOLOGY will
+        # always be None, so we will always build a new topology manager
+        # instance for each module.
+        CURRENT_TOPOLOGY = (module.__TOPOLOGY_HASH__, topomgr)
     return topomgr
 
 
@@ -239,6 +289,28 @@ def pytest_addoption(parser):
         default=0,
         type=int,
         help='Retry building a topology up to defined times'
+    )
+    group.addoption(
+        '--topology-group-by-topology',
+        action='store_true',
+        help=(
+            'Group tests that share the same TOPOLOGY string, SZN file, and '
+            'attribute injection values so they run using a single topology '
+            'manager instance. This allows the topology to be built once per '
+            'group of tests, rather than rebuilding it for each individual '
+            'test. This can significantly reduce test execution time for '
+            'large test suites.'
+        )
+    )
+    group.addoption(
+        '--topology-topologies-file',
+        default=None,
+        type=Path,
+        help=(
+            'File to save the topology information when grouping tests by '
+            'topology. If not specified, the topology information will not be '
+            'saved.'
+        )
     )
 
 
@@ -316,6 +388,7 @@ def pytest_sessionstart(session):
     )
 
 
+@hookimpl(trylast=True)
 def pytest_unconfigure(config):
     """
     pytest hook to unconfigure plugin.
@@ -324,6 +397,8 @@ def pytest_unconfigure(config):
     if plugin:
         del config._topology_plugin
         config.pluginmanager.unregister(plugin)
+
+    _destroy_topology()
 
 
 @hookimpl(tryfirst=True)
@@ -352,9 +427,246 @@ def pytest_runtest_setup(item):
             skip(message)
 
 
+def get_module_topology(
+    plugin: TopologyPlugin,
+    module: object
+) -> Tuple[dict, dict]:
+    """
+    Obtain the topology string from the module, either from the
+    TOPOLOGY variable or from the SZN file defined by the TOPOLOGY_ID
+    variable. If the TOPOLOGY variable is defined, it will be parsed as a
+    string or a dictionary, depending on its type. If the TOPOLOGY_ID
+    variable is defined, the function will search for a SZN file with the
+    same name in the directories specified by the szn_dir option.
+
+    :param plugin: The TopologyPlugin instance containing configuration.
+    :param module: The module object to extract the topology from.
+    :return: A tuple containing the topology as a dictionary and any
+     injected attributes as a dictionary.
+    """
+
+    topology_cache = getattr(module, '__TOPOLOGY__', None)
+    if topology_cache is not None:
+        # If the module already has a cached TOPOLOGY, return it
+        log.debug(
+            f'Using cache __TOPOLOGY__ for module {module.__name__}'
+        )
+
+        # This is a tuple of (topology, injected_attr)
+        return topology_cache
+
+    injected_attr = None
+    if plugin.injected_attr is not None:
+        injected_attr = plugin.injected_attr.get(
+            realpath(module.__file__), None
+        )
+
+    topology = getattr(module, 'TOPOLOGY', '')
+    if topology:   # If topology is defined and not empty
+        if isinstance(topology, str):
+            topology = parse_txtmeta(topology)
+        elif not isinstance(topology, dict):
+            fail(
+                'Module {} has an invalid TOPOLOGY variable. '
+                'It must be a string or a dictionary.'.format(
+                    module.__name__
+                ),
+                pytrace=False
+            )
+
+    # If TOPOLOGY is not defined, check for TOPOLOGY_ID
+    else:
+        topology_id = getattr(module, 'TOPOLOGY_ID', '')
+
+        if not topology_id:
+            fail(
+                'Module {} has no TOPOLOGY or TOPOLOGY_ID variable defined.'
+                .format(module.__name__),
+                pytrace=False
+            )
+
+        if not plugin.szn_dir:
+            fail(
+                'Module {} has TOPOLOGY_ID but no SZN directories defined. '
+                'Please set --topology-szn-dir option to a directory '
+                'where the SZN files are located.'.format(module.__name__),
+                pytrace=False
+            )
+
+        for search_path in plugin.szn_dir:
+            for filename in glob.glob(
+                f'{search_path}/{topology_id}.szn'
+            ):
+                topology = parse_txtmeta(
+                    Path(filename).read_text(encoding='utf-8')
+                )
+
+        assert topology, (
+            'Module {} has TOPOLOGY_ID but no SZN files found in '
+            'the directories: {}'.format(
+                module.__name__, ', '.join(plugin.szn_dir)
+            )
+        )
+
+    # Cache the topology in the module for later use
+    module.__TOPOLOGY__ = (topology, injected_attr)
+    return topology, injected_attr
+
+
+def identify_unique_topologies(
+    plugin: TopologyPlugin,
+    items: list,
+) -> OrderedDict:
+    """
+    Iterate over pytest items and identify unique topologies based on
+    the module's TOPOLOGY string or SZN file. Each unique topology is
+    identified by a hash of its structure, which is calculated using
+    DeepHash from the deepdiff library. In addition, every test module is
+    marked with a `__TOPOLOGY_HASH__` attribute.
+
+    This function groups pytest items by their topology, allowing the
+    topology to be built once per group of tests, rather than rebuilding it
+    for each individual test. This can significantly reduce test execution time
+    for large test suites.
+
+    :param plugin: The TopologyPlugin instance containing configuration.
+    :param items: List of pytest items to analyze for unique topologies.
+    :return: An OrderedDict where keys are topology hashes and values are
+     dictionaries containing the topology data and associated items.
+    """
+
+    unique_topologies = OrderedDict()
+
+    for item in items:
+        # Find if there if this module is already added to a calculated
+        # topology and get the topology_hash of that topology, otherwise,
+        # this is a new module and we need to calculate the topology_hash
+        module = item.module
+        module_name = item.module.__name__
+        topology_hash = next(
+            (
+                key for key, value in unique_topologies.items()
+                if module_name in value['modules']
+            ),
+            None
+        )
+
+        if topology_hash is None:
+
+            # This is a new topology, so calculate a new topology_hash.
+            # To do that, we need to obtain the topology as a dict and merge
+            # it with the injected attributes if any. Once merged, we can
+            # calculate the topology_hash using DeepHash.
+            topology, injected_attr = get_module_topology(plugin, module)
+
+            if injected_attr:
+
+                inject_nodes = injected_attr.get('nodes', {})
+                inject_ports = injected_attr.get('ports', {})
+                inject_links = injected_attr.get('links', {})
+
+                # Merge the topology nodes with the inject nodes
+                for topo_node in topology.get('nodes', []):
+                    for node_id in topo_node.get('nodes', []):
+                        if node_id in inject_nodes:
+                            topo_node['attributes'].update(
+                                inject_nodes[node_id]
+                            )
+
+                # Merge the topology ports with the inject ports
+                for topo_port in topology.get('ports', []):
+                    for node_id, port in topo_port.get('ports', []):
+                        if (node_id, port) in inject_nodes:
+                            topo_port['attributes'].update(
+                                inject_ports[(node_id, port)]
+                            )
+
+                # Merge the topology links with the inject links
+                for topo_link in topology.get('links', []):
+                    if topo_link['endpoints'] in inject_links:
+                        topo_link['attributes'].update(
+                            inject_links[topo_link['endpoints']]
+                        )
+
+            # Find the topology_hash node or create a new one and add the
+            # module to the the node
+            # From deepdiff docs:
+            #   At first it might seem weird why DeepHash(obj)[obj] but
+            #   remember that DeepHash(obj) is a dictionary of hashes of all
+            #   other objects that obj contains too.
+            # Reference:
+            #   https://deepdiff.readthedocs.io/en/latest/deephash.html
+            topology_hash = DeepHash(topology)[topology]
+            module.__TOPOLOGY_HASH__ = topology_hash
+            unique_topo = unique_topologies.setdefault(topology_hash, {
+                'items': [],
+                'modules': {},
+                'topology': topology,
+                'attributes': ''
+            })
+            unique_topo['modules'][module_name] = []
+
+        # Add the tests to the topology_hash node
+        unique_topologies[topology_hash]['items'].append(item)
+        unique_topologies[topology_hash]['modules'][module_name].append(
+            item.name
+        )
+
+    return unique_topologies
+
+
+def sort_items_by_topology(
+    unique_topologies: OrderedDict,
+) -> list:
+    """
+    Takes a dictionary mapping unique topology hashes to their
+    associated test items and returns a flat list of pytest test items
+    sorted by their topology hashes.
+
+    :param unique_topologies: OrderedDict of unique topologies with their
+     associated test items.
+    """
+
+    items = []
+    for topology_hash, node in unique_topologies.items():
+        functions = ', '.join(
+            f'{function.module.__name__}.{function.name}'
+            for function in node['items']
+        )
+        log.debug(
+            f'\n\nSetup ID {topology_hash}: {len(node["items"])} \n{functions}'
+        )
+        items.extend(node.pop('items', []))
+    return items
+
+
+@hookimpl(tryfirst=True)
+def pytest_collection_finish(session):
+    plugin = session.config._topology_plugin
+
+    unique_topologies = identify_unique_topologies(
+        plugin, session.items
+    )
+
+    if session.config.getoption("--topology-group-by-topology"):
+        # Sort the test items using the topology information on each module
+        session.items = sort_items_by_topology(unique_topologies)
+
+    topologies_file = session.config.getoption(
+        '--topology-topologies-file'
+    )
+    if topologies_file is not None:
+        # Write the whole json to an output file to be processed later
+        topologies_file.write_text(
+            dumps(unique_topologies, indent=4),
+            encoding='utf-8'
+        )
+
+
 __all__ = [
-    'TopologyPlugin',
     'topology',
+    'StepLogger',
+    'TopologyPlugin',
     'pytest_addoption',
-    'StepLogger'
+    'pytest_collection_finish',
 ]
