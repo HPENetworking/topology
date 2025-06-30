@@ -1,0 +1,28 @@
+# Nodes
+[type=type1 name="Switch 1"] sw1
+[type=type1 name="Switch 2"] sw2
+[type=type2 name="Switch 2"] sw3
+
+
+#
+#  +---------+       +---------+
+#  |         |1    1 |         |
+#  | sw1     ---------  sw2    |
+#  |         |       |         |
+#  +--|------+       +-----|---+
+#     |10                  |20
+#     |                    |
+#     |                    |
+#     |    +---------+     |
+#     |    |         |     |
+#     +------ sw3    |-----+
+#       10 |         | 20
+#          +---------+
+# Links
+sw1:1 -- sw2:1
+[stack=true] sw1:10 -- sw3:10
+[stack=true] sw2:20 -- sw3:20
+
+# Ports
+[speed=1g] sw1:1 sw1:2
+[speed=10g] sw1:10 sw2:20 sw3:10 sw3:20
