@@ -185,7 +185,16 @@ def topology(request):
         engine=plugin.platform, options=plugin.platform_options
     )
 
-    topology, injected_attr = get_module_topology(plugin, module)
+    module_topology = get_module_topology(plugin, module)
+
+    if module_topology is not None:
+        fail(
+            f'Topology module {module.__name__} is missing TOPOLOGY or '
+            'TOPOLOGY_ID variable.',
+            pytrace=False
+        )
+
+    topology, injected_attr = module_topology
 
     try:
         if isinstance(topology, dict):
@@ -479,11 +488,9 @@ def get_module_topology(
         topology_id = getattr(module, 'TOPOLOGY_ID', '')
 
         if not topology_id:
-            fail(
-                'Module {} has no TOPOLOGY or TOPOLOGY_ID variable defined.'
-                .format(module.__name__),
-                pytrace=False
-            )
+            # No TOPOLOGY or TOPOLOGY_ID was found, this is likely a
+            # non-topology test. Let the caller handle it.
+            return None
 
         if not plugin.szn_dir:
             fail(
@@ -511,6 +518,51 @@ def get_module_topology(
     # Cache the topology in the module for later use
     module.__TOPOLOGY__ = (topology, injected_attr)
     return topology, injected_attr
+
+
+def _merge_attributes(
+    topology: dict,
+    injected_attr: dict
+) -> dict:
+    """
+    Merge the injected attributes into the topology.
+    This function updates the topology nodes, ports, and links with the
+    injected attributes. It modifies the topology in place.
+
+    :param topology: The topology dictionary to update.
+    :param injected_attr: The injected attributes dictionary containing
+     nodes, ports, and links to merge into the topology.
+
+    :return: The updated topology dictionary with merged attributes.
+    """
+
+    inject_nodes = injected_attr.get('nodes', {})
+    inject_ports = injected_attr.get('ports', {})
+    inject_links = injected_attr.get('links', {})
+
+    # Merge the topology nodes with the inject nodes
+    for topo_node in topology.get('nodes', []):
+        for node_id in topo_node.get('nodes', []):
+            if node_id in inject_nodes:
+                topo_node['attributes'].update(
+                    inject_nodes[node_id]
+                )
+
+    # Merge the topology ports with the inject ports
+    for topo_port in topology.get('ports', []):
+        for node_id, port in topo_port.get('ports', []):
+            if (node_id, port) in inject_nodes:
+                topo_port['attributes'].update(
+                    inject_ports[(node_id, port)]
+                )
+
+    # Merge the topology links with the inject links
+    for topo_link in topology.get('links', []):
+        if topo_link['endpoints'] in inject_links:
+            topo_link['attributes'].update(
+                inject_links[topo_link['endpoints']]
+            )
+    return topology
 
 
 def identify_unique_topologies(
@@ -553,47 +605,29 @@ def identify_unique_topologies(
 
         if topology_hash is None:
 
-            # This is a new topology, so calculate a new topology_hash.
-            # To do that, we need to obtain the topology as a dict and merge
-            # it with the injected attributes if any. Once merged, we can
-            # calculate the topology_hash using DeepHash.
-            topology, injected_attr = get_module_topology(plugin, module)
+            # No topology_hash found for this module. Either this is a new
+            # module or this is a non-topology test module.
 
-            if injected_attr:
+            # Check if there is a TOPOLOGY or TOPOLOGY_ID variable in the
+            # module. If not, this is a non-topology test module.
+            module_topology = get_module_topology(plugin, module)
 
-                inject_nodes = injected_attr.get('nodes', {})
-                inject_ports = injected_attr.get('ports', {})
-                inject_links = injected_attr.get('links', {})
+            if module_topology is None:
+                # This is a non-topology test module, so group it
+                # with other non-topology test modules using topology=None
+                topology = None
 
-                # Merge the topology nodes with the inject nodes
-                for topo_node in topology.get('nodes', []):
-                    for node_id in topo_node.get('nodes', []):
-                        if node_id in inject_nodes:
-                            topo_node['attributes'].update(
-                                inject_nodes[node_id]
-                            )
+            else:
+                # This a topology test module, so we can
+                # calculate the topology_hash for it.
+                topology, injected_attr = module_topology
 
-                # Merge the topology ports with the inject ports
-                for topo_port in topology.get('ports', []):
-                    for node_id, port in topo_port.get('ports', []):
-                        if (node_id, port) in inject_nodes:
-                            topo_port['attributes'].update(
-                                inject_ports[(node_id, port)]
-                            )
+                if injected_attr:
+                    # If there are injected attributes, merge them into the
+                    # topology
+                    topology = _merge_attributes(topology, injected_attr)
 
-                # Merge the topology links with the inject links
-                for topo_link in topology.get('links', []):
-                    if topo_link['endpoints'] in inject_links:
-                        topo_link['attributes'].update(
-                            inject_links[topo_link['endpoints']]
-                        )
-
-            # Find the topology_hash node or create a new one and add the
-            # module to the the node
-            # From deepdiff docs:
-            #   At first it might seem weird why DeepHash(obj)[obj] but
-            #   remember that DeepHash(obj) is a dictionary of hashes of all
-            #   other objects that obj contains too.
+            # Create a new topology_hash for this module.
             # Reference:
             #   https://deepdiff.readthedocs.io/en/latest/deephash.html
             topology_hash = DeepHash(topology)[topology]
