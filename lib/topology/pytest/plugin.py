@@ -187,7 +187,7 @@ def topology(request):
 
     module_topology = get_module_topology(plugin, module)
 
-    if module_topology is not None:
+    if module_topology is None:
         fail(
             f'Topology module {module.__name__} is missing TOPOLOGY or '
             'TOPOLOGY_ID variable.',

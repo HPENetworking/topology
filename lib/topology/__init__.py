@@ -21,4 +21,4 @@ topology module entry point.
 
 __author__ = 'Hewlett Packard Enterprise Development LP'
 __email__ = 'hpe-networking@lists.hp.com'
-__version__ = '1.20.1'
+__version__ = '1.20.2'
