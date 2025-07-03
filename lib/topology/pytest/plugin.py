@@ -61,12 +61,7 @@ from topology.logging import get_logger, StepLogger
 log = getLogger(__name__)
 
 
-# When --topology-group-by-topology is used, this variable will hold a tuple
-# of (topology_hash, TopologyManager) for the current built topology.
-CURRENT_TOPOLOGY: Tuple[DeepHash, TopologyManager] = None
-
-
-class TopologyPlugin(object):
+class TopologyPlugin:
     """
     pytest plugin for Topology.
 
@@ -85,13 +80,14 @@ class TopologyPlugin(object):
         self, platform, injected_attr, log_dir, szn_dir, platform_options,
         build_retries
     ):
-        super(TopologyPlugin, self).__init__()
         self.platform = platform
         self.injected_attr = injected_attr
         self.log_dir = log_dir
         self.szn_dir = szn_dir
         self.platform_options = platform_options
         self.build_retries = build_retries
+        self.topomgr: TopologyManager = None
+        self.topology_hash: DeepHash = None
 
     def pytest_report_header(self, config):
         """
@@ -106,21 +102,20 @@ class TopologyPlugin(object):
         return '\n'.join(header)
 
 
-def _destroy_topology():
+def _destroy_topology(plugin: TopologyPlugin):
     """
     Destroy current topology.
     """
-    global CURRENT_TOPOLOGY
-    if CURRENT_TOPOLOGY is None:
+    if plugin.topomgr is None:
+        # No topology manager instance to destroy
         return
 
-    topology_hash, topomgr = CURRENT_TOPOLOGY
+    if plugin.topomgr.is_built():
+        log.info(f'Destroying setup with hash {plugin.topology_hash}')
+        plugin.topomgr.unbuild()
 
-    if topomgr.is_built():
-        log.info(f'Destroying setup with hash {topology_hash}')
-        topomgr.unbuild()
-
-    CURRENT_TOPOLOGY = None
+    plugin.topomgr = None
+    plugin.topology_hash = None
 
 
 @fixture(scope='module')
@@ -134,9 +129,6 @@ def topology(request):
     - https://pytest.org/latest/builtin.html#_pytest.python.FixtureRequest
     """
     from ..logging import manager as logmanager
-
-    # Cache of current built topology = (topology_hash, TopologyManager)
-    global CURRENT_TOPOLOGY
 
     plugin: TopologyPlugin = request.config._topology_plugin
     module = request.module
@@ -154,7 +146,7 @@ def topology(request):
         '--topology-group-by-topology'
     )
 
-    if group_by_topology and CURRENT_TOPOLOGY is not None:
+    if group_by_topology and plugin.topomgr is not None:
         # Fetch topology data for this module
         assert hasattr(module, '__TOPOLOGY_HASH__'), (
             f'Module {module.__name__} has no __TOPOLOGY_HASH__ attribute. '
@@ -162,15 +154,16 @@ def topology(request):
             '(there is a bug in topology pytest plugin)'
         )
 
-        topology_hash = module.__TOPOLOGY_HASH__
+        module_topology_hash = module.__TOPOLOGY_HASH__
 
         # If the topology is already built, check if the topology_hash matches
-        cached_hash, topomgr = CURRENT_TOPOLOGY
+        cached_hash = plugin.topology_hash
+        topomgr = plugin.topomgr
 
-        if topology_hash == cached_hash:
+        if module_topology_hash == cached_hash:
             # If the topology is already built, return the existing instance
             log.info(
-                f'Reusing topology_hash {topology_hash} for suite '
+                f'Reusing topology_hash {module_topology_hash} for suite '
                 f'{abspath(module.__file__)}'
             )
             return topomgr
@@ -179,11 +172,13 @@ def topology(request):
     # a topology group and this is a new unique topology (or this is the fist
     # topology ever), so we need to build a new topology manager instance for
     # this module. If the topology was already built, destroy it first.
-    _destroy_topology()
+    _destroy_topology(plugin)
 
     topomgr = TopologyManager(
         engine=plugin.platform, options=plugin.platform_options
     )
+
+    plugin.topomgr = topomgr
 
     module_topology = get_module_topology(plugin, module)
 
@@ -234,10 +229,11 @@ def topology(request):
         )
 
     if group_by_topology:
-        # Notice if grouping by topology is disabled, CURRENT_TOPOLOGY will
+        # Notice if grouping by topology is disabled, plugin.topology_hash will
         # always be None, so we will always build a new topology manager
         # instance for each module.
-        CURRENT_TOPOLOGY = (module.__TOPOLOGY_HASH__, topomgr)
+        plugin.topology_hash = module.__TOPOLOGY_HASH__
+        plugin.topomgr = topomgr
     return topomgr
 
 
@@ -407,7 +403,7 @@ def pytest_unconfigure(config):
         del config._topology_plugin
         config.pluginmanager.unregister(plugin)
 
-    _destroy_topology()
+    _destroy_topology(plugin)
 
 
 @hookimpl(tryfirst=True)
