@@ -101,21 +101,26 @@ class TopologyPlugin:
 
         return '\n'.join(header)
 
+    def destroy_topology(self):
+        """
+        Checks if the topology manager instance is built and if so,
+        unbuilds it. Then sets the topology manager instance to None and
+        resets the topology hash.
 
-def _destroy_topology(plugin: TopologyPlugin):
-    """
-    Destroy current topology.
-    """
-    if plugin.topomgr is None:
-        # No topology manager instance to destroy
-        return
+        This method should be called when the pytest session ends or when a new
+        topology is built, ensuring that the previous topology is properly
+        cleaned up before building a new one.
+        """
+        if self.topomgr is None:
+            # No topology manager instance to destroy
+            return
 
-    if plugin.topomgr.is_built():
-        log.info(f'Destroying setup with hash {plugin.topology_hash}')
-        plugin.topomgr.unbuild()
+        if self.topomgr.is_built():
+            log.info(f'Destroying setup with hash {self.topology_hash}')
+            self.topomgr.unbuild()
 
-    plugin.topomgr = None
-    plugin.topology_hash = None
+        self.topomgr = None
+        self.topology_hash = None
 
 
 @fixture(scope='module')
@@ -172,7 +177,7 @@ def topology(request):
     # a topology group and this is a new unique topology (or this is the fist
     # topology ever), so we need to build a new topology manager instance for
     # this module. If the topology was already built, destroy it first.
-    _destroy_topology(plugin)
+    plugin.destroy_topology()
 
     topomgr = TopologyManager(
         engine=plugin.platform, options=plugin.platform_options
@@ -398,12 +403,11 @@ def pytest_unconfigure(config):
     """
     pytest hook to unconfigure plugin.
     """
-    plugin = getattr(config, '_topology_plugin', None)
+    plugin: TopologyPlugin = getattr(config, '_topology_plugin', None)
     if plugin:
+        plugin.destroy_topology()
         del config._topology_plugin
         config.pluginmanager.unregister(plugin)
-
-    _destroy_topology(plugin)
 
 
 @hookimpl(tryfirst=True)
