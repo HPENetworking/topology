@@ -87,7 +87,8 @@ class TopologyPlugin:
         self.platform_options = platform_options
         self.build_retries = build_retries
         self.topomgr: TopologyManager = None
-        self.topology_hash: DeepHash = None
+        self.curr_topology_hash: DeepHash = None
+        self.curr_module_name: str = None
 
     def pytest_report_header(self, config):
         """
@@ -116,14 +117,14 @@ class TopologyPlugin:
             return
 
         if self.topomgr.is_built():
-            log.info(f'Destroying setup with hash {self.topology_hash}')
+            log.info(f'Destroying setup with hash {self.curr_topology_hash}')
             self.topomgr.unbuild()
 
         self.topomgr = None
-        self.topology_hash = None
+        self.curr_topology_hash = None
 
 
-@fixture(scope='module')
+@fixture(scope='function')
 def topology(request):
     """
     Fixture that injects a TopologyManager into as a test fixture.
@@ -151,32 +152,53 @@ def topology(request):
         '--topology-group-by-topology'
     )
 
-    if group_by_topology and plugin.topomgr is not None:
-        # Fetch topology data for this module
-        assert hasattr(module, '__TOPOLOGY_HASH__'), (
-            f'Module {module.__name__} has no __TOPOLOGY_HASH__ attribute. '
-            'This should have been set when collecting the tests '
-            '(there is a bug in topology pytest plugin)'
+    assert hasattr(module, '__TOPOLOGY_HASH__'), (
+        f'Module {module.__name__} has no __TOPOLOGY_HASH__ attribute. '
+        'This should have been set when collecting the tests '
+        '(there is a bug in topology pytest plugin)'
+    )
+
+    # If the topology manager is already built, check if we can reuse it.
+    if plugin.topomgr is not None:
+
+        # Get the topology hash and module name for the test we are about
+        # to run
+        new_topo_hash = module.__TOPOLOGY_HASH__
+        new_module_name = module.__name__
+
+        # Get the topology hash and module name of the previous test
+        prev_topo_hash = plugin.curr_topology_hash
+        prev_module_name = plugin.curr_module_name
+
+        # If grouping by topology is enabled we keep the same topology
+        # as long as the module share the same topology hash regardless of
+        # the test module.
+        # However, if grouping by topology is disabled, we only reuse the
+        # topology if the module name is the same as the previous one (all
+        # tests in the same module will share the same topology).
+        should_reuse_topology = (
+            new_topo_hash == prev_topo_hash if group_by_topology
+            else new_module_name == prev_module_name
         )
 
-        module_topology_hash = module.__TOPOLOGY_HASH__
-
         # If the topology is already built, check if the topology_hash matches
-        cached_hash = plugin.topology_hash
-        topomgr = plugin.topomgr
-
-        if module_topology_hash == cached_hash:
-            # If the topology is already built, return the existing instance
+        if should_reuse_topology:
+            # If the topology is already built, return the existing
+            # instance
             log.info(
-                f'Reusing topology_hash {module_topology_hash} for suite '
+                f'Reusing topology_hash {new_topo_hash} for suite '
                 f'{abspath(module.__file__)}'
             )
-            return topomgr
+            return plugin.topomgr
 
-    # Either grouping by topology is disabled, or we just finished to run
-    # a topology group and this is a new unique topology (or this is the fist
-    # topology ever), so we need to build a new topology manager instance for
-    # this module. If the topology was already built, destroy it first.
+    # Either:
+    # - No topology has been built yet.
+    # - Grouping by topology is enabled and we are now using a different
+    #   topology.
+    # - Grouping by topology is disabled and we are in a different module
+    #   than the previous one.
+    # So, let's drop current topology and build a new topology manager
+    # instance.
     plugin.destroy_topology()
 
     topomgr = TopologyManager(
@@ -207,7 +229,7 @@ def topology(request):
                 module.__name__,
                 format_exc()
             ),
-            pytrace=False
+            pytrace=True
         )
 
     for iteration in range(plugin.build_retries + 1):
@@ -230,15 +252,12 @@ def topology(request):
             'Error building topology in module {}:\n{}'.format(
                 module.__name__,
                 format_exc()
-            ), pytrace=False
+            ), pytrace=True
         )
 
-    if group_by_topology:
-        # Notice if grouping by topology is disabled, plugin.topology_hash will
-        # always be None, so we will always build a new topology manager
-        # instance for each module.
-        plugin.topology_hash = module.__TOPOLOGY_HASH__
-        plugin.topomgr = topomgr
+    plugin.curr_module_name = module.__name__
+    plugin.curr_topology_hash = module.__TOPOLOGY_HASH__
+    plugin.topomgr = topomgr
     return topomgr
 
 
