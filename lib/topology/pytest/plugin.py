@@ -232,6 +232,7 @@ def topology(request):
             pytrace=True
         )
 
+    error = ''
     for iteration in range(plugin.build_retries + 1):
         try:
             topomgr.build()
@@ -242,16 +243,14 @@ def topology(request):
             )
             break
         except Exception:
-            msg = (
-                '{}\nAttempt {} to build topology failed.'
-            ).format(format_exc(), iteration)
-
+            error = format_exc()
+            msg = f'{error}\nAttempt {iteration} to build topology failed.'
             log.warning(msg)
     else:
         fail(
             'Error building topology in module {}:\n{}'.format(
                 module.__name__,
-                format_exc()
+                error
             ), pytrace=True
         )
 
