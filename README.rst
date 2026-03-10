@@ -35,6 +35,14 @@ License
 Changelog
 =========
 
+1.20.8 (2026-03-10)
+-------------------
+
+Fix
+~~~
+- Fix recording of test id mark to remove warnings on pytest 7.0.0 and later. [David Diaz]
+
+
 1.19.0 (2024-10-23)
 -------------------
 
