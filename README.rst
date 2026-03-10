@@ -16,7 +16,7 @@ License
 
 .. code-block:: text
 
-   Copyright (C) 2015-2023 Hewlett Packard Enterprise Development LP
+   Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -40,7 +40,132 @@ Changelog
 
 Fix
 ~~~
-- Fix recording of test id mark to remove warnings on pytest 7.0.0 and later. [David Diaz]
+- Fix recording of test id mark to remove warnings on pytest 7.0.0 and later.
+  [David Diaz]
+
+Changes
+~~~~~~~
+- Replace Travis CI with GitHub Actions for continuous integration.
+  [Diego Dompe]
+
+
+1.20.7 (2025-12-09)
+-------------------
+
+Fix
+~~~
+- Fix Pytest plugin empty search paths corner case where an empty list was
+  not handled the same as ``None`` in attribute injection search paths.
+  [Isaac F. Fonseca Segura]
+
+
+1.20.6 (2025-07-28)
+-------------------
+
+Fix
+~~~
+- Fix bad error message on build retry logic. [Sergio Salazar Morales]
+
+
+1.20.5 (2025-07-23)
+-------------------
+
+Changes
+~~~~~~~
+- Change topology fixture scope from module to function, preserving the
+  behavior of building the topology once per module when not grouping by
+  topology. [Sergio Salazar Morales]
+
+
+1.20.4 (2025-07-09)
+-------------------
+
+New
+~~~
+- Save method to destroy topology within the pytest plugin.
+  [Sergio Salazar Morales]
+
+
+1.20.3 (2025-07-03)
+-------------------
+
+New
+~~~
+- Save topology manager instance and hash within the pytest plugin, allowing
+  other hooks and fixtures to access topology information.
+  [Sergio Salazar Morales]
+
+
+1.20.2 (2025-07-02)
+-------------------
+
+Fix
+~~~
+- Fix logical error in plugin. [Sergio Salazar Morales]
+
+
+1.20.1 (2025-07-02)
+-------------------
+
+New
+~~~
+- Add tests for TOPOLOGY_ID feature. [Sergio Salazar Morales]
+
+Fix
+~~~
+- Fix pytest plugin assuming all tests are topology tests.
+  [Sergio Salazar Morales]
+
+
+1.20.0 (2025-06-26)
+-------------------
+
+New
+~~~
+- Add option to group tests by topology (``--topology-group-by-topology``).
+  Tests that share the same topology string, szn and injected attributes are
+  run using the same topology manager instance, reducing the number of builds.
+  Also adds ``--topology-topologies-file`` to control the path to a JSON file
+  where topology group info and its respective tests is written.
+  [Sergio Salazar Morales]
+
+
+1.19.4 (2025-06-25)
+-------------------
+
+Changes
+~~~~~~~
+- Stop returning a deepcopy of metadata; return a reference to the original
+  dictionary for transparency and to avoid hidden side effects.
+  [Sergio Salazar Morales]
+
+
+1.19.3 (2025-06-11)
+-------------------
+
+Changes
+~~~~~~~
+- Update entry point handling to require Python 3.9 or higher, replacing
+  ``pkg_resources`` with ``importlib.metadata``. [Roger Valderrama]
+
+
+1.19.2 (2025-06-11)
+-------------------
+
+Changes
+~~~~~~~
+- Replace ``pkg_resources`` with ``importlib.metadata`` for entry point
+  handling. [Roger Valderrama]
+
+
+1.19.1 (2024-11-05)
+-------------------
+
+Fix
+~~~
+- Update terminal output regex to use a more generic ANSI escape sequence
+  pattern, fixing extra characters appearing in output on newer Ubuntu
+  versions (e.g. Ubuntu 22.04). [Isaac Fonseca Segura]
 
 
 1.19.0 (2024-10-23)
@@ -48,7 +173,6 @@ Fix
 
 Changes
 ~~~~~~~
-
 - Add a step before build to resolve the topology graph. This additional step
   allows the user to take decisions before trying to build the topology and
   figuring out it is not possible too late.
@@ -56,17 +180,18 @@ Changes
 - Add "platform" property so users can access the platform instance from the
   topology manager.
 
+
 1.18.3 (2024-06-25)
 -------------------
 
 Fix
 ~~~
-
 - Move argparse type from 'int' to int.
 
   In latest version of pytest, the 'int' value as type is
   no longer supported, causing issues when topology is
   started.
+
 
 1.18.2 (2023-06-15)
 -------------------
