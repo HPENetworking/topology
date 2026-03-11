@@ -28,11 +28,7 @@ from __future__ import print_function, division
 import logging
 from inspect import isclass
 
-import sys
-if sys.version_info >= (3, 9):
-    from importlib.metadata import entry_points
-else:
-    from importlib_metadata import entry_points  # backport for Python < 3.8
+import packagedata as pkgdata
 
 from .platform import BasePlatform
 
@@ -67,7 +63,7 @@ def platforms(cache=True):
     available = []
 
     # Iterate over entry points
-    for ep in entry_points(group='topology_platform_10'):
+    for ep in pkgdata.entry_points(group='topology_platform_10'):
         available.append(ep.name)
 
     available.sort()
@@ -89,14 +85,16 @@ def load_platform(name):
         raise RuntimeError('Unknown platform engine "{}".'.format(name))
 
     # Iterate over entry points
-    for ep in entry_points(group='topology_platform_10', name=name):
+    for ep in pkgdata.entry_points(group='topology_platform_10'):
+
+        if ep.name != name:
+            continue
 
         try:
             platform = ep.load()
         except Exception as e:
             log.error(
-                'Unable to load topology engine '
-                'platform plugin {}.'.format(name)
+                f'Unable to load topology engine platform plugin {name!r}.'
             )
             raise e
 
@@ -110,7 +108,7 @@ def load_platform(name):
         return platform
 
     raise RuntimeError(
-        'Platform engine "{}"" not in entry points.'.format(name)
+        f'Platform engine {name!r} not in entry points.'
     )
 
 
