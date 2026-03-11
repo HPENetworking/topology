@@ -27,11 +27,7 @@ from inspect import isclass
 from traceback import format_exc
 from collections import OrderedDict
 
-import sys
-if sys.version_info >= (3, 9):
-    from importlib.metadata import entry_points
-else:
-    from importlib_metadata import entry_points  # backport for Python < 3.8
+import packagedata as pkgdata
 
 from .node import BaseNode
 
@@ -92,7 +88,7 @@ class NodeLoader(object):
         available = OrderedDict()
 
         # Iterate over entry points
-        for ep in entry_points(group=self.entrypoint):
+        for ep in pkgdata.entry_points(group=self.entrypoint):
 
             name = ep.name
 

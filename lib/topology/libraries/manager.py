@@ -32,11 +32,7 @@ from traceback import format_exc
 from collections import OrderedDict
 from argparse import Namespace
 
-import sys
-if sys.version_info >= (3, 9):
-    from importlib.metadata import entry_points
-else:
-    from importlib_metadata import entry_points  # backport for Python < 3.8
+import packagedata as pkgdata
 
 
 log = logging.getLogger(__name__)
@@ -74,7 +70,7 @@ def libraries(cache=True):
     available = {}
 
     # Iterate over entry points
-    for ep in entry_points(group='topology_library_10'):
+    for ep in pkgdata.entry_points(group='topology_library_10'):
 
         name = ep.name
 
