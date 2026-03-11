@@ -28,14 +28,14 @@ import pytest  # noqa
 from deepdiff import DeepDiff
 
 # Reload module to properly measure coverage
-from six.moves import reload_module
+from importlib import reload
 
 import topology.platforms.manager
 from topology.manager import TopologyManager
 from topology.graph import TopologyGraph
 
 
-reload_module(topology.platforms.manager)
+reload(topology.platforms.manager)
 
 
 def test_build():

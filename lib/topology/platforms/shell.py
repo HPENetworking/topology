@@ -28,7 +28,7 @@ from collections import OrderedDict
 from time import sleep
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
+
 from pexpect import spawn as Spawn  # noqa
 from pexpect import TIMEOUT
 
@@ -108,8 +108,7 @@ class DisconnectedError(Exception):
         )
 
 
-@add_metaclass(ABCMeta)
-class BaseShell(object):
+class BaseShell(metaclass=ABCMeta):
     """
     Base shell class for Topology nodes.
 
@@ -316,8 +315,7 @@ class BaseShell(object):
         """
 
 
-@add_metaclass(ABCMeta)
-class PExpectShell(BaseShell):
+class PExpectShell(BaseShell, metaclass=ABCMeta):
     """
     Implementation of the BaseShell class using pexpect.
 

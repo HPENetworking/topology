@@ -1,5 +1,4 @@
 packagedata
-six
 # Why pinning pexpect to 4.6?
 # pexpect 4.5 introduced the use_poll keyword argument to allow
 # using more than 1024 file descriptors by the means of using poll()

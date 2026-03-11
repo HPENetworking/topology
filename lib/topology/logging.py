@@ -28,7 +28,7 @@ from distutils.dir_util import mkpath
 from weakref import WeakValueDictionary
 from datetime import datetime
 
-from six import add_metaclass
+
 
 
 LEVELS = OrderedDict([
@@ -67,8 +67,7 @@ class PexpectFileHandler(logging.FileHandler):
             self.handleError(record)
 
 
-@add_metaclass(ABCMeta)
-class BaseLogger(object):
+class BaseLogger(metaclass=ABCMeta):
     """
     Base class for Topology logger classes.
 
@@ -157,8 +156,7 @@ class BaseLogger(object):
         self._log_dir = log_dir
 
 
-@add_metaclass(ABCMeta)
-class StdOutLogger(BaseLogger):
+class StdOutLogger(BaseLogger, metaclass=ABCMeta):
     """
     Logger that logs to the standard output.
     """
@@ -177,8 +175,7 @@ class StdOutLogger(BaseLogger):
         self.logger.log(self._level, message)
 
 
-@add_metaclass(ABCMeta)
-class FileLogger(BaseLogger):
+class FileLogger(BaseLogger, metaclass=ABCMeta):
     """
     Subclass of BaseLogger that adds a PexpectFileHandler.
 

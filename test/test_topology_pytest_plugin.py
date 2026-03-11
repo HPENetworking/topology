@@ -27,12 +27,12 @@ from __future__ import print_function, division
 from pytest import mark
 
 # Reload module to properly measure coverage
-from six.moves import reload_module
+from importlib import reload
 
 import topology.pytest.plugin
 from topology.manager import TopologyManager
 
-reload_module(topology.pytest.plugin)
+reload(topology.pytest.plugin)
 
 TOPOLOGY = """
 # Nodes

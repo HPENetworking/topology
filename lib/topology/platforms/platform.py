@@ -27,14 +27,13 @@ from __future__ import print_function, division
 import logging
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
+
 
 
 log = logging.getLogger(__name__)
 
 
-@add_metaclass(ABCMeta)
-class BasePlatform(object):
+class BasePlatform(metaclass=ABCMeta):
     """
     Base platform engine class.
 
