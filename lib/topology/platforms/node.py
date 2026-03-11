@@ -29,7 +29,7 @@ from datetime import datetime
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass, iterkeys
+
 
 from .service import BaseService
 from ..libraries.manager import LibsProxy
@@ -39,8 +39,7 @@ from .shell import ShellContext, BaseShell
 log = logging.getLogger(__name__)
 
 
-@add_metaclass(ABCMeta)
-class HighLevelShellAPI(object):
+class HighLevelShellAPI(metaclass=ABCMeta):
     """
     API used to interact with node shells.
 
@@ -95,8 +94,7 @@ class HighLevelShellAPI(object):
         """
 
 
-@add_metaclass(ABCMeta)
-class LowLevelShellAPI(object):
+class LowLevelShellAPI(metaclass=ABCMeta):
     """
     API used to interact with low level shell objects.
     """
@@ -138,8 +136,7 @@ class LowLevelShellAPI(object):
         """
 
 
-@add_metaclass(ABCMeta)
-class ServicesAPI(object):
+class ServicesAPI(metaclass=ABCMeta):
     """
     API to gather information and connection parameters to a node services.
     """
@@ -192,8 +189,7 @@ class ServicesAPI(object):
         """
 
 
-@add_metaclass(ABCMeta)
-class StateAPI(object):
+class StateAPI(metaclass=ABCMeta):
     """
     API to control the enable/disabled state of a node.
     """
@@ -224,8 +220,7 @@ class StateAPI(object):
         """
 
 
-@add_metaclass(ABCMeta)
-class BaseNode(HighLevelShellAPI, LowLevelShellAPI, ServicesAPI, StateAPI):
+class BaseNode(HighLevelShellAPI, LowLevelShellAPI, ServicesAPI, StateAPI, metaclass=ABCMeta):
     """
     Base engine node class.
 
@@ -252,8 +247,7 @@ class BaseNode(HighLevelShellAPI, LowLevelShellAPI, ServicesAPI, StateAPI):
         self.ports = OrderedDict()
 
 
-@add_metaclass(ABCMeta)
-class CommonNode(BaseNode):
+class CommonNode(BaseNode, metaclass=ABCMeta):
     """
     Base engine node class with a common base implementation.
 
@@ -316,7 +310,7 @@ class CommonNode(BaseNode):
 
         See :meth:`HighLevelShellAPI.available_shells` for more information.
         """
-        return list(iterkeys(self._shells))
+        return list(self._shells.keys())
 
     def send_command(self, cmd, shell=None, silent=False):
         """
@@ -337,7 +331,7 @@ class CommonNode(BaseNode):
 
         # Check if default shell is already set
         if self._default_shell is None:
-            self._default_shell = list(iterkeys(self._shells))[0]
+            self._default_shell = list(self._shells.keys())[0]
 
         # Check requested shell is supported
         if shell is None:
@@ -418,7 +412,7 @@ class CommonNode(BaseNode):
 
         See :meth:`ServicesAPI.available_services` for more information.
         """
-        return list(iterkeys(self._services))
+        return list(self._services.keys())
 
     def get_service(self, service):
         """

@@ -34,7 +34,7 @@ from datetime import datetime
 from traceback import format_exc
 from collections import OrderedDict
 
-from six import string_types
+
 from pyszn.parser import parse_txtmeta
 
 from .graph import TopologyGraph, Link
@@ -349,7 +349,7 @@ class TopologyManager(object):
                     eport = self._platform.add_biport(node, port)
 
                     # Check that engine port is of correct type
-                    if not isinstance(eport, string_types):
+                    if not isinstance(eport, str):
                         msg = (
                             'Platform {} returned an invalid '
                             'engine port name {}.'
