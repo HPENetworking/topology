@@ -20,9 +20,6 @@ This module defines the functionality that a Topology Engine Node must
 implement to be able to create a network using a specific environment.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import logging
 from datetime import datetime
 from collections import OrderedDict
