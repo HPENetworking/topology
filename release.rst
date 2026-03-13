@@ -39,8 +39,8 @@ You need to have an entry in ``~/.pypirc``::
 
     [hpepypi]
     repository = https://upload.pypi.org/legacy/
-    username = hpe-networking
-    password = *******
+    username = __token__
+    password = *************************
 
 #. Add entry in GitHub releases:
 
