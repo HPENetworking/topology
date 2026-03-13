@@ -10,7 +10,7 @@ sphinx-readable-theme
 
 # Framework documentation
 pytest
--e git+https://github.com/HPENetworking/topology_docker.git#egg=topology_docker
--e git+https://github.com/HPENetworking/topology_connect.git#egg=topology_connect
--e git+https://github.com/HPENetworking/topology_lib_ping.git#egg=topology_lib_ping
--e git+https://github.com/HPENetworking/topology_lib_ip.git#egg=topology_lib_ip
+topology_docker @ git+https://github.com/HPENetworking/topology_docker.git
+topology_connect @ git+https://github.com/HPENetworking/topology_connect.git
+topology_lib_ping @ git+https://github.com/HPENetworking/topology_lib_ping.git
+topology_lib_ip @ git+https://github.com/HPENetworking/topology_lib_ip.git

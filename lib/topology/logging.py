@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2020 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,19 +14,17 @@
 # under the License.
 
 """
-Logging module for the Topology Modular Framework.
+Logging module for the Topology Framework.
 """
 
 import logging
+from os import makedirs
 from abc import ABCMeta
 from os.path import join
 from inspect import stack
-from collections import OrderedDict
-from distutils.dir_util import mkpath
-from weakref import WeakValueDictionary
 from datetime import datetime
-
-
+from collections import OrderedDict
+from weakref import WeakValueDictionary
 
 
 LEVELS = OrderedDict([
@@ -531,7 +527,7 @@ class LoggingManager(object):
 
     @logging_directory.setter
     def logging_directory(self, log_dir):
-        mkpath(log_dir)
+        makedirs(log_dir, exist_ok=True)
         self._log_dir = log_dir
 
         # Notify all categories of a log directory change

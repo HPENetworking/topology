@@ -29,7 +29,7 @@ How to make a Topology release?
 
 #. Upload to PyPI::
 
-    twine upload --repository hpepypi --skip-existing dist/*
+    twine upload --repository hpepypi --skip-existing dist/topology*
 
 You need to have an entry in ``~/.pypirc``::
 
