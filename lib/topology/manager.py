@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2024 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,9 +20,6 @@ This module takes care of understanding the topology defined in the test
 suite, commanding its construction to appropriate topology platform plugin
 and finally commanding its destruction to the plugin also.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 import logging
 from sys import exc_info
