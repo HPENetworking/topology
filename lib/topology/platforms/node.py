@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,8 +27,6 @@ import logging
 from datetime import datetime
 from collections import OrderedDict
 from abc import ABCMeta, abstractmethod
-
-
 
 from .service import BaseService
 from ..libraries.manager import LibsProxy
@@ -220,7 +217,13 @@ class StateAPI(metaclass=ABCMeta):
         """
 
 
-class BaseNode(HighLevelShellAPI, LowLevelShellAPI, ServicesAPI, StateAPI, metaclass=ABCMeta):
+class BaseNode(
+    HighLevelShellAPI,
+    LowLevelShellAPI,
+    ServicesAPI,
+    StateAPI,
+    metaclass=ABCMeta,
+):
     """
     Base engine node class.
 
