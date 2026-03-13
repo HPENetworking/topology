@@ -20,9 +20,6 @@ This module defines the functionality that a topology platform plugin must
 provide to be able to create a network using specific hardware or software.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import logging
 from abc import ABCMeta, abstractmethod
 

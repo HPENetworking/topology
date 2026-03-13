@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +16,6 @@
 """
 topology module for interactive mode.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 import logging
 from atexit import register

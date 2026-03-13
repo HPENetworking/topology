@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2025 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,9 +19,6 @@ topology libraries manager module.
 This module finds out which topology communication libraries plugins are
 installed and returns them in a dictionary.
 """
-
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
 
 import logging
 from functools import partial

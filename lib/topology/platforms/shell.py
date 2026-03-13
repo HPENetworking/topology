@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,20 +17,17 @@
 topology shell api module.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
+from time import sleep
 from warnings import warn
 from re import sub as regex_sub
 from collections import OrderedDict
-from time import sleep
 from abc import ABCMeta, abstractmethod
-
 
 from pexpect import spawn as Spawn  # noqa
 from pexpect import TIMEOUT
 
 from topology.logging import get_logger
+
 
 TERM_CODES_REGEX = r'\x1B[@-_][0-?]*[ -/]*[@-~]'
 """
