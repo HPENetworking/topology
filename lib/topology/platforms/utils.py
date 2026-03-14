@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2015-2025 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,20 +17,13 @@
 Common utilities for engine platforms.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import logging
 from copy import copy
 from inspect import isclass
 from traceback import format_exc
 from collections import OrderedDict
 
-import sys
-if sys.version_info >= (3, 9):
-    from importlib.metadata import entry_points
-else:
-    from importlib_metadata import entry_points  # backport for Python < 3.8
+import packagedata as pkgdata
 
 from .node import BaseNode
 
@@ -92,7 +84,7 @@ class NodeLoader(object):
         available = OrderedDict()
 
         # Iterate over entry points
-        for ep in entry_points(group=self.entrypoint):
+        for ep in pkgdata.entry_points(group=self.entrypoint):
 
             name = ep.name
 

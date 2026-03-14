@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "topology"
+description = "Topology is a framework for building and testing network topologies, with support for pytest."
+dynamic = ["version"]
+readme = {file = "README.rst", content-type = "text/x-rst"}
+license = "Apache-2.0"
+authors = [
+    {name = "Hewlett Packard Enterprise Development LP", email = "hpe-networking@lists.hp.com"}
+]
+keywords = ["topology"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "packagedata",
+    "pexpect>=4.6",
+    "pyszn",
+    "typing_extensions",
+    "pprintpp",
+    "deepdiff",
+]
+
+[project.urls]
+Homepage = "https://topology.readthedocs.io/"
+
+[project.scripts]
+topology = "topology.__main__:__main__"
+
+[project.entry-points."pytest11"]
+topology = "topology.pytest.plugin"
+
+[project.entry-points."topology_platform_10"]
+debug = "topology.platforms.debug:DebugPlatform"
+
+[project.entry-points."topology_library_10"]
+common = "topology.libraries.common"
+
+[tool.setuptools.dynamic]
+version = {attr = "topology.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["lib"]

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2024 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,9 +21,6 @@ suite, commanding its construction to appropriate topology platform plugin
 and finally commanding its destruction to the plugin also.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import logging
 from sys import exc_info
 from warnings import warn
@@ -34,7 +29,7 @@ from datetime import datetime
 from traceback import format_exc
 from collections import OrderedDict
 
-from six import string_types
+
 from pyszn.parser import parse_txtmeta
 
 from .graph import TopologyGraph, Link
@@ -349,7 +344,7 @@ class TopologyManager(object):
                     eport = self._platform.add_biport(node, port)
 
                     # Check that engine port is of correct type
-                    if not isinstance(eport, string_types):
+                    if not isinstance(eport, str):
                         msg = (
                             'Platform {} returned an invalid '
                             'engine port name {}.'

@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2015-2024 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,20 +20,14 @@ This module defines the functionality that a topology platform plugin must
 provide to be able to create a network using specific hardware or software.
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import logging
 from abc import ABCMeta, abstractmethod
-
-from six import add_metaclass
 
 
 log = logging.getLogger(__name__)
 
 
-@add_metaclass(ABCMeta)
-class BasePlatform(object):
+class BasePlatform(metaclass=ABCMeta):
     """
     Base platform engine class.
 
