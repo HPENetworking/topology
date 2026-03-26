@@ -12,3 +12,5 @@ pyszn>=1.4.0
 typing_extensions
 pprintpp
 deepdiff
+# Setup tools is required to map calls to deprecated distutils lib
+setuptools
