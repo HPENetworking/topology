@@ -35,6 +35,18 @@ License
 Changelog
 =========
 
+1.20.9 (2026-03-26)
+-------------------
+
+Changes
+~~~~~~~
+- Add setuptools as dependency, as this library now maps calls to the
+  distutils library to setuptools._distutils.
+  distutils was deprecated on Python 3.10 and finally removed on Python 3.12.
+  This change helps avoiding crashes on Python 3.12 and later.
+  [Isaac Fonseca Segura]
+
+
 1.20.8 (2026-03-10)
 -------------------
 
