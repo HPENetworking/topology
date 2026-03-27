@@ -10,27 +10,21 @@ Developer Guide
 Setup Development Environment
 =============================
 
-#. Install ``pip3`` and ``tox``:
+#. Install ``uv``:
+
+   Check https://docs.astral.sh/uv/ for your platform.
+
+#. Install ``tox`` with the ``tox-uv`` plugin:
 
    ::
 
-      wget https://bootstrap.pypa.io/get-pip.py
-      sudo python3 get-pip.py
-      sudo pip3 install tox
+      uv tool install tox --with tox-uv
 
 #. Install Graphviz for topology auto-plotting:
 
    ::
 
-      sudo apt-get install graphviz
-
-#. Configure git pre-commit hook:
-
-   ::
-
-      sudo pip3 install flake8 pep8-naming
-      flake8 --install-hook
-      git config flake8.strict true
+      sudo apt install graphviz
 
 
 Building Documentation
@@ -59,13 +53,10 @@ Running Test Suite
 
 ::
 
-   tox -e py27,py34
+   tox -e test
 
-
-Running Coverage
-================
+Coverage test is available at:
 
 ::
 
-   tox -e coverage
-   webdev .tox/coverage/tmp/htmlcov/
+   webdev .tox/test/tmp/htmlcov/

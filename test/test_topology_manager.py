@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2016 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,21 +19,18 @@ Test suite for module topology.manager.
 See http://pythontesting.net/framework/pytest/pytest-introduction/#fixtures
 """
 
-from __future__ import unicode_literals, absolute_import
-from __future__ import print_function, division
-
 import pytest  # noqa
 from deepdiff import DeepDiff
 
 # Reload module to properly measure coverage
-from six.moves import reload_module
+from importlib import reload
 
 import topology.platforms.manager
 from topology.manager import TopologyManager
 from topology.graph import TopologyGraph
 
 
-reload_module(topology.platforms.manager)
+reload(topology.platforms.manager)
 
 
 def test_build():
