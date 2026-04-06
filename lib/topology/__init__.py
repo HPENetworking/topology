@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2015-2023 Hewlett Packard Enterprise Development LP
+# Copyright (C) 2015-2026 Hewlett Packard Enterprise Development LP
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -21,4 +19,4 @@ topology module entry point.
 
 __author__ = 'Hewlett Packard Enterprise Development LP'
 __email__ = 'hpe-networking@lists.hp.com'
-__version__ = '1.20.8'
+__version__ = '1.21.0'

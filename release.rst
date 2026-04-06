@@ -15,7 +15,7 @@ How to make a Topology release?
 #. Commit, tag::
 
     git commit -a
-        chg: dev: Bumping version number to x.y.z.
+        Bumping version number to x.y.z.
     git tag x.y.z
 
 #. Build wheel package::
