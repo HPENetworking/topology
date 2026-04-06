@@ -35,6 +35,25 @@ License
 Changelog
 =========
 
+1.21.0 (2026-04-06)
+-------------------
+
+Changes
+~~~~~~~
+- Migrate project packaging from ``setup.py`` to ``pyproject.toml``.
+  [Carlos Jenkins]
+- Update development workflow to use ``uv`` instead of ``pip``.
+  [Carlos Jenkins]
+- Migrate entrypoint management to use the ``packagedata`` library to support
+  modern and legacy Python versions. [Carlos Jenkins]
+- Remove the ``six`` dependency. Python 2 officially dropped.
+  Oldest supported Python is 3.7. [Carlos Jenkins]
+- Remove old Python 2.7 ``__future__`` imports and other deprecated
+  configuration. [Carlos Jenkins]
+- Split CI into two test matrices: modern Python (3.10+) and legacy Python
+  (3.7-3.9).[Carlos Jenkins]
+
+
 1.20.8 (2026-03-10)
 -------------------
 
