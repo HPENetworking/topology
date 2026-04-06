@@ -52,6 +52,13 @@ jobs:
       - name: Install tox
         run: pip install tox
 
+      # pyproject.toml uses the PEP 639 SPDX string format for `license`
+      # (e.g. license = "Apache-2.0"), which requires setuptools>=77. That
+      # version dropped Python 3.8 support, so we downgrade to the old table
+      # format (license = {text = "..."}) here for legacy Python builds.
+      - name: Patch pyproject.toml for legacy setuptools
+        run: sed -i 's/^license = "Apache-2.0"/license = {text = "Apache-2.0"}/' pyproject.toml
+
       - name: Run tests
         run: tox -e test
 
