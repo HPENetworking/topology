@@ -14,7 +14,9 @@ ipdb
 #######################
 
 flake8
-pep8-naming
+# pep8-naming>=0.14.0 doesn't support Python 3.7
+pep8-naming; python_version > "3.7"
+pep8-naming<0.14.0; python_version == "3.7"
 
 #######################
 # Testing             #
