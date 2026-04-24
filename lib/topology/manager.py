@@ -88,7 +88,6 @@ class TopologyManager(object):
 
         self._platform = None
         self._built = False
-        self._resolved = False
 
     @property
     def platform(self):
@@ -290,11 +289,9 @@ class TopologyManager(object):
         )
         if not hasattr(self._platform, 'resolve'):
             log.warning('Platform does not implement resolve method.')
-            self._resolved = True
             return
 
         self._platform.resolve()
-        self._resolved = True
 
     def build(self):
         """
@@ -308,10 +305,7 @@ class TopologyManager(object):
                 'You cannot build a topology twice.'
             )
 
-        if not self._resolved:
-            # To keep backward compatibility, resolve the topology if it was
-            # not resolved yet.
-            self.resolve()
+        self.resolve()
 
         node_enode_map = OrderedDict()
 
